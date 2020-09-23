@@ -1,0 +1,23 @@
+#python
+__pycache__/
+*.pyc
+
+#output files
+*.ampdb
+*.db
+*.traj
+*.amp
+*.txt
+*.pdf
+*.OUTCAR
+*.pt
+*.gif
+*.tar
+*.out
+*.pickle
+*.png
+*.json
+
+.ipynb_checkpoints
+*/checkpoints/*
+stored-primes/
