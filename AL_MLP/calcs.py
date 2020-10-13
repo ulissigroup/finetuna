@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 from ase.calculators.calculator import Calculator, Parameters, all_changes
 from ase.calculators.calculator import PropertyNotImplementedError
 from amptorch.trainer import AtomsTrainer
@@ -23,8 +24,8 @@ class TrainerCalc(Calculator):
         
     def calculate(self, atoms, properties, system_changes):
         calculated_atoms = self.trainer.predict([atoms])[0]
-        self.results["energy"] = calculated_atoms.get_potential_energy()
-        self.results["forces"] = calculated_atoms.get_forces()
+        self.results["energy"] = calculated_atoms.get_potential_energy(apply_constraint=False)
+        self.results["forces"] = calculated_atoms.get_forces(apply_constraint=False)
         
 class DeltaCalc(Calculator):
 
@@ -56,24 +57,33 @@ class DeltaCalc(Calculator):
         if len(calcs) != len(refs):
             raise ValueError('The length of the weights must be the same as the number of calculators!')
 
-        self.calcs = calcs
+        self.calcs_copy = calcs
         self.mode = mode
         self.refs = refs
 
     def calculate(self, atoms=None, properties=['energy'], system_changes=all_changes):
         """ Calculates the desired property.
+        Precalculated properties from the first calculator can be attached to atoms.
         "sub" mode: calculates the delta between the two given calculators.
         "add" mode: calculates the predicted value given the predicted delta calculator and the base calc.
         """
-        for calc in self.calcs:
-            calc.calculate(atoms, properties, system_changes)
+        
+        self.calcs = [copy.copy(calc) for calc in self.calcs_copy]
+        
+        if atoms.calc is not None:
+            self.calcs[0].results["energy"] = atoms.get_potential_energy(apply_constraint=False)
+            self.calcs[0].results["forces"] = atoms.get_forces(apply_constraint=False)
+        else:
+            self.calcs[0].calculate(atoms, properties, system_changes)
+            
+        self.calcs[1].calculate(atoms, properties, system_changes)
         
         if self.mode == "sub":
             delta_energies = []
             if "energy" in properties:
                 for i in range(len(self.calcs)):
                     delta_energies.append(self.calcs[i].results["energy"] -
-                                          self.refs[i].get_potential_energy())
+                                          self.refs[i].get_potential_energy(apply_constraint=False))
                 self.results["energy"] = delta_energies[0] - delta_energies[1]
                 
             for k in properties:
@@ -87,8 +97,8 @@ class DeltaCalc(Calculator):
             if "energy" in properties:
                 delta_energies.append(self.calcs[0].results["energy"])
                 delta_energies.append(self.calcs[1].results["energy"] - 
-                                      self.refs[1].get_potential_energy())
-                delta_energies.append(self.refs[0].get_potential_energy())
+                                      self.refs[1].get_potential_energy(apply_constraint=False))
+                delta_energies.append(self.refs[0].get_potential_energy(apply_constraint=False))
                 self.results["energy"] = np.sum(delta_energies)
                 
             for k in properties:
