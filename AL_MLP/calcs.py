@@ -6,6 +6,8 @@ from amptorch.trainer import AtomsTrainer
 
 class TrainerCalc(Calculator):
     """Atomistics Machine-Learning Potential (AMP) ASE calculator
+        This class is temporary, we might make it so the user has to 
+        provide this.
    Parameters
    ----------
     trainer: amptorch AtomsTrainer object with a valid predict method.
