@@ -1,2 +1,2 @@
-# AL_MLP
-test
+# al-mlp
+Active Learning for Machine Learning Potentials
