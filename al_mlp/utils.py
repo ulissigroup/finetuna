@@ -13,6 +13,7 @@ def convert_to_singlepoint(images):
         List of ase atoms images with attached calculators for forces and energies.
     """
     
+    images = copy_images(images)
     singlepoint_images = []
     cwd = os.getcwd()
     for image in images:
@@ -58,3 +59,25 @@ def compute_with_calc(images, calculator):
         os.system("rm -rf ./temp")
         
     return singlepoint_images
+
+
+def copy_images(images):
+    """
+    Copies images and returns the new instances.
+    The new images also have copied calculators.
+    
+    Parameters
+    ----------
+    
+    images: list
+        List of ase atoms images to be copied.
+    """
+    new_images = []
+    for image in images:
+        calc = image.get_calculator()
+        new_image = image.copy()
+        new_image.set_calculator(copy.copy(calc))
+        new_images.append(new_image)
+    return new_images
+    
+    

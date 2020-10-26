@@ -32,7 +32,7 @@ class MultiMorse(Calculator):
         
         image = atoms
         
-        n = NeighborList(cutoffs=[cutoff / 2.0] * len(image),
+        n = NeighborList(cutoffs=[self.cutoff / 2.0] * len(image),
                          self_interaction=False, primitive=NewPrimitiveNeighborList)
         n.update(image)
         image_neighbors = [n.get_neighbors(index) for index in range(len(image))]

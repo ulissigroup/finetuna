@@ -30,7 +30,7 @@ class TrainerCalc(Calculator):
         self.results["forces"] = calculated_atoms.get_forces(apply_constraint=False)
 '''
 class DeltaCalc(Calculator):
-
+    implemented_properties = ['energy', 'forces']
     def __init__(self, calcs, mode, refs, atoms=None):
         """Implementation of sum of calculators.
 
@@ -59,7 +59,7 @@ class DeltaCalc(Calculator):
         if len(calcs) != len(refs):
             raise ValueError('The length of the weights must be the same as the number of calculators!')
 
-        self.calcs_copy = calcs
+        self.calcs = calcs
         self.mode = mode
         self.refs = refs
 
@@ -70,7 +70,7 @@ class DeltaCalc(Calculator):
         "add" mode: calculates the predicted value given the predicted delta calculator and the base calc.
         """
         
-        self.calcs = [copy.copy(calc) for calc in self.calcs_copy]
+        self.calcs = [copy.copy(calc) for calc in self.calcs]
         
         if atoms.calc is not None:
             self.calcs[0].results["energy"] = atoms.get_potential_energy(apply_constraint=False)
@@ -90,9 +90,8 @@ class DeltaCalc(Calculator):
                 
             for k in properties:
                 if k not in self.results:
-                    self.results[k] = calc.results[k]
-                else:
-                    self.results[k] -= calc.results[k]
+                    self.results[k] = self.calcs[0].results[k] - self.calcs[1].results[k]
+
                     
         if self.mode == "add":
             delta_energies = []
@@ -105,9 +104,7 @@ class DeltaCalc(Calculator):
                 
             for k in properties:
                 if k not in self.results:
-                    self.results[k] = calc.results[k]
-                else:
-                    self.results[k] += calc.results[k]
+                    self.results[k] = self.calcs[0].results[k] + self.calcs[1].results[k]
 
     def reset(self):
         """Clear all previous results recursively from all fo the calculators."""

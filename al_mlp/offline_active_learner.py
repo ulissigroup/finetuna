@@ -43,7 +43,7 @@ class OfflineActiveLearner:
         
         raw_data = self.training_data
         sp_raw_data = convert_to_singlepoint(raw_data)
-        parent_ref_image = sp_raw_data[0].copy()
+        parent_ref_image = sp_raw_data[0]
         base_ref_image = compute_with_calc(sp_raw_data[:1],self.base_calc)[0]
         self.refs = [parent_ref_image, base_ref_image]
         self.delta_sub_calc = DeltaCalc(self.calcs, "sub", self.refs)
