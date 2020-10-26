@@ -101,7 +101,7 @@ class OfflineActiveLearner:
             return True
         return False
         
-    def query_func(sample_candidates):
+    def query_func(self, sample_candidates):
         """
         Default query strategy. Randomly queries 1 data point.
         """
