@@ -1,6 +1,4 @@
 import random
-#from amptorch.ase_utils import AMPtorch
-#from amptorch.trainer import AtomsTrainer
 from calcs import DeltaCalc
 from utils import convert_to_singlepoint, compute_with_calc
 
@@ -27,19 +25,14 @@ class OfflineActiveLearner:
     base_calc: ase Calculator object
         Calculator used to calculate delta data for training.
         
-    trainer_calc: uninitialized ase Calculator object
-        The trainer_calc should produce an ase Calculator instance
-        capable of force and energy calculations via trainer_calc(trainer)
-        
      """
     
-    def __init__(self, learner_settings, trainer, training_data, parent_calc, base_calc, trainer_calc):
+    def __init__(self, learner_settings, trainer, training_data, parent_calc, base_calc):
         self.learner_settings = learner_settings
         self.trainer = trainer
         self.training_data = training_data
         self.parent_calc = parent_calc
         self.base_calc = base_calc
-        self.trainer_calc_func = trainer_calc
         self.calcs = [parent_calc, base_calc]
         self.init_training_data()
         
@@ -74,11 +67,11 @@ class OfflineActiveLearner:
                 self.query_data(sample_candidates)
                 
             self.trainer.train(self.training_data)
-            trainer_calc = self.trainer_calc_func(self.trainer)
+            trainer_calc = self.make_trainer_calc()
             trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
             
-            atomistic_method.run(calc=trained_calc, filename="relax")
-            sample_candidates = atomistic_method.get_trajectory(filename="relax")
+            atomistic_method.run(calc=trained_calc, filename="relax_iter_%d"%self.iterations)
+            sample_candidates = atomistic_method.get_trajectory(filename="relax_iter_%d"%self.iterations)
             
             terminate = self.check_terminate()
             self.iterations += 1
@@ -100,7 +93,7 @@ class OfflineActiveLearner:
             image.calc = None
         self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
     
-    def check_terminate():
+    def check_terminate(self):
         """
         Default termination function. Teminates after 10 iterations
         """
@@ -110,8 +103,13 @@ class OfflineActiveLearner:
         
     def query_func(sample_candidates):
         """
-        Detault query strategy. Randomly queries 1 data point.
+        Default query strategy. Randomly queries 1 data point.
         """
         queried_images = random.sample(sample_candidates,1)
         return queried_images
-        
+    
+    def make_trainer_calc(self):
+        """
+        Default trainer calc after train. Assumes trainer has a 'get_calc' method.
+        """
+        return self.trainer.get_calc()
