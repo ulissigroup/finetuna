@@ -2,8 +2,8 @@ import numpy as np
 import copy
 from ase.calculators.calculator import Calculator, Parameters, all_changes
 from ase.calculators.calculator import PropertyNotImplementedError
-from amptorch.trainer import AtomsTrainer
-
+# from amptorch.trainer import AtomsTrainer
+'''
 class TrainerCalc(Calculator):
     """Atomistics Machine-Learning Potential (AMP) ASE calculator
         This class is temporary, we might make it so the user has to 
@@ -28,7 +28,7 @@ class TrainerCalc(Calculator):
         calculated_atoms = self.trainer.predict([atoms])[0]
         self.results["energy"] = calculated_atoms.get_potential_energy(apply_constraint=False)
         self.results["forces"] = calculated_atoms.get_forces(apply_constraint=False)
-        
+'''
 class DeltaCalc(Calculator):
 
     def __init__(self, calcs, mode, refs, atoms=None):
