@@ -51,7 +51,7 @@ class OfflineActiveLearner:
         
     def learn(self, atomistic_method):
         """
-        Conduct offline active learning. Returns the trained calculator.
+        Conduct offline active learning. 
         
         Parameters
         ----------
@@ -77,7 +77,7 @@ class OfflineActiveLearner:
             terminate = self.check_terminate()
             self.iterations += 1
             
-        return trained_calc
+        self.trained_calc = trained_calc
             
     def query_data(self, sample_candidates):
         """
@@ -98,7 +98,7 @@ class OfflineActiveLearner:
         """
         Default termination function. Teminates after 10 iterations
         """
-        if self.iterations >= 3:
+        if self.iterations >= 10:
             return True
         return False
         

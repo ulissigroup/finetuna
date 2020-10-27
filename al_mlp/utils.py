@@ -50,7 +50,7 @@ def compute_with_calc(images, calculator):
     for image in images:
         os.makedirs("./temp", exist_ok=True)
         os.chdir("./temp")
-        calc = copy.copy(calculator)
+        calc = copy.deepcopy(calculator)
         calc.calculate(atoms=image, properties = ["energy", "forces"])
         image.set_calculator(
             sp(atoms=image, energy=float(calc.results["energy"]), forces=calc.results["forces"])
@@ -77,7 +77,7 @@ def copy_images(images):
     for image in images:
         calc = image.get_calculator()
         new_image = image.copy()
-        new_image.set_calculator(copy.copy(calc))
+        new_image.set_calculator(copy.deepcopy(calc))
         new_images.append(new_image)
     return new_images
     
