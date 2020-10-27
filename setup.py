@@ -9,6 +9,6 @@ setup(name='al_mlp',
       author_email='ruiqic@andrew.cmu.edu, madams2@andrew.cmu.edu',
       packages=find_packages(),
       include_package_data=False,
-      install_requires=['numpy', 'ase'],
+      install_requires=['ase'],
       long_description='''Module for performing delta active learning \
                           with machine learning potentials.''',)
