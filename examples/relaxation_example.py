@@ -106,7 +106,7 @@ config = {
 trainer = AtomsTrainer(config)
 
 # building base morse calculator as base calculator
-cutoff = 6.5
+cutoff = Gs["default"]["cutoff"]
 
 params = {
     "C": {"re": 1.285943211152638, "D": 8.928283649952903, "a": 1.8923342241917613},
@@ -136,6 +136,7 @@ class Learner(OfflineActiveLearner):
         return False
     
     def query_func(self, sample_candidates):
+        random.seed()
         queried_images = random.sample(sample_candidates,2)
         return queried_images
     

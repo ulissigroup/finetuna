@@ -90,8 +90,6 @@ class OfflineActiveLearner:
             List of ase atoms objects to query from.
         """
         queried_images = self.query_func(sample_candidates)
-        for image in queried_images:
-            image.calc = None
         self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
     
     def check_terminate(self):
@@ -106,6 +104,7 @@ class OfflineActiveLearner:
         """
         Default query strategy. Randomly queries 1 data point.
         """
+        random.seed()
         queried_images = random.sample(sample_candidates,1)
         return queried_images
     
