@@ -29,15 +29,15 @@ volumes = []
 LC = [3.5, 3.55, 3.6, 3.65, 3.7, 3.75]
 
 for a in LC:
-  cu_bulk = bulk('Cu', 'fcc', a=a)
+    cu_bulk = bulk('Cu', 'fcc', a=a)
 
-  calc = EMT()
+    calc = EMT()
 
-  cu_bulk.set_calculator(calc)
+    cu_bulk.set_calculator(calc)
 
-  e = cu_bulk.get_potential_energy()
-  energies.append(e)
-  volumes.append(cu_bulk.get_volume())
+    e = cu_bulk.get_potential_energy()
+    energies.append(e)
+    volumes.append(cu_bulk.get_volume())
 
 
 eos = EquationOfState(volumes, energies)
