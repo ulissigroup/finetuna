@@ -44,7 +44,7 @@ class OfflineActiveLearner:
         raw_data = self.training_data
         sp_raw_data = convert_to_singlepoint(raw_data)
         parent_ref_image = sp_raw_data[0]
-        base_ref_image = compute_with_calc(sp_raw_data[:1],self.base_calc)[0]
+        base_ref_image = compute_with_calc([parent_ref_image], self.base_calc)[0]
         self.refs = [parent_ref_image, base_ref_image]
         self.delta_sub_calc = DeltaCalc(self.calcs, "sub", self.refs)
         self.training_data = compute_with_calc(sp_raw_data, self.delta_sub_calc)
@@ -61,6 +61,7 @@ class OfflineActiveLearner:
         """
         
         self.iterations = 0
+        terminate = False
         
         while not terminate:
             if self.iterations > 0:
@@ -71,7 +72,7 @@ class OfflineActiveLearner:
             trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
             
             atomistic_method.run(calc=trained_calc, filename="relax_iter_%d"%self.iterations)
-            sample_candidates = atomistic_method.get_trajectory(filename="relax_iter_%d"%self.iterations)
+            sample_candidates = list(atomistic_method.get_trajectory(filename="relax_iter_%d"%self.iterations))
             
             terminate = self.check_terminate()
             self.iterations += 1
@@ -97,7 +98,7 @@ class OfflineActiveLearner:
         """
         Default termination function. Teminates after 10 iterations
         """
-        if self.iterations >= 10:
+        if self.iterations >= 3:
             return True
         return False
         

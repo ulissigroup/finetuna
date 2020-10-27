@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+from ase.calculators.singlepoint import SinglePointCalculator
 from ase.calculators.calculator import Calculator, Parameters, all_changes
 from ase.calculators.calculator import PropertyNotImplementedError
 # from amptorch.trainer import AtomsTrainer
@@ -72,7 +73,7 @@ class DeltaCalc(Calculator):
         
         self.calcs = [copy.copy(calc) for calc in self.calcs]
         
-        if atoms.calc is not None:
+        if isinstance(atoms.calc, SinglePointCalculator):
             self.calcs[0].results["energy"] = atoms.get_potential_energy(apply_constraint=False)
             self.calcs[0].results["forces"] = atoms.get_forces(apply_constraint=False)
         else:

@@ -22,7 +22,7 @@ def convert_to_singlepoint(images):
         sample_energy = image.get_potential_energy(apply_constraint=False)
         sample_forces = image.get_forces(apply_constraint=False)
         image.set_calculator(
-            sp(atoms=image, energy=sample_energy, forces=sample_forces)
+            sp(atoms=image, energy=float(sample_energy), forces=sample_forces)
         )
         singlepoint_images.append(image)
         os.chdir(cwd)
@@ -44,6 +44,7 @@ def compute_with_calc(images, calculator):
         Calculator used to get forces and energies.
     """
     
+    images = copy_images(images)
     singlepoint_images = []
     cwd = os.getcwd()
     for image in images:
@@ -52,7 +53,7 @@ def compute_with_calc(images, calculator):
         calc = copy.copy(calculator)
         calc.calculate(atoms=image, properties = ["energy", "forces"])
         image.set_calculator(
-            sp(atoms=image, energy=calc.results["energy"], forces=calc.results["forces"])
+            sp(atoms=image, energy=float(calc.results["energy"]), forces=calc.results["forces"])
         )
         singlepoint_images.append(image)
         os.chdir(cwd)
