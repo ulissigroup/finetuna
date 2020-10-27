@@ -45,21 +45,9 @@ def compute_with_calc(images, calculator):
     """
     
     images = copy_images(images)
-    singlepoint_images = []
-    cwd = os.getcwd()
     for image in images:
-        os.makedirs("./temp", exist_ok=True)
-        os.chdir("./temp")
-        calc = copy.deepcopy(calculator)
-        calc.calculate(atoms=image, properties = ["energy", "forces"])
-        image.set_calculator(
-            sp(atoms=image, energy=float(calc.results["energy"]), forces=calc.results["forces"])
-        )
-        singlepoint_images.append(image)
-        os.chdir(cwd)
-        os.system("rm -rf ./temp")
-        
-    return singlepoint_images
+        image.set_calculator(copy.deepcopy(calculator))
+    return convert_to_singlepoint(images)
 
 
 def copy_images(images):
