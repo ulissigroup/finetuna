@@ -1,5 +1,6 @@
 import ase
 
+
 class Relaxation:
     def __init__(self, initial_geometry, optimizer, fmax=0.05, steps=None):
         self.initial_geometry = initial_geometry

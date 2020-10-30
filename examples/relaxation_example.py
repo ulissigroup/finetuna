@@ -10,6 +10,7 @@ import copy
 import sys
 import random
 import torch
+
 torch.set_num_threads(1)
 
 from al_mlp.offline_active_learner import OfflineActiveLearner
@@ -29,7 +30,7 @@ volumes = []
 LC = [3.5, 3.55, 3.6, 3.65, 3.7, 3.75]
 
 for a in LC:
-    cu_bulk = bulk('Cu', 'fcc', a=a)
+    cu_bulk = bulk("Cu", "fcc", a=a)
 
     calc = EMT()
 
@@ -42,17 +43,15 @@ for a in LC:
 
 eos = EquationOfState(volumes, energies)
 v0, e0, B = eos.fit()
-aref=3.6
-vref = bulk('Cu', 'fcc', a=aref).get_volume()
+aref = 3.6
+vref = bulk("Cu", "fcc", a=aref).get_volume()
 
-copper_lattice_constant = (v0/vref)**(1/3)*aref
+copper_lattice_constant = (v0 / vref) ** (1 / 3) * aref
 
 slab = fcc100("Cu", a=copper_lattice_constant, size=(2, 2, 3))
 ads = molecule("C")
 add_adsorbate(slab, ads, 3, offset=(1, 1))
-cons = FixAtoms(
-    indices=[atom.index for atom in slab if (atom.tag == 3)]
-)
+cons = FixAtoms(indices=[atom.index for atom in slab if (atom.tag == 3)])
 slab.set_constraint(cons)
 slab.center(vacuum=13.0, axis=2)
 slab.set_pbc(True)
@@ -118,32 +117,35 @@ base_calc = MultiMorse(params, cutoff, combo="mean")
 
 # define learner inheriting from OfflineActiveLearner
 
+
 class Learner(OfflineActiveLearner):
-    
+
     # can customize init
-    def __init__(self, learner_settings, trainer, 
-                 training_data, parent_calc, base_calc):
-        super().__init__(learner_settings, trainer, 
-                         training_data, parent_calc, base_calc)
-    
+    def __init__(
+        self, learner_settings, trainer, training_data, parent_calc, base_calc
+    ):
+        super().__init__(
+            learner_settings, trainer, training_data, parent_calc, base_calc
+        )
+
     def make_trainer_calc(self):
         return AMPtorch(self.trainer)
-    
+
     # can customize termination criteria and query strategy
     def check_terminate(self):
         if self.iterations >= 10:
             return True
         return False
-    
+
     def query_func(self, sample_candidates):
         random.seed()
-        queried_images = random.sample(sample_candidates,2)
+        queried_images = random.sample(sample_candidates, 2)
         return queried_images
-    
-    
+
+
 learner = Learner(None, trainer, images, parent_calc, base_calc)
-learner.learn(atomistic_method=Relaxation(
-        initial_geometry=slab.copy(),
-        optimizer=BFGS,
-        fmax=0.01,
-        steps=100))
+learner.learn(
+    atomistic_method=Relaxation(
+        initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=100
+    )
+)
