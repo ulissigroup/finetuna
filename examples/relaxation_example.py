@@ -84,6 +84,7 @@ config = {
         "epochs": 100,
         "loss": "mse",
         "metric": "mae",
+        "optimizer": torch.optim.LBFGS,
     },
     "dataset": {
         "raw_data": images,
