@@ -47,6 +47,17 @@ class OfflineActiveLearner:
         self.ensemble = ensemble
         self.calcs = [parent_calc, base_calc]
         self.iteration = 0
+        self.parent_calls = 0
+        if ensemble:
+            assert isinstance(ensemble, int) and ensemble > 1, "Invalid ensemble!"
+            self.training_data, self.parent_dataset = bootstrap_ensemble(
+                self.training_data, n_ensembles=ensemble
+            )
+
+            # make initial fingerprints - daemonic processes cannot do this
+            make_fps(training_data, training_params["Gs"])
+        else:
+            self.parent_dataset = self.training_data
         self.init_training_data()
 
     def init_training_data(self):
@@ -81,7 +92,9 @@ class OfflineActiveLearner:
         while not terminate:
             fn_label = f"{file_dir}{filename}_iter_{self.iteration}"
             if self.iteration > 0:
-                self.query_data(sample_candidates,samples_to_retrain)
+                queried_images = self.query_data(sample_candidates,samples_to_retrain)
+                self.parent_dataset, self.training_data = self.add_data(queried_images)
+                self.parent_calls += len(queried_images)
 
             self.trainer.train(self.training_data)
             trainer_calc = self.trainer_calc(self.trainer)
@@ -111,10 +124,11 @@ class OfflineActiveLearner:
         sample_candidates: list
             List of ase atoms objects to query from.
         """
-        queries_db = ase.db.connect('queried_images.db')        
-        queried_images = self.query_func(sample_candidates,samples_to_retrain)
+        queries_db = ase.db.connect('queried_images.db')
+        query_idx = self.query_func(sample_candidates,samples_to_retrain)
+        queried_images = [sample_candidates[idx] for idx in query_idx]
         write_to_db(queries_db, queried_images)
-        self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
+        return queried_images
 
     def check_terminate(self,max_iterations):
         """
@@ -129,6 +143,18 @@ class OfflineActiveLearner:
         Default query strategy. Randomly queries 1 data point.
         """
         random.seed()
-        queried_images = random.sample(sample_candidates, samples_to_retrain)
-        return queried_images
-   
+        query_idx = random.sample(range(1, len(sample_candidates)), samples_to_retrain)
+        return query_idx
+
+    def add_data(self, queried_images):
+        if self.ensemble:
+            for query in queried_images:
+                self.training_data, self.parent_dataset = bootstrap_ensemble(
+                    self.parent_dataset,
+                    self.training_data,
+                    query,
+                    n_ensembles=self.ensemble,
+                )
+        else:
+            self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
+        return self.parent_dataset, self.training_data  
