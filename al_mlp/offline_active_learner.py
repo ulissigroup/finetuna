@@ -1,7 +1,8 @@
 import random
 from al_mlp.calcs import DeltaCalc
 from al_mlp.utils import convert_to_singlepoint, compute_with_calc
-
+import ase
+from ase.db import connect
 
 class OfflineActiveLearner:
     """Offline Active Learner
@@ -98,7 +99,9 @@ class OfflineActiveLearner:
         sample_candidates: list
             List of ase atoms objects to query from.
         """
+        database = ase.db.connect('queried_images.db')
         queried_images = self.query_func(sample_candidates)
+        write_to_db(database,queried_images)
         self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
 
     def check_terminate(self):
@@ -117,3 +120,6 @@ class OfflineActiveLearner:
         queried_images = random.sample(sample_candidates, 1)
         return queried_images
 
+    def write_to_db(database, queried_images):
+        for image in queried_images:
+            database.write(image)
