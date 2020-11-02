@@ -28,10 +28,11 @@ class OfflineActiveLearner:
     """
 
     def __init__(
-        self, learner_settings, trainer, training_data, parent_calc, base_calc
+        self, learner_settings, trainer,trainer_calc, training_data, parent_calc, base_calc
     ):
         self.learner_settings = learner_settings
         self.trainer = trainer
+        self.trainer_calc = trainer_calc
         self.training_data = training_data
         self.parent_calc = parent_calc
         self.base_calc = base_calc
@@ -70,7 +71,7 @@ class OfflineActiveLearner:
                 self.query_data(sample_candidates)
 
             self.trainer.train(self.training_data)
-            trainer_calc = self.make_trainer_calc()
+            trainer_calc = self.trainer_calc(self.trainer)
             trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
 
             atomistic_method.run(
@@ -116,8 +117,3 @@ class OfflineActiveLearner:
         queried_images = random.sample(sample_candidates, 1)
         return queried_images
 
-    def make_trainer_calc(self):
-        """
-        Default trainer calc after train. Assumes trainer has a 'get_calc' method.
-        """
-        return self.trainer.get_calc()
