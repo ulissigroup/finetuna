@@ -1,6 +1,7 @@
 import random
 from al_mlp.calcs import DeltaCalc
 from al_mlp.utils import write_to_db,convert_to_singlepoint, compute_with_calc
+from al_mlp.bootstrap import bootstrap_ensemble
 import ase
 from ase.db import connect
 
@@ -48,19 +49,10 @@ class OfflineActiveLearner:
         self.calcs = [parent_calc, base_calc]
         self.iteration = 0
         self.parent_calls = 0
-        if ensemble:
-            assert isinstance(ensemble, int) and ensemble > 1, "Invalid ensemble!"
-            self.training_data, self.parent_dataset = bootstrap_ensemble(
-                self.training_data, n_ensembles=ensemble
-            )
+        self.init_training_data(ensemble)
 
-            # make initial fingerprints - daemonic processes cannot do this
-            make_fps(training_data, training_params["Gs"])
-        else:
-            self.parent_dataset = self.training_data
-        self.init_training_data()
 
-    def init_training_data(self):
+    def init_training_data(self,ensemble=False):
         """
         Prepare the training data by attaching delta values for training.
         """
@@ -72,7 +64,14 @@ class OfflineActiveLearner:
         self.refs = [parent_ref_image, base_ref_image]
         self.delta_sub_calc = DeltaCalc(self.calcs, "sub", self.refs)
         self.training_data = compute_with_calc(sp_raw_data, self.delta_sub_calc)
+        if ensemble:
+            assert isinstance(ensemble, int) and ensemble > 1, "Invalid ensemble!"
+            self.training_data, self.parent_dataset = bootstrap_ensemble(
+                self.training_data, n_ensembles=ensemble
+            )
 
+        else:
+            self.parent_dataset = self.training_data
     def learn(self, atomistic_method):
         """
         Conduct offline active learning.
