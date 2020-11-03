@@ -4,7 +4,7 @@ from al_mlp.utils import write_to_db,convert_to_singlepoint, compute_with_calc
 from al_mlp.bootstrap import bootstrap_ensemble
 import ase
 from ase.db import connect
-
+from al_mlp.ensemble_calc import EnsembleCalc
 class OfflineActiveLearner:
     """Offline Active Learner
 
@@ -72,7 +72,7 @@ class OfflineActiveLearner:
 
         else:
             self.parent_dataset = self.training_data
-    def learn(self, atomistic_method):
+    def learn(self, atomistic_method,ensemble=False):
         """
         Conduct offline active learning.
 
@@ -94,19 +94,30 @@ class OfflineActiveLearner:
                 queried_images = self.query_data(sample_candidates,samples_to_retrain)
                 self.parent_dataset, self.training_data = self.add_data(queried_images)
                 self.parent_calls += len(queried_images)
-
-            self.trainer.train(self.training_data)
-            trainer_calc = self.trainer_calc(self.trainer)
-            trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
-
-            atomistic_method.run(
-                calc=trained_calc, filename=fn_label
-            )
-            sample_candidates = list(
-                atomistic_method.get_trajectory(
-                    filename=fn_label
+            if self.ensemble:
+                ensemble_sets = self.training_data
+                trained_calc = self.make_ensemble(ensemble_sets)
+                atomistic_method.run(
+                    calc=trained_calc, filename=fn_label
                 )
-            )
+                sample_candidates = list(
+                    atomistic_method.get_trajectory(
+                        filename=fn_label
+                    )
+                )
+            else: 
+                self.trainer.train(self.training_data)
+                trainer_calc = self.trainer_calc(self.trainer)
+                trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
+
+                atomistic_method.run(
+                    calc=trained_calc, filename=fn_label
+                )
+                sample_candidates = list(
+                    atomistic_method.get_trajectory(
+                        filename=fn_label
+                    )
+                )
 
             terminate = self.check_terminate(max_iterations)
             self.iteration += 1
@@ -156,4 +167,14 @@ class OfflineActiveLearner:
                 )
         else:
             self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
-        return self.parent_dataset, self.training_data  
+        return self.parent_dataset, self.training_data 
+   
+    def make_ensemble(self,ensemble_datasets):
+
+        trained_calcs = []
+        for dataset in ensemble_datasets:
+             self.trainer.train(dataset)
+             trainer_calc = self.trainer_calc(self.trainer)
+             trained_calcs.append(DeltaCalc([trainer_calc, self.base_calc], "add", self.refs))
+        ensemble_calc = EnsembleCalc(trained_calcs, self.trainer)
+        return ensemble_calc 

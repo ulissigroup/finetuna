@@ -6,7 +6,7 @@ import pandas as pd
 from ase.db import connect
 from ase.calculators.singlepoint import SinglePointCalculator as sp
 from ase.calculators.calculator import Calculator
-from al_mlp.al_utils import convert_to_singlepoint, compute_with_calc
+from al_mlp.utils import convert_to_singlepoint, compute_with_calc
 from al_mlp.bootstrap import bootstrap_ensemble
 from al_mlp.ensemble_calc import make_ensemble
 from al_mlp.calcs import DeltaCalc
@@ -118,9 +118,13 @@ class OnlineActiveLearner(Calculator):
                 self.parent_dataset, self.ensemble_sets, new_data=new_data
             )
 
-            self.ensemble_calc = make_ensemble(
-                self.ensemble_sets, self.training_params, self.n_cores
-            )
+            self.ensemble_calc = make_ensemble(self.ensemble_sets,
+                                               self.trainer,
+                                               self.base_calc,
+                                               self.refs, 
+                                               self.n_cores
+            ) 
+
             self.parent_calls += 1
         else:
             db.write(None)
