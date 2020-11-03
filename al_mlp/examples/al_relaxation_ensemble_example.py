@@ -79,9 +79,9 @@ config = {
     "optim": {
         "device": "cpu",
         "force_coefficient": 0.04,
-        "lr": 1e-2,
+        "lr": 5e-2,
         "batch_size": 1000,
-        "epochs": 100,
+        "epochs": 200,
         "loss": "mse",
         "metric": "mae",
         "optimizer": torch.optim.LBFGS,
@@ -116,7 +116,8 @@ learner_params = {
         "max_iterations": 10,
         "samples_to_retrain": 5,
         "filename":"relax_example",
-        "file_dir":"./"
+        "file_dir":"./",
+        "query_method":"max_uncertainty"
         }
 
 learner = OfflineActiveLearner(learner_params, trainer,trainer_calc, images, parent_calc, base_calc,ensemble=3)

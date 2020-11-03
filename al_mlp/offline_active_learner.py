@@ -3,6 +3,7 @@ from al_mlp.calcs import DeltaCalc
 from al_mlp.utils import write_to_db,convert_to_singlepoint, compute_with_calc
 from al_mlp.bootstrap import bootstrap_ensemble
 import ase
+import numpy as np
 from ase.db import connect
 from al_mlp.ensemble_calc import EnsembleCalc
 class OfflineActiveLearner:
@@ -86,6 +87,7 @@ class OfflineActiveLearner:
         samples_to_retrain = self.learner_params["samples_to_retrain"]
         filename = self.learner_params["filename"]
         file_dir = self.learner_params["file_dir"]
+        query_method = self.learner_params["query_method"]
         terminate = False
 
         while not terminate:
@@ -100,6 +102,7 @@ class OfflineActiveLearner:
                 atomistic_method.run(
                     calc=trained_calc, filename=fn_label
                 )
+               # Querying issue somewhere currently 
                 sample_candidates = list(
                     atomistic_method.get_trajectory(
                         filename=fn_label
@@ -152,8 +155,12 @@ class OfflineActiveLearner:
         """
         Default query strategy. Randomly queries 1 data point.
         """
-        random.seed()
-        query_idx = random.sample(range(1, len(sample_candidates)), samples_to_retrain)
+        if self.learner_params["query_method"] == "random":
+           random.seed()
+           query_idx = random.sample(range(1, len(sample_candidates)), samples_to_retrain)
+        if self.learner_params["query_method"] == "max_uncertainty":
+           uncertainty = np.array([atoms.info["uncertainty"][0] for atoms in sample_candidates])
+           query_idx = np.argpartition(uncertainty, -1 * samples_to_retrain)[  -1 * samples_to_retrain : ]
         return query_idx
 
     def add_data(self, queried_images):

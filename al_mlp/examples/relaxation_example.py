@@ -116,10 +116,11 @@ learner_params = {
         "max_iterations": 10,
         "samples_to_retrain": 5,
         "filename":"relax_example",
-        "file_dir":"./"
+        "file_dir":"./",
+        "query_method":"random"
         }
 
-learner = OfflineActiveLearner(learner_params, trainer,trainer_calc, images, parent_calc, base_calc)
+learner = OfflineActiveLearner(learner_params, trainer,trainer_calc, images, parent_calc, base_calc,ensemble=False)
 learner.learn(
     atomistic_method=Relaxation(
         initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=100
