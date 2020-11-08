@@ -1,59 +1,43 @@
 import random
 from al_mlp.calcs import DeltaCalc
-from al_mlp.utils import write_to_db,convert_to_singlepoint, compute_with_calc
-from al_mlp.bootstrap import bootstrap_ensemble
-import ase
-import numpy as np
-from ase.db import connect
-from al_mlp.ensemble_calc import EnsembleCalc
-class OfflineActiveLearner:
-    """Offline Active Learner
+from al_mlp.utils import convert_to_singlepoint, compute_with_calc
 
+
+class OfflineActiveLearner:
+    """Offline Active Learner.
+    This class serves as a parent class to inherit more sophisticated
+    learners with different query and termination strategies.
     Parameters
     ----------
-
-    learner_settings: dict
+    learner_params: dict
         Dictionary of learner parameters and settings.
 
     trainer: object
         An isntance of a trainer that has a train and predict method.
- 
-    trainer_calc: ase Calculator object
-         Calculator used for predicting image properties.
 
     training_data: list
         A list of ase.Atoms objects that have attached calculators.
         Used as the first set of training data.
-
     parent_calc: ase Calculator object
         Calculator used for querying training data.
 
     base_calc: ase Calculator object
-        Calculator used to calculate delta data for training
-  
-    ensemble: boolean.
-        Whether to train an ensemble of models to make predictions. ensemble
-        must be True if uncertainty based query methods are to be used.
+        Calculator used to calculate delta data for training.
 
     """
 
     def __init__(
-        self, learner_params, trainer,trainer_calc, training_data, parent_calc, base_calc, ensemble = False
+        self, learner_settings, trainer, training_data, parent_calc, base_calc
     ):
         self.learner_params = learner_params
         self.trainer = trainer
-        self.trainer_calc = trainer_calc
         self.training_data = training_data
         self.parent_calc = parent_calc
         self.base_calc = base_calc
-        self.ensemble = ensemble
         self.calcs = [parent_calc, base_calc]
-        self.iteration = 0
-        self.parent_calls = 0
-        self.init_training_data(ensemble)
+        self.init_training_data()
 
-
-    def init_training_data(self,ensemble=False):
+    def init_training_data(self):
         """
         Prepare the training data by attaching delta values for training.
         """
@@ -65,123 +49,101 @@ class OfflineActiveLearner:
         self.refs = [parent_ref_image, base_ref_image]
         self.delta_sub_calc = DeltaCalc(self.calcs, "sub", self.refs)
         self.training_data = compute_with_calc(sp_raw_data, self.delta_sub_calc)
-        if ensemble:
-            assert isinstance(ensemble, int) and ensemble > 1, "Invalid ensemble!"
-            self.training_data, self.parent_dataset = bootstrap_ensemble(
-                self.training_data, n_ensembles=ensemble
-            )
 
-        else:
-            self.parent_dataset = self.training_data
-    def learn(self, atomistic_method,ensemble=False):
+    def learn(self):
         """
         Conduct offline active learning.
 
         Parameters
         ----------
-
         atomistic_method: object
             Define relaxation parameters and starting image.
         """
-        max_iterations = self.learner_params["max_iterations"]
-        samples_to_retrain = self.learner_params["samples_to_retrain"]
-        filename = self.learner_params["filename"]
-        file_dir = self.learner_params["file_dir"]
-        query_method = self.learner_params["query_method"]
-        terminate = False
+        self.do_before_learn()
+        while not self.terminate:
+            self.do_before_train()
+            self.do_train()
+            self.do_after_train()
+        self.do_after_learn()
 
-        while not terminate:
-            fn_label = f"{file_dir}{filename}_iter_{self.iteration}"
-            if self.iteration > 0:
-                queried_images = self.query_data(sample_candidates,samples_to_retrain)
-                self.parent_dataset, self.training_data = self.add_data(queried_images)
-                self.parent_calls += len(queried_images)
-            if self.ensemble:
-                ensemble_sets = self.training_data
-                trained_calc = self.make_ensemble(ensemble_sets)
-                atomistic_method.run(
-                    calc=trained_calc, filename=fn_label
-                )
-               # Querying issue somewhere currently 
-                sample_candidates = list(
-                    atomistic_method.get_trajectory(
-                        filename=fn_label
-                    )
-                )
-            else: 
-                self.trainer.train(self.training_data)
-                trainer_calc = self.trainer_calc(self.trainer)
-                trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
+    def do_before_learn(self):
+        """
+        Executes before active learning loop begins.
+        """
+        self.iterations = 0
+        self.terminate = False
+        self.atomistic_method = self.learner_params["atomistic_method"]
+        self.max_iterations = self.learner_params["max_iterations"]
+        self.samples_to_retrain = self.learner_params["samples_to_retrain"]
+        self.filename = self.learner_params["filename"]
+        self.file_dir = self.learner_params["file_dir"]
 
-                atomistic_method.run(
-                    calc=trained_calc, filename=fn_label
-                )
-                sample_candidates = list(
-                    atomistic_method.get_trajectory(
-                        filename=fn_label
-                    )
-                )
+    def do_before_train(self):
+        """
+        Executes before training the trainer in every active learning loop.
+        """
+        if self.iterations > 0:
+            self.query_data(self.sample_candidates)
+        self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
 
-            terminate = self.check_terminate(max_iterations)
-            self.iteration += 1
+    def do_train(self):
+        """
+        Executes the training of trainer
+        """
+        self.trainer.train(self.training_data)
 
+    def do_after_train(self):
+        """
+        Executes after training the trainer in every active learning loop.
+        """
+
+        trainer_calc = self.make_trainer_calc()
+        self.trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
+
+        self.atomistic_method.run(calc=self.trained_calc, filename=self.fn_label)
+        self.sample_candidates = list(
+            self.atomistic_method.get_trajectory(filename=self.fn_label)
+        )
+
+        self.terminate = self.check_terminate()
+        self.iterations += 1
+
+    def do_after_learn(self):
+        """
+        Executes after active learning loop terminates.
+        """
         self.trained_calc = trained_calc
 
-    def query_data(self, sample_candidates,samples_to_retrain):
+    def query_data(self):
         """
         Queries data from a list of images. Calculates the properties and adds them to the training data.
 
         Parameters
         ----------
-
         sample_candidates: list
             List of ase atoms objects to query from.
         """
-        queries_db = ase.db.connect('queried_images.db')
-        query_idx = self.query_func(sample_candidates,samples_to_retrain)
-        queried_images = [sample_candidates[idx] for idx in query_idx]
-        write_to_db(queries_db, queried_images)
-        return queried_images
+        queried_images = self.query_func()
+        self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
 
-    def check_terminate(self,max_iterations):
+    def check_terminate(self):
         """
-        Default termination function. Teminates after 10 iterations
+        Default termination function.
         """
-        if self.iteration >= max_iterations:
+        if self.iterations >= self.max_iterations:
             return True
         return False
 
-    def query_func(self, sample_candidates,samples_to_retrain):
+    def query_func(self):
         """
-        Default query strategy. Randomly queries 1 data point.
+        Default random query strategy.
         """
-        if self.learner_params["query_method"] == "random":
-           random.seed()
-           query_idx = random.sample(range(1, len(sample_candidates)), samples_to_retrain)
-        if self.learner_params["query_method"] == "max_uncertainty":
-           uncertainty = np.array([atoms.info["uncertainty"][0] for atoms in sample_candidates])
-           query_idx = np.argpartition(uncertainty, -1 * samples_to_retrain)[  -1 * samples_to_retrain : ]
-        return query_idx
+        random.seed()
+        queried_images = random.sample(self.sample_candidates, self.samples_to_retrain)
+        return queried_images
 
-    def add_data(self, queried_images):
-        if self.ensemble:
-            for query in queried_images:
-                self.training_data, self.parent_dataset = bootstrap_ensemble(
-                    self.parent_dataset,
-                    self.training_data,
-                    query,
-                    n_ensembles=self.ensemble,
-                )
-        else:
-            self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
-        return self.parent_dataset, self.training_data 
-   
-    def make_ensemble(self,ensemble_datasets):
-
-        trained_calcs = []
-        for dataset in ensemble_datasets:
-             self.trainer.train(dataset)
-             trainer_calc = self.trainer_calc(self.trainer)
-             trained_calcs.append(DeltaCalc([trainer_calc, self.base_calc], "add", self.refs))
-        ensemble_calc = EnsembleCalc(trained_calcs, self.trainer)
-        return ensemble_calc 
+    def make_trainer_calc(self):
+        """
+        Default trainer calc after train. Assumes trainer has a 'get_calc' method.
+        """
+        return self.trainer.get_calc()
