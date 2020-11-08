@@ -26,9 +26,7 @@ class OfflineActiveLearner:
 
     """
 
-    def __init__(
-        self, learner_settings, trainer, training_data, parent_calc, base_calc
-    ):
+    def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc):
         self.learner_params = learner_params
         self.trainer = trainer
         self.training_data = training_data
@@ -83,7 +81,7 @@ class OfflineActiveLearner:
         Executes before training the trainer in every active learning loop.
         """
         if self.iterations > 0:
-            self.query_data(self.sample_candidates)
+            self.query_data()
         self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
 
     def do_train(self):
@@ -112,7 +110,7 @@ class OfflineActiveLearner:
         """
         Executes after active learning loop terminates.
         """
-        self.trained_calc = trained_calc
+        pass
 
     def query_data(self):
         """

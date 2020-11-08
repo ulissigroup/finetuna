@@ -2,8 +2,9 @@ import numpy as np
 from ase.neighborlist import NeighborList, NewPrimitiveNeighborList
 from ase.calculators.calculator import Calculator, all_changes
 import os
-import al_mlp
 import pandas as pd
+
+
 class MultiMorse(Calculator):
     implemented_properties = ["energy", "forces"]
     nolabel = True
@@ -19,7 +20,6 @@ class MultiMorse(Calculator):
         print(unique_elements)
         self.params = self.get_params(unique_elements)
 
-
     def calculate(self, atoms=None, properties=["energy"], system_changes=all_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
 
@@ -31,7 +31,7 @@ class MultiMorse(Calculator):
             re = params_dict[element]["re"]
             D = params_dict[element]["De"]
             # sig calculated from pubs.acs.org/doi/pdf/10.1021/acs.jpca.7b11252
-            sig = re - np.log(2)/params_dict[element]["a"]
+            sig = re - np.log(2) / params_dict[element]["a"]
             params.append(np.array([[re, D, sig]]))
         params = np.vstack(np.array(params))
         n = NeighborList(
@@ -41,7 +41,6 @@ class MultiMorse(Calculator):
         )
         n.update(image)
         image_neighbors = [n.get_neighbors(index) for index in range(len(image))]
-
 
         natoms = len(image)
 
@@ -92,10 +91,11 @@ class MultiMorse(Calculator):
 
         self.results["energy"] = energy
         self.results["forces"] = forces
+
     def get_params(self, elements):
         params = {}
         for elem in elements:
-            home_dir = os.path.dirname(os.path.realpath(__file__)) 
+            home_dir = os.path.dirname(os.path.realpath(__file__))
             try:
                 element_params = (
                     pd.read_csv(f"{home_dir}/morse_params/{elem}{elem}.csv")

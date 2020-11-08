@@ -1,25 +1,20 @@
+import numpy as np
+import copy
+import torch
 from ase.eos import EquationOfState
 from ase.build import bulk
 from ase.build import fcc100, add_adsorbate, molecule
 from ase.constraints import FixAtoms
 from ase.optimize import BFGS
 from ase.calculators.emt import EMT
-from ase import Atoms, Atom
-import numpy as np
-import copy
-import sys
-import random
-import torch
-
-torch.set_num_threads(1)
 
 from al_mlp.offline_active_learner import OfflineActiveLearner
-from al_mlp.base_calcs import MultiMorse
+from al_mlp.base_calcs.morse import MultiMorse
 from al_mlp.atomistic_methods import Relaxation
 
-from amptorch.ase_utils import AMPtorch
 from amptorch.trainer import AtomsTrainer
 
+torch.set_num_threads(1)
 
 parent_calc = EMT()
 # Make a simple C on Cu slab.
@@ -108,45 +103,20 @@ trainer = AtomsTrainer(config)
 # building base morse calculator as base calculator
 cutoff = Gs["default"]["cutoff"]
 
-params = {
-    "C": {"re": 1.285943211152638, "D": 8.928283649952903, "a": 1.8923342241917613},
-    "Cu": {"re": 2.2178539292118344, "D": 2.774711971071156, "a": 1.3847642126468944},
+base_calc = MultiMorse(images, cutoff, combo="mean")
+
+
+# define learner_params OfflineActiveLearner
+
+learner_params = {
+    "atomistic_method": Relaxation(
+        initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=100
+    ),
+    "max_iterations": 10,
+    "samples_to_retrain": 2,
+    "filename": "example",
+    "file_dir": "./",
 }
 
-base_calc = MultiMorse(params, cutoff, combo="mean")
-
-
-# define learner inheriting from OfflineActiveLearner
-
-
-class Learner(OfflineActiveLearner):
-
-    # can customize init
-    def __init__(
-        self, learner_settings, trainer, training_data, parent_calc, base_calc
-    ):
-        super().__init__(
-            learner_settings, trainer, training_data, parent_calc, base_calc
-        )
-
-    def make_trainer_calc(self):
-        return AMPtorch(self.trainer)
-
-    # can customize termination criteria and query strategy
-    def check_terminate(self):
-        if self.iterations >= 10:
-            return True
-        return False
-
-    def query_func(self, sample_candidates):
-        random.seed()
-        queried_images = random.sample(sample_candidates, 2)
-        return queried_images
-
-
-learner = Learner(None, trainer, images, parent_calc, base_calc)
-learner.learn(
-    atomistic_method=Relaxation(
-        initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=100
-    )
-)
+learner = OfflineActiveLearner(learner_params, trainer, images, parent_calc, base_calc)
+learner.learn()
