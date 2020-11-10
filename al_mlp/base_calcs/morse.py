@@ -95,7 +95,7 @@ class MultiMorse(Calculator):
     def get_params(self, elements):
         params = {}
         for elem in elements:
-            home_dir = os.path.dirname(os.path.realpath(__file__))
+            home_dir = os.path.dirname(al_mlp.base_calcs.__file__)
             try:
                 element_params = (
                     pd.read_csv(f"{home_dir}/morse_params/{elem}{elem}.csv")
