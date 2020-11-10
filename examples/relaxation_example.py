@@ -116,6 +116,7 @@ learner_params = {
     "samples_to_retrain": 2,
     "filename": "example",
     "file_dir": "./",
+    "use_dask": False,
 }
 
 learner = OfflineActiveLearner(learner_params, trainer, images, parent_calc, base_calc)
