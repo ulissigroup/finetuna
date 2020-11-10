@@ -9,7 +9,7 @@ setup(
     author="Rui Qi Chen, Matt Adams",
     author_email="ruiqic@andrew.cmu.edu, madams2@andrew.cmu.edu",
     packages=find_packages(),
-    include_package_data=False,
+    include_package_data=True,
     install_requires=["ase"],
     long_description="""Module for performing delta active learning \
                           with machine learning potentials.""",
