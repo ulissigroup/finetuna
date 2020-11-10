@@ -1,6 +1,6 @@
 import random
 from al_mlp.calcs import DeltaCalc
-from al_mlp.utils import convert_to_singlepoint, compute_with_calc
+from al_mlp.utils import convert_to_singlepoint
 
 
 class OfflineActiveLearner:
@@ -33,7 +33,25 @@ class OfflineActiveLearner:
         self.parent_calc = parent_calc
         self.base_calc = base_calc
         self.calcs = [parent_calc, base_calc]
+        self.init_learner()
         self.init_training_data()
+
+    def init_learner(self):
+        """
+        Initializes learner, before training loop.
+        """
+
+        self.iterations = 0
+        self.terminate = False
+        if self.learner_params["use_dask"]:
+            from al_mlp.utils_dask import compute_with_calc
+        else:
+            from al_mlp.utils import compute_with_calc
+        self.atomistic_method = self.learner_params["atomistic_method"]
+        self.max_iterations = self.learner_params["max_iterations"]
+        self.samples_to_retrain = self.learner_params["samples_to_retrain"]
+        self.filename = self.learner_params["filename"]
+        self.file_dir = self.learner_params["file_dir"]
 
     def init_training_data(self):
         """
@@ -57,24 +75,12 @@ class OfflineActiveLearner:
         atomistic_method: object
             Define relaxation parameters and starting image.
         """
-        self.do_before_learn()
+
         while not self.terminate:
             self.do_before_train()
             self.do_train()
             self.do_after_train()
         self.do_after_learn()
-
-    def do_before_learn(self):
-        """
-        Executes before active learning loop begins.
-        """
-        self.iterations = 0
-        self.terminate = False
-        self.atomistic_method = self.learner_params["atomistic_method"]
-        self.max_iterations = self.learner_params["max_iterations"]
-        self.samples_to_retrain = self.learner_params["samples_to_retrain"]
-        self.filename = self.learner_params["filename"]
-        self.file_dir = self.learner_params["file_dir"]
 
     def do_before_train(self):
         """

@@ -1,25 +1,20 @@
+import numpy as np
+import copy
+import torch
 from ase.eos import EquationOfState
 from ase.build import bulk
 from ase.build import fcc100, add_adsorbate, molecule
 from ase.constraints import FixAtoms
 from ase.optimize import BFGS
 from ase.calculators.emt import EMT
-from ase import Atoms, Atom
-import numpy as np
-import copy
-import sys
-import random
-import torch
-
-torch.set_num_threads(1)
 
 from al_mlp.offline_active_learner import OfflineActiveLearner
 from al_mlp.base_calcs.morse import MultiMorse
 from al_mlp.atomistic_methods import Relaxation
 
-from amptorch.ase_utils import AMPtorch
 from amptorch.trainer import AtomsTrainer
 
+torch.set_num_threads(1)
 
 parent_calc = EMT()
 # Make a simple C on Cu slab.
@@ -104,25 +99,25 @@ config = {
 }
 
 trainer = AtomsTrainer(config)
-trainer_calc = AMPtorch
+
 # building base morse calculator as base calculator
 cutoff = Gs["default"]["cutoff"]
-
 
 base_calc = MultiMorse(images, cutoff, combo="mean")
 
 
-learner_params = {
-        "max_iterations": 10,
-        "samples_to_retrain": 5,
-        "filename":"relax_example",
-        "file_dir":"./",
-        "query_method":"random"
-        }
+# define learner_params OfflineActiveLearner
 
-learner = OfflineActiveLearner(learner_params, trainer,trainer_calc, images, parent_calc, base_calc,ensemble=False)
-learner.learn(
-    atomistic_method=Relaxation(
+learner_params = {
+    "atomistic_method": Relaxation(
         initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=100
-    )
-)
+    ),
+    "max_iterations": 10,
+    "samples_to_retrain": 2,
+    "filename": "example",
+    "file_dir": "./",
+    "use_dask": False,
+}
+
+learner = OfflineActiveLearner(learner_params, trainer, images, parent_calc, base_calc)
+learner.learn()

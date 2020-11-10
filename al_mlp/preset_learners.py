@@ -43,9 +43,6 @@ class EnsembleLearner(OfflineActiveLearner):
             self.training_data, n_ensembles=ensemble
         )
 
-    def do_before_learn(self):
-        super().do_before_learn()
-
     def do_before_train(self):
         if self.iterations > 0:
             queried_images = self.query_func()
