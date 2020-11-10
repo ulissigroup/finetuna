@@ -40,13 +40,14 @@ class OfflineActiveLearner:
         """
         Initializes learner, before training loop.
         """
-
-        self.iterations = 0
-        self.terminate = False
+        global compute_with_calc
         if self.learner_params["use_dask"]:
             from al_mlp.utils_dask import compute_with_calc
         else:
             from al_mlp.utils import compute_with_calc
+
+        self.iterations = 0
+        self.terminate = False
         self.atomistic_method = self.learner_params["atomistic_method"]
         self.max_iterations = self.learner_params["max_iterations"]
         self.samples_to_retrain = self.learner_params["samples_to_retrain"]
