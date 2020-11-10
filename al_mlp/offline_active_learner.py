@@ -1,6 +1,6 @@
 import random
 from al_mlp.calcs import DeltaCalc
-from al_mlp.utils import convert_to_singlepoint
+from al_mlp.utils import convert_to_singlepoint, compute_with_calc
 
 
 class OfflineActiveLearner:
