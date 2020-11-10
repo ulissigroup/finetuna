@@ -3,7 +3,7 @@ from ase.neighborlist import NeighborList, NewPrimitiveNeighborList
 from ase.calculators.calculator import Calculator, all_changes
 import os
 import pandas as pd
-
+import al_mlp
 
 class MultiMorse(Calculator):
     implemented_properties = ["energy", "forces"]
