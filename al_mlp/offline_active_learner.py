@@ -144,7 +144,8 @@ class OfflineActiveLearner:
         """
         queries_db = ase.db.connect("queried_images.db")
         random.seed()
-        queried_images = random.sample(self.sample_candidates, self.samples_to_retrain)
+        query_idx = random.sample(range(1, len(self.sample_candidates)), self.samples_to_retrain)
+        queried_images = [self.sample_candidates[idx] for idx in query_idx]
         write_to_db(queries_db,queried_images)
         return queried_images
 
