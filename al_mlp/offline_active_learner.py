@@ -1,7 +1,7 @@
 import random
 from al_mlp.calcs import DeltaCalc
-from al_mlp.utils import convert_to_singlepoint
-
+from al_mlp.utils import convert_to_singlepoint, compute_with_calc,write_to_db
+import ase
 
 class OfflineActiveLearner:
     """Offline Active Learner.
@@ -143,8 +143,11 @@ class OfflineActiveLearner:
         """
         Default random query strategy.
         """
+        queries_db = ase.db.connect("queried_images.db")
         random.seed()
-        queried_images = random.sample(self.sample_candidates, self.samples_to_retrain)
+        query_idx = random.sample(range(1, len(self.sample_candidates)), self.samples_to_retrain)
+        queried_images = [self.sample_candidates[idx] for idx in query_idx]
+        write_to_db(queries_db,queried_images)
         return queried_images
 
     def make_trainer_calc(self):

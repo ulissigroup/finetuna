@@ -14,6 +14,7 @@ import torch
 torch.set_num_threads(1)
 
 from al_mlp.offline_active_learner import OfflineActiveLearner
+from al_mlp.preset_learners import EnsembleLearner
 from al_mlp.base_calcs.morse import MultiMorse
 from al_mlp.atomistic_methods import Relaxation
 
@@ -113,16 +114,17 @@ base_calc = MultiMorse(images, cutoff, combo="mean")
 
 
 learner_params = {
+        "atomistic_method": Relaxation(
+        initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=50
+    ),
         "max_iterations": 10,
         "samples_to_retrain": 5,
         "filename":"relax_example",
         "file_dir":"./",
-        "query_method":"max_uncertainty"
+        "query_method":"max_uncertainty",
+        "use_dask":False,
+        "atomistic_method":Relaxation
         }
 
-learner = OfflineActiveLearner(learner_params, trainer,trainer_calc, images, parent_calc, base_calc,ensemble=3)
-learner.learn(
-    atomistic_method=Relaxation(
-        initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=100
-    )
-)
+learner = EnsembleLearner(learner_params, trainer, images, parent_calc, base_calc,ensemble=3)
+learner.learn()

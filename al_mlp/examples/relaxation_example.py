@@ -55,7 +55,7 @@ slab.set_calculator(copy.copy(parent_calc))
 slab.set_initial_magnetic_moments()
 
 images = [slab]
-
+print(images)
 
 Gs = {
     "default": {
@@ -78,7 +78,7 @@ config = {
         "batch_size": 1000,
         "epochs": 100,
         "loss": "mse",
-        "metric": "mae",
+        "metric": "mse",
         "optimizer": torch.optim.LBFGS,
     },
     "dataset": {
@@ -87,6 +87,7 @@ config = {
         "elements": elements,
         "fp_params": Gs,
         "save_fps": True,
+        "scaling": {"type":"standardize"},
     },
     "cmd": {
         "debug": False,
@@ -113,7 +114,7 @@ learner_params = {
         initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=100
     ),
     "max_iterations": 10,
-    "samples_to_retrain": 2,
+    "samples_to_retrain": 5,
     "filename": "example",
     "file_dir": "./",
     "use_dask": False,
