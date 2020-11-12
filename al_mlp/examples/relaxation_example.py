@@ -8,7 +8,7 @@ from ase.constraints import FixAtoms
 from ase.optimize import BFGS
 from ase.calculators.emt import EMT
 
-from al_mlp.offline_active_learner import OfflineActiveLearner
+from al_mlp.preset_learners import EnsembleLearner
 from al_mlp.base_calcs.morse import MultiMorse
 from al_mlp.atomistic_methods import Relaxation
 
@@ -55,7 +55,7 @@ slab.set_calculator(copy.copy(parent_calc))
 slab.set_initial_magnetic_moments()
 
 images = [slab]
-print(images)
+
 
 Gs = {
     "default": {
@@ -78,7 +78,7 @@ config = {
         "batch_size": 1000,
         "epochs": 100,
         "loss": "mse",
-        "metric": "mse",
+        "metric": "mae",
         "optimizer": torch.optim.LBFGS,
     },
     "dataset": {
@@ -87,7 +87,6 @@ config = {
         "elements": elements,
         "fp_params": Gs,
         "save_fps": True,
-        "scaling": {"type":"standardize"},
     },
     "cmd": {
         "debug": False,
@@ -113,12 +112,12 @@ learner_params = {
     "atomistic_method": Relaxation(
         initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=100
     ),
-    "max_iterations": 10,
-    "samples_to_retrain": 5,
+    "max_iterations": 2,
+    "samples_to_retrain": 2,
     "filename": "example",
     "file_dir": "./",
     "use_dask": False,
 }
 
-learner = OfflineActiveLearner(learner_params, trainer, images, parent_calc, base_calc)
+learner = EnsembleLearner(learner_params, trainer, images, parent_calc, base_calc, 5)
 learner.learn()

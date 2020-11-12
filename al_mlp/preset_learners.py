@@ -42,6 +42,7 @@ class EnsembleLearner(OfflineActiveLearner):
         self.training_data, self.parent_dataset = bootstrap_ensemble(
             self.training_data, n_ensembles=ensemble
         )
+        self.parent_calls = 0
 
     def do_before_train(self):
         if self.iterations > 0:
@@ -56,7 +57,6 @@ class EnsembleLearner(OfflineActiveLearner):
 
     def do_after_train(self):
         self.atomistic_method.run(calc=self.trained_calc, filename=self.fn_label)
-        # Querying issue somewhere currently
         self.sample_candidates = list(
             self.atomistic_method.get_trajectory(filename=self.fn_label)
         )
@@ -76,7 +76,7 @@ class EnsembleLearner(OfflineActiveLearner):
             -1 * self.samples_to_retrain :
         ]
         queried_images = [self.sample_candidates[idx] for idx in query_idx]
-        write_to_db(queries_db, queried_images)
+        # write_to_db(queries_db, queried_images) bugged unique ID
         return queried_images
 
     def add_data(self, queried_images):
