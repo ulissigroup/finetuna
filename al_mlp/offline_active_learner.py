@@ -69,7 +69,12 @@ class OfflineActiveLearner:
         base_ref_image = compute_with_calc([parent_ref_image], self.base_calc)[0]
         self.refs = [parent_ref_image, base_ref_image]
         self.delta_sub_calc = DeltaCalc(self.calcs, "sub", self.refs)
-        self.training_data = compute_with_calc(sp_raw_data, self.delta_sub_calc)
+        self.training_data = []
+        for image in sp_raw_data:
+            sp_calc = image.get_calculator()
+            sp_calc.implemented_properties = ["energy", "forces"]
+            sp_delta_calc = DeltaCalc([sp_calc, self.base_calc], "sub", self.refs)
+            self.training_data += compute_with_calc([image], sp_delta_calc)
 
     def learn(self):
         """

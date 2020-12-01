@@ -18,6 +18,9 @@ def convert_to_singlepoint(images):
     singlepoint_images = []
     cwd = os.getcwd()
     for image in images:
+        if isinstance(image.get_calculator(), sp):
+            singlepoint_images.append(image)
+            continue
         os.makedirs("./temp", exist_ok=True)
         os.chdir("./temp")
         sample_energy = image.get_potential_energy(apply_constraint=False)

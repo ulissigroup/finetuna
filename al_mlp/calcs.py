@@ -29,6 +29,7 @@ class DeltaCalc(LinearCombinationCalculator):
         super().__init__(calcs, weights, atoms)
         self.refs = refs
         self.mode = mode
+        self.parent_results = calcs[0].results
 
     def calculate(self, atoms=None, properties=["energy"], system_changes=all_changes):
         """Calculates the desired property.
@@ -36,7 +37,7 @@ class DeltaCalc(LinearCombinationCalculator):
         "sub" mode: calculates the delta between the two given calculators.
         "add" mode: calculates the predicted value given the predicted delta calculator and the base calc.
         """
-
+        self.calcs[0].results = self.parent_results
         super().calculate(atoms, properties, system_changes)
 
         if "energy" in self.results:
