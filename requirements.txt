@@ -1,4 +1,3 @@
--e git+https://github.com/ulissigroup/al_mlp.git@60fbb864319640f4b573325aef7c325445cb46f5#egg=al_mlp
 ase==3.20.1
 attrs==20.3.0
 cycler==0.10.0
