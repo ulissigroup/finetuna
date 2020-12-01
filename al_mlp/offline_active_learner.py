@@ -1,7 +1,8 @@
 import random
 from al_mlp.calcs import DeltaCalc
-from al_mlp.utils import convert_to_singlepoint, compute_with_calc,write_to_db
+from al_mlp.utils import convert_to_singlepoint, compute_with_calc, write_to_db
 import ase
+
 
 class OfflineActiveLearner:
     """Offline Active Learner.
@@ -42,7 +43,10 @@ class OfflineActiveLearner:
         """
         global compute_with_calc
         if self.learner_params["use_dask"]:
-            from al_mlp.utils_dask import compute_with_calc
+            from al_mlp.dask_calculate.utils_dask import init_dask, compute_with_calc
+
+            dask_gpu = self.learner_params.get("dask_gpu", False)
+            init_dask(dask_gpu)
         else:
             from al_mlp.utils import compute_with_calc
 
@@ -145,9 +149,11 @@ class OfflineActiveLearner:
         """
         queries_db = ase.db.connect("queried_images.db")
         random.seed()
-        query_idx = random.sample(range(1, len(self.sample_candidates)), self.samples_to_retrain)
+        query_idx = random.sample(
+            range(1, len(self.sample_candidates)), self.samples_to_retrain
+        )
         queried_images = [self.sample_candidates[idx] for idx in query_idx]
-        write_to_db(queries_db,queried_images)
+        write_to_db(queries_db, queried_images)
         return queried_images
 
     def make_trainer_calc(self):
