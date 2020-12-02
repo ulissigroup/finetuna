@@ -73,3 +73,7 @@ sub_energy = slab.get_potential_energy()
 
 def test_deltaCalc():
  assert add_energy == sub_energy
+
+if __name__ == "__main__":
+   test_deltaCalc()
+   print("Success!")
