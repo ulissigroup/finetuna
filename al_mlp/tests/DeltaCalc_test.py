@@ -70,5 +70,6 @@ delta_calc = DeltaCalc([parent_calculator,base_calc],"sub",[slab,slab])
 #Set slab calculator to delta calc and evaluate energy
 slab.set_calculator(delta_calc)
 sub_energy = slab.get_potential_energy()
+
 def test_deltaCalc():
  assert add_energy == sub_energy
