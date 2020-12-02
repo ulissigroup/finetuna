@@ -5,24 +5,29 @@ TODO
 
 ### Installation
 
-1. ```pip install git+https://github.com/ulissigroup/al_mlp.git```
+Install dependencies:
 
+1. Ensure conda is up-to-date: ```conda update conda```
+
+2. Create conda environment: ```conda env create -f env_cpu.yml```
+
+3. Activate the conda environment `conda activate al_mlp` and install the package with `pip install -e .`
 
 ### Usage
 #### Configs [wip]
 ```
 learner_params = {
-    "atomistic_method": Relaxation(          #
-        initial_geometry=slab.copy(), 
-        optimizer=BFGS, 
-        fmax=0.01, 
-        steps=100
+    "atomistic_method": Relaxation(          # 
+        initial_geometry=ase.Atoms object,   # The Atoms object  
+        optimizer=ase.Optimizer object,      # Optimizer for Relaxation of Starting Image
+        fmax=float,                          # Force criteria required to terminate relaxation early
+        steps=int                            # Maximum number of steps before relaxation termination 
          )
-    "max_iterations": int,                   #
-    "samples_to_retrain": int,               #
-    "filename": str,                         #
-    "file_dir": str,                         #
-    "use_dask": bool,                        #
+    "max_iterations": int,                   # Maximum number of iterations for the active learning loop
+    "samples_to_retrain": int,               # Number of samples to be retrained and added to the training data
+    "filename": str,                         # Name of trajectory file generated
+    "file_dir": str,                         # Directory where trajectory file will be generated
+    "use_dask": bool,                        # 
 }
 
 ```
@@ -35,7 +40,6 @@ trainer = object
 training_data = list
 #A list of ase.Atoms objects that have attached calculators.
  
-
 parent_calc = ase Calculator object
 #Calculator used for querying training data.
 
@@ -46,6 +50,5 @@ base_calc = ase Calculator object
 ```
 learner = OfflineActiveLearner(learner_params, trainer, images, parent_calc, base_calc)
 learner.learn()
-
 ```
 
