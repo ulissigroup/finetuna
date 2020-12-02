@@ -45,4 +45,4 @@ jobs:
             source /home/circleci/miniconda/etc/profile.d/conda.sh
             conda activate al_mlp
             pip install -e .
-            python -m unittest
+            pytest 
