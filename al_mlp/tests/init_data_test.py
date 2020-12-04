@@ -1,5 +1,5 @@
 #Tests [wip]
 
 
-def init_data_test():
+def test_init_data():
     pass
