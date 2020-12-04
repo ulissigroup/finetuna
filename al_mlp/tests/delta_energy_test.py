@@ -86,6 +86,5 @@ def test_delta_sub():
     assert sub_energy == ((parent_energy - base_energy)+(-parent_ref + base_ref)), "Energies don't match!"
 
 def test_delta_add():
-    assert add_energy == ((base_energy + parent_energy)+(parent_ref - base_ref)), "Energies don't match!"   
-
-
+    assert np.abs(add_energy - ((base_energy + parent_energy)+(parent_ref - base_ref))) < 1e-5, "Energies don't match!"   
+test_delta_add()
