@@ -17,7 +17,6 @@ class MultiMorse(Calculator):
         unique_elements = np.unique(
             np.array([atom.symbol for atoms in images for atom in atoms])
         )
-        print(unique_elements)
         self.params = self.get_params(unique_elements)
 
     def calculate(self, atoms=None, properties=["energy"], system_changes=all_changes):

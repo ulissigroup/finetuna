@@ -34,21 +34,17 @@ learner_params = {
 
 #### Specify Calculators and Training Data
 ```
-trainer = object
-#An isntance of a trainer that has a train and predict method.
+trainer = object                             # An isntance of a trainer that has a train and predict method.
 
-training_data = list
-#A list of ase.Atoms objects that have attached calculators.
+training_data = list                         # A list of ase.Atoms objects that have attached calculators.
  
-parent_calc = ase Calculator object
-#Calculator used for querying training data.
+parent_calc = ase Calculator object          # Calculator used for querying training data.
 
-base_calc = ase Calculator object
-#Calculator used to calculate delta data for training.
+base_calc = ase Calculator object<           # Calculator used to calculate delta data for training.
 ```
 #### Run Learner
 ```
-learner = OfflineActiveLearner(learner_params, trainer, images, parent_calc, base_calc)
+learner = OfflineActiveLearner(learner_params, trainer, training_data, parent_calc, base_calc)
 learner.learn()
 ```
 

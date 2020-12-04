@@ -1,3 +1,4 @@
+# Tests if delta calculator is working properly with simple assertion function
 from al_mlp.calcs import DeltaCalc
 from ase.calculators.emt import EMT
 from ase.calculators.morse import MorsePotential
@@ -44,6 +45,9 @@ slab.wrap(pbc=[True] * 3)
 slab.set_calculator(copy.copy(parent_calculator))
 slab.set_initial_magnetic_moments()
 images = [slab]
+parent_energy = parent_ref = slab.get_potential_energy()
+
+
 Gs = {
     "default": {
         "G2": {
@@ -58,22 +62,34 @@ Gs = {
 # create image with base calculator attached
 cutoff = Gs["default"]["cutoff"]
 base_calc = MultiMorse(images, cutoff, combo="mean")
-slab.set_calculator(base_calc) 
+slab_base = slab.copy()
+slab_base.set_calculator(base_calc) 
+base_energy = base_ref = slab_base.get_potential_energy()
 
-#add
-delta_calc = DeltaCalc([parent_calculator,base_calc],"add",[slab,slab])
+#Add
+delta_calc = DeltaCalc([parent_calculator,base_calc],"add",[slab,slab_base])
 #Set slab calculator to delta calc and evaluate energy
-slab.set_calculator(delta_calc)
-add_energy = slab.get_potential_energy()
+slab_add = slab.copy()
+slab_add.set_calculator(delta_calc)
+add_energy = slab_add.get_potential_energy()
+
+
 #Sub
-delta_calc = DeltaCalc([parent_calculator,base_calc],"sub",[slab,slab])
+delta_calc = DeltaCalc([parent_calculator,base_calc],"sub",[slab,slab_base])
 #Set slab calculator to delta calc and evaluate energy
-slab.set_calculator(delta_calc)
-sub_energy = slab.get_potential_energy()
+slab_sub = slab.copy()
+slab_sub.set_calculator(delta_calc)
+sub_energy = slab_sub.get_potential_energy()
 
-def test_deltaCalc():
- assert add_energy == sub_energy
 
-if __name__ == "__main__":
-   test_deltaCalc()
-   print("Success!")
+def test_delta_sub():  
+    assert sub_energy == ((parent_energy - base_energy)+(-parent_ref + base_ref)), "Energies don't match!"
+    return sub_energy
+
+test_delta_sub()
+
+def test_delta_add():
+    assert add_energy == ((base_energy + parent_energy)+(parent_ref - base_ref)), "Energies don't match!"   
+
+test_delta_add()
+
