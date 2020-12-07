@@ -21,10 +21,9 @@ class EnsembleCalc(Calculator):
 
     implemented_properties = ["energy", "forces", "uncertainty"]
 
-    def __init__(self, trained_calcs, trainer):
+    def __init__(self, trained_calcs):
         Calculator.__init__(self)
         self.trained_calcs = trained_calcs
-        self.trainer = trainer
 
     def calculate_stats(self, energies, forces):
         median_idx = np.argsort(energies)[len(energies) // 2]
@@ -48,15 +47,3 @@ class EnsembleCalc(Calculator):
         self.results["energy"] = energy_pred
         self.results["forces"] = force_pred
         atoms.info["uncertainty"] = np.array([uncertainty])
-
-
-def make_ensemble(ensemble_datasets, trainer, trainer_calc, base_calc, n_cores, refs):
-    if n_cores == "max":
-        ncores = len(ensemble_datasets)
-
-    trained_calcs = []
-    for dataset in ensemble_datasets:
-        trainer.train(dataset)
-        trained_calcs.append(trainer_calc(trainer))
-    ensemble_calc = EnsembleCalc(trained_calcs, trainer)
-    return ensemble_calc

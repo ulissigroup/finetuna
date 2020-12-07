@@ -78,16 +78,3 @@ def copy_images(images):
 def write_to_db(database, queried_images):
     for image in queried_images:
         database.write(image)
-
-
-def make_ensemble(ensemble_datasets, trainer, base_calc, n_cores, refs):
-    if n_cores == "max":
-        ncores = len(ensemble_datasets)
-
-    trained_calcs = []
-    for _, dataset in enumerate(ensemble_datasets):
-        inputs = dataset
-        trainer.train(inputs)
-        trained_calcs.append(TrainerCalc(trainer))
-    ensemble_calc = EnsembleCalc(trained_calcs, trainer)
-    return ensemble_calc

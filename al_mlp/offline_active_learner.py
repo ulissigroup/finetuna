@@ -161,8 +161,11 @@ class OfflineActiveLearner:
         write_to_db(queries_db, queried_images)
         return queried_images
 
-    def make_trainer_calc(self):
+    def make_trainer_calc(self, trainer=None):
         """
         Default trainer calc after train. Assumes trainer has a 'get_calc' method.
+        If trainer is passed in, it will get its calculator instead
         """
+        if trainer is not None:
+            return trainer.get_calc()
         return self.trainer.get_calc()
