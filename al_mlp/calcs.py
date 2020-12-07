@@ -25,6 +25,8 @@ class DeltaCalc(LinearCombinationCalculator):
             weights = [1, 1]
         else:
             raise ValueError('mode must be "add" or "sub"!')
+        if calcs[0] == calcs[1]:
+            raise ValueError("Calculators cannot be the same!")
 
         super().__init__(calcs, weights, atoms)
         self.refs = refs
