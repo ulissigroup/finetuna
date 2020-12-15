@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: al-mlp
+Version: 0.1
+Summary: Active Learning for Machine Learning Potentials
+Home-page: https://github.com/ulissigroup/al_mlp
+Author: Rui Qi Chen, Matt Adams
+Author-email: ruiqic@andrew.cmu.edu, madams2@andrew.cmu.edu
+License: UNKNOWN
+Description: Module for performing delta active learning                           with machine learning potentials.
+Platform: UNKNOWN

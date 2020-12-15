@@ -1,21 +1,10 @@
 # adapted from
 # https://github.com/ulissigroup/ulissigroup_docker_images/tree/master/kubernetes_examples/dask-vasp
-from al_mlp.utils import convert_to_singlepoint, copy_images
+from al_mlp.utils import copy_images
 import dask.bag as db
 import tempfile
 from ase.calculators.singlepoint import SinglePointCalculator as sp
 import copy
-from dask_kubernetes import KubeCluster
-from dask.distributed import Client
-
-
-def init_dask(dask_gpu):
-    if dask_gpu:
-        cluster = KubeCluster.from_yaml("worker-gpu-spec.yml")
-    else:
-        cluster = KubeCluster.from_yaml("worker-cpu-spec.yml")
-    client = Client(cluster)
-    cluster.adapt(minimum=0, maximum=4)
 
 
 def calculate(atoms):

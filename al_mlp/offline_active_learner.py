@@ -43,10 +43,7 @@ class OfflineActiveLearner:
         """
         global compute_with_calc
         if self.learner_params["use_dask"]:
-            from al_mlp.dask_calculate.utils_dask import init_dask, compute_with_calc
-
-            dask_gpu = self.learner_params.get("dask_gpu", False)
-            init_dask(dask_gpu)
+            from al_mlp.dask_calculate import compute_with_calc
         else:
             from al_mlp.utils import compute_with_calc
 
