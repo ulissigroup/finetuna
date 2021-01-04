@@ -6,17 +6,15 @@ spec:
   containers:
   - image: ulissigroup/kubeflow_vasp:amptorch
     imagePullPolicy: Always
-    args: [dask-worker, --nthreads, '1', --no-dashboard, --memory-limit, 4GB, --death-timeout, '60']
+    args: [dask-worker, --nthreads, '1', --no-dashboard, --death-timeout, '60']
     name: dask
     env:
     - name: ASE_VASP_COMMAND
-      value: "mpirun -np 4 --mca btl_vader_single_copy_mechanism none /opt/vasp.6.1.2_pgi_mkl/bin/vasp_std"
+      value: "mpirun -np 4 --mca mpi_cuda_support 0 --mca btl_base_warn_component_unused 0 --mca btl_vader_single_copy_mechanism none /opt/vasp.6.1.2_pgi_mkl/bin/vasp_std"
     resources:
       limits:
-        cpu: "4"
-        memory: 4G
+        cpu: "8"
+        memory: 8G
       requests:
-        cpu: "2"
-        memory: 4G
-  imagePullSecrets:
-  - name: ulissigroup-dockerhub
+        cpu: "4"
+        memory: 8G

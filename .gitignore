@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 myvenv/
+al_mlp.egg-info
 
 #output files
 *.ampdb

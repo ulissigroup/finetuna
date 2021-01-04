@@ -10,6 +10,7 @@ import copy
 
 import torch
 import ase
+import functools
 
 from ase.db import connect
 
@@ -26,7 +27,34 @@ cluster = KubeCluster.from_yaml("dask-worker-cpu-spec.yml")
 client = Client(cluster)
 cluster.adapt(minimum=0, maximum=4)
 
+# only necessary to upload egg file to
+# workers if al_mlp is not in the environment but
 
+files_list = ["al_mlp-0.1-py3.6.egg"]
+
+for i in range(len(files_list)):
+    fname = files_list[i]
+    with open(fname, "rb") as f:
+        data = f.read()
+
+    def _worker_upload(dask_worker, *, data, fname):
+        dask_worker.loop.add_callback(
+            callback=dask_worker.upload_file,
+            comm=None,  # not used
+            filename=fname,
+            data=data,
+            load=True,
+        )
+
+    client.register_worker_callbacks(
+        setup=functools.partial(
+            _worker_upload,
+            data=data,
+            fname=fname,
+        )
+    )
+
+# vasp as parent calculator
 parent_calc = vasp(
     prec="Normal",
     algo="Normal",
@@ -137,13 +165,12 @@ learner_params = {
     "atomistic_method": Relaxation(
         initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=100
     ),
-    "max_iterations": 20,
-    "force_tolerance": 0.01,
-    "samples_to_retrain": 5,
+    "max_iterations": 2,
+    "samples_to_retrain": 1,
     "filename": "relax_example",
     "file_dir": "./",
     "query_method": "random",
-    "use_dask": False,
+    "use_dask": True,
 }
 
 learner = OfflineActiveLearner(learner_params, trainer, images, parent_calc, base_calc)

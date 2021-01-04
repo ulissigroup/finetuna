@@ -42,10 +42,9 @@ class OfflineActiveLearner:
         Initializes learner, before training loop.
         """
         global compute_with_calc
+        global convert_to_singlepoint
         if self.learner_params["use_dask"]:
-            from al_mlp.dask_calculate import compute_with_calc
-        else:
-            from al_mlp.utils import compute_with_calc
+            from al_mlp.dask_calculate import compute_with_calc, convert_to_singlepoint
 
         self.iterations = 0
         self.terminate = False
