@@ -47,6 +47,7 @@ class OfflineActiveLearner:
             from al_mlp.dask_calculate import compute_with_calc, convert_to_singlepoint
 
         self.iterations = 0
+        self.parent_calls = 0
         self.terminate = False
         self.atomistic_method = self.learner_params["atomistic_method"]
         self.max_iterations = self.learner_params["max_iterations"]
@@ -155,6 +156,7 @@ class OfflineActiveLearner:
         )
         queried_images = [self.sample_candidates[idx] for idx in query_idx]
         write_to_db(queries_db, queried_images)
+        self.parent_calls += len(queried_images)
         return queried_images
 
     def make_trainer_calc(self, trainer=None):
