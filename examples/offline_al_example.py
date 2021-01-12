@@ -4,32 +4,17 @@ from ase.build import fcc100, add_adsorbate, molecule
 from ase.constraints import FixAtoms
 from ase.optimize import BFGS
 from ase.calculators.emt import EMT
-from ase import Atoms, Atom
 import numpy as np
 import copy
-import sys
-import random
 
 import torch
-from ase.io import read,write
 import ase
 
-from ase.calculators.calculator import Calculator
-from ase.calculators.emt import EMT
-from ase.calculators.singlepoint import SinglePointCalculator as sp
-from ase.build import fcc111, fcc100, add_adsorbate, molecule
-from ase.constraints import FixAtoms
-from ase.optimize import BFGS, BFGSLineSearch
-from ase import Atoms, Atom
-from ase.io import read, write
-import copy
-import multiprocessing as mp
 from ase.db import connect
 from al_mlp.offline_active_learner import OfflineActiveLearner
 from al_mlp.base_calcs.morse import MultiMorse
 from al_mlp.atomistic_methods import Relaxation
 
-from amptorch.ase_utils import AMPtorch
 from amptorch.trainer import AtomsTrainer
 
 parent_calc = EMT()
@@ -69,14 +54,14 @@ slab.set_pbc(True)
 slab.wrap(pbc=[True] * 3)
 slab.set_calculator(copy.copy(parent_calc))
 slab.set_initial_magnetic_moments()
-db = connect('relax_example.db')
+db = connect("relax_example.db")
 images = [slab]
-#for row in db.select():
+# for row in db.select():
 #   if row.id < 4:
 #       pass
 #   else:
 #       images.append(db.get_atoms(id=row.id))
-#print(images)
+# print(images)
 Gs = {
     "default": {
         "G2": {
@@ -84,7 +69,7 @@ Gs = {
             "rs_s": [0] * 4,
         },
         "G4": {"etas": [0.005], "zetas": [1.0, 4.0], "gammas": [1.0, -1.0]},
-        "cutoff": 5.876798323827276, 
+        "cutoff": 5.876798323827276,
     },
 }
 
@@ -108,7 +93,6 @@ config = {
         "fp_params": Gs,
         "save_fps": True,
         "scaling": {"type": "standardize", "range": (0, 1)},
-
     },
     "cmd": {
         "debug": False,
@@ -130,23 +114,23 @@ base_calc = MultiMorse(images, cutoff, combo="mean")
 
 
 learner_params = {
-        "atomistic_method":Relaxation(
+    "atomistic_method": Relaxation(
         initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=100
-        ),
-        "max_iterations": 20,
-        "force_tolerance":0.01,
-        "samples_to_retrain": 5,
-        "filename":"relax_example",
-        "file_dir":"./",
-        "query_method":"random",
-        "use_dask":False
-        }
+    ),
+    "max_iterations": 20,
+    "force_tolerance": 0.01,
+    "samples_to_retrain": 1,
+    "filename": "relax_example",
+    "file_dir": "./",
+    "query_method": "random",
+    "use_dask": False,
+}
 
 learner = OfflineActiveLearner(learner_params, trainer, images, parent_calc, base_calc)
 learner.learn()
 
 # Calculate true relaxation
-al_iterations = learner.iterations - 1 
+al_iterations = learner.iterations - 1
 file_path = learner_params["file_dir"] + learner_params["filename"]
 true_relax = Relaxation(slab, BFGS)
 true_relax.run(EMT(), "true_relax")
@@ -160,15 +144,15 @@ emt_evaluated_ml_energies = [
     EMT().get_potential_energy(image) for image in final_ml_traj
 ]
 # Compute actual energies for EMT relaxation structures
-emt_relaxation_energies = [
-    image.get_potential_energy() for image in parent_calc_traj
-]
+emt_relaxation_energies = [image.get_potential_energy() for image in parent_calc_traj]
 steps = range(len(final_ml_traj))
 n_samples_iteration = learner_params["samples_to_retrain"]
 parent_calls = learner.parent_calls
 
+
 def compute_loss(a, b):
     return np.mean(np.sqrt(np.sum((a - b) ** 2, axis=1)))
+
 
 initial_structure = images[0].positions
 print(f"Number of AL iterations: {al_iterations}")
