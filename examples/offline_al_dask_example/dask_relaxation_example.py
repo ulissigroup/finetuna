@@ -165,8 +165,8 @@ learner_params = {
     "atomistic_method": Relaxation(
         initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=100
     ),
-    "max_iterations": 2,
-    "samples_to_retrain": 1,
+    "max_iterations": 10,
+    "samples_to_retrain": 2,
     "filename": "relax_example",
     "file_dir": "./",
     "query_method": "random",
