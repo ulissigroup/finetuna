@@ -1,7 +1,7 @@
 [![ulissigroup](https://circleci.com/gh/ulissigroup/al_mlp.svg?style=svg)](https://app.circleci.com/pipelines/github/ulissigroup/al_mlp)
 ## *al_mlp*: Active Learning for Machine Learning Potentials
 
-Implements active learning with $\Delta$-machine learning to accelerate atomistic simulations.
+Implements active learning with delta machine learning to accelerate atomistic simulations.
 
 ### Installation
 
