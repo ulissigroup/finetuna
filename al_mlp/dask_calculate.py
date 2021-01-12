@@ -61,6 +61,21 @@ def convert_to_singlepoint(images):
     return singlepoint_images
 
 
+def fix_dask_energy_datatype(image):
+    """
+    When dask returns atoms objects, the datatype of the energy
+    value gets altered. This function makes sure that the correct
+    type is returned.
+
+    Parameters
+    ----------
+
+    images: ase Atoms object
+        Image with attached singlepoint calculators.
+    """
+    image.calc.results["energy"] = float(image.calc.results["energy"])
+
+
 def compute_with_calc(images, calculator=None):
     """
     Calculates forces and energies of images with calculator.
@@ -83,4 +98,6 @@ def compute_with_calc(images, calculator=None):
     images_bag = db.from_sequence(images)
     images_bag_computed = images_bag.map(calculate)
     singlepoint_images = images_bag_computed.compute()
+    for image in singlepoint_images:
+        fix_dask_energy_datatype(image)
     return singlepoint_images
