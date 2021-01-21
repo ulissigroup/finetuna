@@ -23,3 +23,11 @@ def bootstrap_ensemble(
         for i in range(n_ensembles):
             ensemble_sets.append(random.choices(parent_dataset, k=len(parent_dataset)))
     return ensemble_sets, parent_dataset
+
+def non_bootstrap_ensemble(parent_dataset, new_data=None, n_ensembles=1):
+    if new_data:
+        parent_dataset.append(new_data)
+    for i in range(n_ensembles):
+        ensemble_sets = [parent_dataset.copy() for i in range(n_ensembles)]
+    return ensemble_sets, parent_dataset
+
