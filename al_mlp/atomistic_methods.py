@@ -39,7 +39,9 @@ class MDsimulate:
             )
         elif self.ensemble == "langevin":
             dyn = Langevin(slab, self.dt * units.fs, self.temp * units.kB, 0.002)
-        traj = ase.io.Trajectory(filename + ".traj", "w", slab)
+        traj = ase.io.Trajectory(
+            filename + ".traj", "w", slab, properties=["energy", "forces"]
+        )
         dyn.attach(traj.write, interval=1)
         try:
             fixed_atoms = len(slab.constraints[0].get_indices())
