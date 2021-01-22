@@ -1,5 +1,14 @@
 import numpy as np
 from ase.calculators.calculator import Calculator
+import random
+from al_mlp.calcs import DeltaCalc
+import copy
+import dask.bag as daskbag
+from al_mlp.utils import copy_images
+from amptorch.trainer import AtomsTrainer
+from torch.multiprocessing import Pool
+import torch
+torch.multiprocessing.set_sharing_strategy("file_system")
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -47,3 +56,44 @@ class EnsembleCalc(Calculator):
         self.results["energy"] = energy_pred
         self.results["forces"] = force_pred
         atoms.info["uncertainty"] = np.array([uncertainty])
+
+    @classmethod
+    def make_ensemble(cls, ensemble_sets, trainer, base_calc, refs, n_cores):
+        """
+        Uses Dask to parallelize, must have previously set up cluster, image to use, and pool of workers
+        """
+        #method for training trainer on ensemble sets, then create neural net calc, combine with base calc, return additive delta calc
+        def train_and_combine(args_tuple):
+            ensemble_set = args_tuple[0]
+            trainer = args_tuple[1]
+            base_calc = args_tuple[2]
+            refs = args_tuple[3]
+            n_cores = args_tuple[4]
+
+            trainer.train(raw_data=ensemble_set)
+            check_path = trainer.cp_dir
+            trainer = AtomsTrainer()
+            trainer.load_pretrained(checkpoint_path=check_path)
+            trained_calc = DeltaCalc((trainer.get_calc(),base_calc),"add",refs)
+            return trained_calc
+
+        #split ensemble sets into separate tuples, clone: trainer, base calc and add to tuples, add: refs and n_cores to tuples
+        tuples = []
+        random.seed(trainer.config["cmd"]["seed"])
+        randomlist = [random.randint(0,4294967295) for set in ensemble_sets]
+        for i in range(len(ensemble_sets)):
+            set = ensemble_sets[i]
+            trainer_copy = AtomsTrainer(trainer.config.copy())
+            trainer_copy.config["cmd"]["seed"] = randomlist[i]
+            trainer_copy.load_rng_seed()
+            base_calc_copy = copy.deepcopy(base_calc)
+            refs_copy = copy_images(refs) 
+            tuples.append((set, trainer_copy, base_calc_copy, refs_copy, n_cores))
+        
+        #map training method, returns array of delta calcs
+        tuples_bag = daskbag.from_sequence(tuples)
+        tuples_bag_computed = tuples_bag.map(train_and_combine)
+        trained_calcs = tuples_bag_computed.compute()
+
+        #call init to construct ensemble calc from array of delta calcs
+        return cls(trained_calcs)

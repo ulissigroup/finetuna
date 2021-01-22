@@ -8,7 +8,8 @@ from ase.calculators.singlepoint import SinglePointCalculator as sp
 from ase.calculators.calculator import Calculator
 from al_mlp.utils import convert_to_singlepoint, compute_with_calc
 from al_mlp.bootstrap import bootstrap_ensemble
-from al_mlp.ensemble_calc import make_ensemble
+from al_mlp.bootstrap import non_bootstrap_ensemble
+from al_mlp.ensemble_calc import EnsembleCalc
 from al_mlp.calcs import DeltaCalc
 
 __author__ = "Muhammed Shuaibi"
@@ -52,7 +53,14 @@ class OnlineActiveLearner(Calculator):
     implemented_properties = ["energy", "forces"]
 
     def __init__(
-        self, learner_params, parent_dataset, parent_calc,base_calc,trainer, n_ensembles, n_cores
+        self, 
+        learner_params, 
+        trainer,
+        parent_dataset, 
+        parent_calc,
+        base_calc, 
+        n_ensembles=10, 
+        n_cores='max'
     ):
         Calculator.__init__(self)
 
@@ -63,11 +71,11 @@ class OnlineActiveLearner(Calculator):
         self.trainer = trainer
         self.learner_params = learner_params
         self.n_cores = n_cores
-        self.ensemble_sets, self.parent_dataset = bootstrap_ensemble(
+        self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
             parent_dataset, n_ensembles=n_ensembles
         )
         self.init_training_data()
-        self.ensemble_calc = make_ensemble(
+        self.ensemble_calc = EnsembleCalc.make_ensemble(
             self.ensemble_sets, self.trainer,self.base_calc,self.refs, self.n_cores
         )
 
@@ -81,12 +89,12 @@ class OnlineActiveLearner(Calculator):
         """
         raw_data = self.parent_dataset
         sp_raw_data = convert_to_singlepoint(raw_data)
-        parent_ref_image = sp_raw_data[0].copy()
+        parent_ref_image = sp_raw_data[0]
         base_ref_image = compute_with_calc(sp_raw_data[:1],self.base_calc)[0]
-        self.refs = [parent_ref_image, base_ref_image]
+        self.refs = [parent_ref_image, base_ref_image] 
         self.delta_sub_calc = DeltaCalc(self.calcs, "sub", self.refs)
-        self.ensemble_sets,self.parent_dataset= bootstrap_ensemble(
-            compute_with_calc(sp_raw_data, self.delta_sub_calc))
+        self.ensemble_sets, self.parent_dataset= non_bootstrap_ensemble(
+            compute_with_calc(sp_raw_data, self.delta_sub_calc),n_ensembles=self.n_ensembles)
 
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
@@ -114,15 +122,16 @@ class OnlineActiveLearner(Calculator):
 
             energy_list.append(energy_pred)
             db.write(new_data)
-            self.ensemble_sets, self.parent_dataset = bootstrap_ensemble(
-                self.parent_dataset, self.ensemble_sets, new_data=new_data
+            self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
+                self.parent_dataset, new_data=new_data, n_ensembles=self.n_ensembles
             )
 
-            self.ensemble_calc = make_ensemble(self.ensemble_sets,
-                                               self.trainer,
-                                               self.base_calc,
-                                               self.refs, 
-                                               self.n_cores
+            self.ensemble_calc = EnsembleCalc.make_ensemble(
+                self.ensemble_sets,
+                self.trainer,
+                self.base_calc,
+                self.refs, 
+                self.n_cores
             ) 
 
             self.parent_calls += 1
@@ -130,4 +139,3 @@ class OnlineActiveLearner(Calculator):
             db.write(None)
         self.results["energy"] = energy_pred
         self.results["forces"] = force_pred
-
