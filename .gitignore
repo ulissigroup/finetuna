@@ -19,6 +19,7 @@ al_mlp.egg-info
 *.pickle
 *.png
 *.json
+*.h5
 
 .ipynb_checkpoints
 */checkpoints/*

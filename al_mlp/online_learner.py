@@ -11,6 +11,7 @@ from al_mlp.bootstrap import bootstrap_ensemble
 from al_mlp.bootstrap import non_bootstrap_ensemble
 from al_mlp.ensemble_calc import EnsembleCalc
 from al_mlp.calcs import DeltaCalc
+from al_mlp.utils import copy_images
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -99,13 +100,27 @@ class OnlineActiveLearner(Calculator):
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
 
-        energy_pred = self.ensemble_calc.get_potential_energy(atoms)
-        force_pred = self.ensemble_calc.get_forces(atoms)
+        ensemble_calc_copy = copy.deepcopy(self.ensemble_calc)
+        energy_pred = ensemble_calc_copy.get_potential_energy(atoms)
+        force_pred = ensemble_calc_copy.get_forces(atoms)
         uncertainty = atoms.info["uncertainty"][0]
-        db = connect('dft_calls.db')
+        uncertainty_tol = self.uncertain_tol
+        if "relative_variance" in  self.learner_params and self.learner_params["relative_variance"]:
+            ensemble_calc_copy = copy.deepcopy(self.ensemble_calc)
+            copied_images = copy_images(self.parent_dataset)
+            base_uncertainty = 0
+            for image in copied_images:
+                ensemble_calc_copy.reset()
+                ensemble_calc_copy.get_forces(image)
+                if image.info["uncertainty"][0] > base_uncertainty:
+                    base_uncertainty = image.info["uncertainty"][0]
+            uncertainty_tol = self.uncertain_tol*base_uncertainty
 
+        db = connect('dft_calls.db')
+        
         cwd = os.getcwd()
-        if uncertainty >= self.uncertain_tol:
+        print('uncertainty: '+str(uncertainty)+', uncertainty_tol: '+str(uncertainty_tol)) #FIXME remove me
+        if uncertainty >= uncertainty_tol:
             print('DFT required')
             new_data = atoms.copy()
             new_data.set_calculator(copy.copy(self.parent_calc))
@@ -120,10 +135,12 @@ class OnlineActiveLearner(Calculator):
            # os.chdir(cwd)
            # os.system("rm -rf ./temp")
 
-            energy_list.append(energy_pred)
-            db.write(new_data)
+            try:
+                db.write(new_data)
+            except:
+                pass
             self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
-                self.parent_dataset, new_data=new_data, n_ensembles=self.n_ensembles
+                self.parent_dataset, compute_with_calc([new_data],self.delta_sub_calc), n_ensembles=self.n_ensembles
             )
 
             self.ensemble_calc = EnsembleCalc.make_ensemble(
@@ -136,6 +153,7 @@ class OnlineActiveLearner(Calculator):
 
             self.parent_calls += 1
         else:
-            db.write(None)
+            print('')
+            #db.write(None)
         self.results["energy"] = energy_pred
         self.results["forces"] = force_pred

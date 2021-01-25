@@ -39,7 +39,8 @@ class EnsembleCalc(Calculator):
         energy_median = energies[median_idx]
         forces_median = forces[median_idx]
         max_forces_var = np.max(np.var(forces, axis=0))
-        return energy_median, forces_median, max_forces_var
+        max_energy_var = np.var(energies)
+        return energy_median, forces_median, max_energy_var #change back to max energy var
 
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
@@ -83,7 +84,7 @@ class EnsembleCalc(Calculator):
         randomlist = [random.randint(0,4294967295) for set in ensemble_sets]
         for i in range(len(ensemble_sets)):
             set = ensemble_sets[i]
-            trainer_copy = AtomsTrainer(trainer.config.copy())
+            trainer_copy = AtomsTrainer(copy.deepcopy(trainer.config))
             trainer_copy.config["cmd"]["seed"] = randomlist[i]
             trainer_copy.load_rng_seed()
             base_calc_copy = copy.deepcopy(base_calc)
@@ -93,7 +94,10 @@ class EnsembleCalc(Calculator):
         #map training method, returns array of delta calcs
         tuples_bag = daskbag.from_sequence(tuples)
         tuples_bag_computed = tuples_bag.map(train_and_combine)
-        trained_calcs = tuples_bag_computed.compute()
+        if "single-threaded" in  trainer.config["cmd"] and trainer.config["cmd"]["single-threaded"]:
+            trained_calcs = tuples_bag_computed.compute(scheduler='single-threaded')
+        else:
+            trained_calcs = tuples_bag_computed.compute()
 
         #call init to construct ensemble calc from array of delta calcs
         return cls(trained_calcs)
