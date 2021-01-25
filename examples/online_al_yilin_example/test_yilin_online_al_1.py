@@ -13,21 +13,23 @@ from ase.optimize import BFGS, QuasiNewton
 from ase.build import bulk
 from ase.utils.eos import EquationOfState
 from al_mlp.atomistic_methods import Relaxation
+import os
 
 
 #Set up dask
 from dask_kubernetes import KubeCluster
 from dask.distributed import Client
 
-cluster = KubeCluster.from_yaml("dask-worker-cpu-spec.yml")
+cluster = KubeCluster.from_yaml("/home/jovyan/al_mlp/examples/offline_al_dask_example/dask-worker-cpu-spec.yml")
 client = Client(cluster)
-cluster.adapt(minimum=0, maximum=2)
+cluster.adapt(minimum=0, maximum=1)
 
 #Set up parent calculator and image environment
 parent_calculator = EMT()
 
-initial_db = ase.io.read("Pt-init-images.db",":")
-images = [initial_db[0]]
+initial_db = ase.io.read("/home/jovyan/scripts/test_yilin/Pt-init-images.db",":")
+images = [initial_db[1]]
+images[0].calc = EMT()
 
 Gs = {
     "default": {
@@ -46,7 +48,8 @@ learner_params = {
         "samples_to_retrain": 1,
         "filename":"relax_example",
         "file_dir":"./",
-        "uncertain_tol": 0.05
+        "uncertain_tol": 2,
+        "relative_variance": True 
         }
 
 config = {
@@ -72,6 +75,7 @@ config = {
         "identifier": "test",
         "verbose": True,
         # "logger": True,
+        "single-threaded": True
     },
 }
 cutoff = Gs["default"]["cutoff"]
@@ -92,6 +96,8 @@ onlinecalc = OnlineActiveLearner(
 
 structure_optim = Relaxation(images[0],BFGS,fmax=0.05,steps = 100)
 
+if os.path.exists('dft_calls.db'):
+    os.remove('dft_calls.db')
 structure_optim.run(onlinecalc,filename="relax_oal")
 
 

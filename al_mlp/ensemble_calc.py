@@ -40,7 +40,7 @@ class EnsembleCalc(Calculator):
         forces_median = forces[median_idx]
         max_forces_var = np.max(np.var(forces, axis=0))
         max_energy_var = np.var(energies)
-        return energy_median, forces_median, max_energy_var #change back to max energy var
+        return energy_median, forces_median, max_forces_var #change back to max forces var
 
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)

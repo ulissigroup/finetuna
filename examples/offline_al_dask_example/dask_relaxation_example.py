@@ -23,7 +23,7 @@ from amptorch.trainer import AtomsTrainer
 from dask_kubernetes import KubeCluster
 from dask.distributed import Client
 
-cluster = KubeCluster.from_yaml("dask-worker-cpu-spec.yml")
+cluster = KubeCluster.from_yaml("/home/jovyan/al_mlp/examples/offline_al_dask_example/dask-worker-cpu-spec.yml")
 client = Client(cluster)
 cluster.adapt(minimum=0, maximum=4)
 
@@ -32,27 +32,27 @@ cluster.adapt(minimum=0, maximum=4)
 
 files_list = ["al_mlp-0.1-py3.6.egg"]
 
-for i in range(len(files_list)):
-    fname = files_list[i]
-    with open(fname, "rb") as f:
-        data = f.read()
+# for i in range(len(files_list)):
+#     fname = files_list[i]
+#     with open(fname, "rb") as f:
+#         data = f.read()
 
-    def _worker_upload(dask_worker, *, data, fname):
-        dask_worker.loop.add_callback(
-            callback=dask_worker.upload_file,
-            comm=None,  # not used
-            filename=fname,
-            data=data,
-            load=True,
-        )
+#     def _worker_upload(dask_worker, *, data, fname):
+#         dask_worker.loop.add_callback(
+#             callback=dask_worker.upload_file,
+#             comm=None,  # not used
+#             filename=fname,
+#             data=data,
+#             load=True,
+#         )
 
-    client.register_worker_callbacks(
-        setup=functools.partial(
-            _worker_upload,
-            data=data,
-            fname=fname,
-        )
-    )
+#     client.register_worker_callbacks(
+#         setup=functools.partial(
+#             _worker_upload,
+#             data=data,
+#             fname=fname,
+#         )
+#     )
 
 # vasp as parent calculator
 parent_calc = vasp(
