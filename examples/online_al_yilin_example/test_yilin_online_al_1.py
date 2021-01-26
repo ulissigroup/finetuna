@@ -14,6 +14,9 @@ from ase.build import bulk
 from ase.utils.eos import EquationOfState
 from al_mlp.atomistic_methods import Relaxation
 import os
+from al_mlp.ensemble_calc import EnsembleCalc
+#from concurrent.futures import ThreadPoolExecutor
+#e = ThreadPoolExecutor(10)
 
 
 #Set up dask
@@ -22,7 +25,8 @@ from dask.distributed import Client
 
 cluster = KubeCluster.from_yaml("/home/jovyan/al_mlp/examples/offline_al_dask_example/dask-worker-cpu-spec.yml")
 client = Client(cluster)
-cluster.adapt(minimum=0, maximum=1)
+cluster.adapt(minimum=10, maximum=10)
+executor = client
 
 #Set up parent calculator and image environment
 parent_calculator = EMT()
@@ -49,7 +53,7 @@ learner_params = {
         "filename":"relax_example",
         "file_dir":"./",
         "uncertain_tol": 2,
-        "relative_variance": True 
+        "relative_variance": True
         }
 
 config = {
@@ -75,7 +79,7 @@ config = {
         "identifier": "test",
         "verbose": True,
         # "logger": True,
-        "single-threaded": True
+        "single-threaded": False,
     },
 }
 cutoff = Gs["default"]["cutoff"]
@@ -84,6 +88,8 @@ trainer = AtomsTrainer(config)
 trainer_calc = AMPtorch
 base_calc = MultiMorse(images, cutoff, combo="mean")
 
+EnsembleCalc.set_executor(executor)
+
 onlinecalc = OnlineActiveLearner(
              learner_params,
              trainer,
@@ -91,8 +97,9 @@ onlinecalc = OnlineActiveLearner(
              parent_calc,
              base_calc,
              #trainer_calc,
-             n_ensembles=2,
-             n_cores='max')
+             n_ensembles=10,
+             n_cores='max'
+             )
 
 structure_optim = Relaxation(images[0],BFGS,fmax=0.05,steps = 100)
 

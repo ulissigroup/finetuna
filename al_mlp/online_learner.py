@@ -77,7 +77,7 @@ class OnlineActiveLearner(Calculator):
         )
         self.init_training_data()
         self.ensemble_calc = EnsembleCalc.make_ensemble(
-            self.ensemble_sets, self.trainer,self.base_calc,self.refs, self.n_cores
+            self.ensemble_sets, self.trainer,self.base_calc,self.refs
         )
 
         self.uncertain_tol = learner_params["uncertain_tol"]
@@ -147,8 +147,7 @@ class OnlineActiveLearner(Calculator):
                 self.ensemble_sets,
                 self.trainer,
                 self.base_calc,
-                self.refs, 
-                self.n_cores
+                self.refs
             ) 
 
             self.parent_calls += 1
