@@ -57,12 +57,15 @@ class EnsembleCalc(Calculator):
         energies = []
         forces = []
 
-        def evaluate_ef(atoms_image):
-            return (calc.get_potential_energy(atoms_image), calc.get_forces(atoms))
+        def evaluate_ef(tuple):
+            atoms_image = tuple[0]
+            calc = tuple[1]
+            calc.calcs[0].trainer.config['dataset']['save_fps'] = False
+            return (calc.get_potential_energy(atoms_image), calc.get_forces(atoms_image))
         if self.executor is not None:
             futures = []
             for calc in self.trained_calcs:
-                futures.append(self.executor.submit(evaluate_ef, atoms))
+                futures.append(self.executor.submit(evaluate_ef, (atoms,calc)))
             energies = [future.result()[0] for future in futures]
             forces = [future.result()[1] for future in futures]
         else:

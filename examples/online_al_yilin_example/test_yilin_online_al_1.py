@@ -3,6 +3,7 @@ import ase
 import copy
 from al_mlp.online_learner import OnlineActiveLearner
 from ase.calculators.emt import EMT
+from ase.calculators.calculator import Calculator, all_changes
 from al_mlp.base_calcs.morse import MultiMorse
 from ase import Atoms
 from amptorch.ase_utils import AMPtorch
@@ -15,18 +16,40 @@ from ase.utils.eos import EquationOfState
 from al_mlp.atomistic_methods import Relaxation
 import os
 from al_mlp.ensemble_calc import EnsembleCalc
-#from concurrent.futures import ThreadPoolExecutor
-#e = ThreadPoolExecutor(10)
+#from dummy.py import Dummy
 
+class Dummy(Calculator):
+    implemented_properties = ["energy", "forces"]
+
+    def __init__(self, images, **kwargs):
+        Calculator.__init__(self, **kwargs)
+        self.images = images
+
+    def calculate(self, atoms=None, properties=["energy"], system_changes=all_changes):
+        Calculator.calculate(self, atoms, properties, system_changes)
+        image = atoms
+        natoms = len(image)
+        energy = 0.0
+        forces = np.zeros((natoms, 3))
+        self.results["energy"] = energy
+        self.results["forces"] = forces
+
+from concurrent.futures import ThreadPoolExecutor
+#executor = ThreadPoolExecutor(8)
 
 #Set up dask
 from dask_kubernetes import KubeCluster
 from dask.distributed import Client
 
-cluster = KubeCluster.from_yaml("/home/jovyan/al_mlp/examples/offline_al_dask_example/dask-worker-cpu-spec.yml")
+num_workers = 10
+cluster = KubeCluster.from_yaml("/home/jovyan/al_mlp/examples/online_al_yilin_example/dask-worker-cpu-spec.yml")
 client = Client(cluster)
-cluster.adapt(minimum=10, maximum=10)
+cluster.adapt(minimum=num_workers, maximum=num_workers)
 executor = client
+
+#client.upload_file('dummy.py')#pass dask workers changed files (TEMPORARY)
+
+EnsembleCalc.set_executor(executor)
 
 #Set up parent calculator and image environment
 parent_calculator = EMT()
@@ -63,7 +86,7 @@ config = {
         "force_coefficient": 0.04,
         "lr": 1e-2,
         "batch_size": 10,
-        "epochs": 100,
+        "epochs": 100, #was 100
     },
     "dataset": {
         "raw_data": images,
@@ -86,9 +109,8 @@ cutoff = Gs["default"]["cutoff"]
 parent_calc = EMT()
 trainer = AtomsTrainer(config)
 trainer_calc = AMPtorch
-base_calc = MultiMorse(images, cutoff, combo="mean")
-
-EnsembleCalc.set_executor(executor)
+#base_calc = MultiMorse(images, cutoff, combo="mean")
+base_calc = Dummy(images)
 
 onlinecalc = OnlineActiveLearner(
              learner_params,
@@ -97,7 +119,7 @@ onlinecalc = OnlineActiveLearner(
              parent_calc,
              base_calc,
              #trainer_calc,
-             n_ensembles=10,
+             n_ensembles=num_workers,
              n_cores='max'
              )
 
