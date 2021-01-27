@@ -38,6 +38,13 @@ class EnsembleCalc(Calculator):
         self.trained_calcs = trained_calcs
 
     def calculate_stats(self, energies, forces):
+        # energies_mean = np.mean(energies,axis=0)
+        # forces_mean = np.mean(forces,axis=0)
+        # abs_max_force_idx = np.argmax(np.abs(forces_mean))
+        # direction_idx = int(abs_max_force_idx%3)
+        # force_idx = int((abs_max_force_idx-direction_idx)/3)
+        # abs_max_force = forces_mean[force_idx][direction_idx]
+
         median_idx = np.argsort(energies)[len(energies) // 2]
         energy_median = energies[median_idx]
         forces_median = forces[median_idx]
