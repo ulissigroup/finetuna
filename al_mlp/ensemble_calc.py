@@ -105,12 +105,21 @@ class EnsembleCalc(Calculator):
             tuples.append((set, trainer_copy, base_calc_copy, refs_copy))
         
         #map training method, returns array of delta calcs
-        tuples_bag = daskbag.from_sequence(tuples)
-        tuples_bag_computed = tuples_bag.map(train_and_combine)
-        if "single-threaded" in  trainer.config["cmd"] and trainer.config["cmd"]["single-threaded"]:
-            trained_calcs = tuples_bag_computed.compute(scheduler='single-threaded')
+        # tuples_bag = daskbag.from_sequence(tuples)
+        # tuples_bag_computed = tuples_bag.map(train_and_combine)
+        # if "single-threaded" in  trainer.config["cmd"] and trainer.config["cmd"]["single-threaded"]:
+        #     trained_calcs = tuples_bag_computed.compute(scheduler='single-threaded')
+        # else:
+        #     trained_calcs = tuples_bag_computed.compute()
+        trained_calcs = []
+        if cls.executor is not None:
+            futures = []
+            for tuple in tuples:
+                futures.append(cls.executor.submit(train_and_combine, tuple))
+            trained_calcs = [future.result() for future in futures]
         else:
-            trained_calcs = tuples_bag_computed.compute()
+            for tuple in tuples:
+                trained_calcs.append(train_and_combine(tuple))
 
         #call init to construct ensemble calc from array of delta calcs
         return cls(trained_calcs)
