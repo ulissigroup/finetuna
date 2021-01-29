@@ -29,3 +29,4 @@ dependencies:
    - six==1.15.0
    - toml==0.10.2
    - zipp==3.4.0
+   - dask==2.30.0
