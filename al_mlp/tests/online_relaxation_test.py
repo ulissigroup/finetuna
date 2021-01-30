@@ -16,23 +16,7 @@ from ase.utils.eos import EquationOfState
 from al_mlp.atomistic_methods import Relaxation
 import os
 from al_mlp.ensemble_calc import EnsembleCalc
-
-class Dummy(Calculator):
-    implemented_properties = ["energy", "forces"]
-
-    def __init__(self, images, **kwargs):
-        Calculator.__init__(self, **kwargs)
-        self.images = images
-
-    def calculate(self, atoms=None, properties=["energy"], system_changes=all_changes):
-        Calculator.calculate(self, atoms, properties, system_changes)
-        image = atoms
-        natoms = len(image)
-        energy = 0.0
-        forces = np.zeros((natoms, 3))
-        self.results["energy"] = energy
-        self.results["forces"] = forces
-
+from al_mlp.base_calcs.dummy import Dummy
 
 def run_oal(initial_structure):
     Gs = {
