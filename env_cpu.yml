@@ -6,4 +6,4 @@ dependencies:
  - dask
  - dask-kubernetes
  - pip:
-   - git+https://github.com/ulissigroup/amptorch/blob/master/setup.py
+   - git+https://github.com/ulissigroup/amptorch.git
