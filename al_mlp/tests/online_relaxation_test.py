@@ -40,7 +40,8 @@ def run_oal(initial_structure, dbname):
             "filename":"relax_example",
             "file_dir":"./",
             "uncertain_tol": 2,
-            "relative_variance": True
+            "relative_variance": True,
+            "use_dask": False
             }
 
     config = {
@@ -69,12 +70,6 @@ def run_oal(initial_structure, dbname):
             "single-threaded": False,
         },
     }
-
-    #Set up dask
-    from dask.distributed import Client
-    client = Client()
-    executor = client
-    EnsembleCalc.set_executor(executor)
 
     cutoff = Gs["default"]["cutoff"]
     trainer = AtomsTrainer(config)
