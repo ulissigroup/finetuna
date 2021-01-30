@@ -95,4 +95,4 @@ def run_oal(initial_structure, dbname):
         os.remove("dft_calls.db")
     structure_optim.run(onlinecalc, filename=dbname)
 
-    return structure_optim
+    return onlinecalc, structure_optim

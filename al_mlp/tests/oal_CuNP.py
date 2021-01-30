@@ -19,7 +19,7 @@ EMT_structure_optim.run(EMT(), "CuNP_emt")
 
 OAL_initial_structure = initial_structure.copy()
 OAL_initial_structure.set_calculator(EMT())
-OAL_structure_optim = run_oal(OAL_initial_structure, "CuNP_oal")
+OAL_learner, OAL_structure_optim = run_oal(OAL_initial_structure, "CuNP_oal")
 
 
 def oal_CuNP_energy():
@@ -48,7 +48,6 @@ def oal_CuNP_calls():
 
     # What I want here is the number of EMT calls; I don't think that this is
     # what get_trajectory actually does
-    OAL_images = OAL_structure_optim.get_trajectory('CuNP_emt')
-    EMT_images = EMT_structure_optim.get_trajectory('CuNP_oal')
+    EMT_images = EMT_structure_optim.get_trajectory('CuNP_emt')
 
-    assert EMT_structure_optim.parent_calls<0.5*len(EMT_IMAGES)
+    assert OAL_learner.parent_calls < 0.5*len(EMT_images)
