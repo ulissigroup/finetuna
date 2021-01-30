@@ -19,9 +19,12 @@ from al_mlp.ensemble_calc import EnsembleCalc
 from al_mlp.base_calcs.dummy import Dummy
 
 
-def run_oal(initial_structure, dbname):
+def run_oal(atomistic_method,
+            images,
+            dbname,
+            parent_calc):
 
-    images = [initial_structure]
+
     Gs = {
         "default": {
             "G2": {
@@ -33,7 +36,7 @@ def run_oal(initial_structure, dbname):
         },
     }
 
-    elements = np.unique(initial_structure.get_chemical_symbols())
+    elements = np.unique(images[0].get_chemical_symbols())
 
     learner_params = {
         "max_iterations": 10,
@@ -75,7 +78,6 @@ def run_oal(initial_structure, dbname):
     cutoff = Gs["default"]["cutoff"]
     trainer = AtomsTrainer(config)
     trainer_calc = AMPtorch
-    parent_calc = EMT()
     base_calc = Dummy(images)
 
     onlinecalc = OnlineActiveLearner(
@@ -89,10 +91,8 @@ def run_oal(initial_structure, dbname):
         n_cores="max",
     )
 
-    structure_optim = Relaxation(initial_structure, BFGS, fmax=0.05, steps=100)
-
     if os.path.exists("dft_calls.db"):
         os.remove("dft_calls.db")
-    structure_optim.run(onlinecalc, filename=dbname)
+    atomistic_method.run(onlinecalc, filename=dbname)
 
-    return onlinecalc, structure_optim
+    return onlinecalc, atomistic_method

@@ -130,7 +130,7 @@ class OnlineActiveLearner(Calculator):
             + ", uncertainty_tol: "
             + str(uncertainty_tol)
         )  # FIXME remove me
-        if uncertainty >= uncertainty_tol:
+        if uncertainty >= uncertainty_tol or len(self.parent_dataset) == 1:
             print("DFT required")
             new_data = atoms.copy()
             new_data.set_calculator(copy.copy(self.parent_calc))

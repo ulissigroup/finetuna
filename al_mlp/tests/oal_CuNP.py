@@ -12,14 +12,19 @@ initial_structure.rattle(0.1)
 initial_structure.set_pbc(True)
 initial_structure.set_cell([20, 20, 20])
 
+
 EMT_initial_structure = initial_structure.copy()
 EMT_initial_structure.set_calculator(EMT())
-EMT_structure_optim = Relaxation(EMT_initial_structure, BFGS, fmax=0.05, steps=100)
+EMT_structure_optim = Relaxation(EMT_initial_structure, BFGS, fmax=0.05, steps=30)
 EMT_structure_optim.run(EMT(), "CuNP_emt")
 
 OAL_initial_structure = initial_structure.copy()
 OAL_initial_structure.set_calculator(EMT())
-OAL_learner, OAL_structure_optim = run_oal(OAL_initial_structure, "CuNP_oal")
+OAL_relaxation = Relaxation(OAL_initial_structure, BFGS, fmax=0.05, steps=30)
+OAL_learner, OAL_structure_optim = run_oal(OAL_relaxation, 
+                                           [OAL_initial_structure],
+                                           "CuNP_oal", 
+                                           EMT())
 
 
 def oal_CuNP_energy():
