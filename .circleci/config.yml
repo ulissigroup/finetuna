@@ -32,7 +32,9 @@ jobs:
               source /home/circleci/miniconda/etc/profile.d/conda.sh
               conda activate base
               conda install -c conda-forge conda-merge
-              conda env create -f env_cpu.yml
+              wget https://raw.githubusercontent.com/ulissigroup/amptorch/master/env_cpu.yml -O env_amptorch_cpu.yml
+              conda-merge env_amptorch_cpu.yml env_cpu.yml > env.yml
+              conda env create -f env.yml
             fi
       - save_cache:
           paths:
