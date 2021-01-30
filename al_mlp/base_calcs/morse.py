@@ -5,6 +5,7 @@ import os
 import pandas as pd
 import al_mlp
 
+
 class MultiMorse(Calculator):
     implemented_properties = ["energy", "forces"]
     nolabel = True

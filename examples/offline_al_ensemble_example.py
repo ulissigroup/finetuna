@@ -111,16 +111,18 @@ base_calc = MultiMorse(images, cutoff, combo="mean")
 
 
 learner_params = {
-        "atomistic_method": Relaxation(
+    "atomistic_method": Relaxation(
         initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=50
     ),
-        "max_iterations": 10,
-        "samples_to_retrain": 5,
-        "filename":"relax_example",
-        "file_dir":"./",
-        "query_method":"max_uncertainty",
-        "use_dask":False
-        }
+    "max_iterations": 10,
+    "samples_to_retrain": 5,
+    "filename": "relax_example",
+    "file_dir": "./",
+    "query_method": "max_uncertainty",
+    "use_dask": False,
+}
 
-learner = EnsembleLearner(learner_params, trainer, images, parent_calc, base_calc,ensemble=3)
+learner = EnsembleLearner(
+    learner_params, trainer, images, parent_calc, base_calc, ensemble=3
+)
 learner.learn()

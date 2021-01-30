@@ -18,8 +18,9 @@ import os
 from al_mlp.ensemble_calc import EnsembleCalc
 from al_mlp.base_calcs.dummy import Dummy
 
+
 def run_oal(initial_structure, dbname):
-    
+
     images = [initial_structure]
     Gs = {
         "default": {
@@ -34,15 +35,15 @@ def run_oal(initial_structure, dbname):
 
     elements = np.unique(initial_structure.get_chemical_symbols())
 
-    learner_params = { 
-            "max_iterations": 10,
-            "samples_to_retrain": 1,
-            "filename":"relax_example",
-            "file_dir":"./",
-            "uncertain_tol": 2,
-            "relative_variance": True,
-            "use_dask": False
-            }
+    learner_params = {
+        "max_iterations": 10,
+        "samples_to_retrain": 1,
+        "filename": "relax_example",
+        "file_dir": "./",
+        "uncertain_tol": 2,
+        "relative_variance": True,
+        "use_dask": False,
+    }
 
     config = {
         "model": {"get_forces": True, "num_layers": 3, "num_nodes": 5},
@@ -51,7 +52,7 @@ def run_oal(initial_structure, dbname):
             "force_coefficient": 0.04,
             "lr": 1e-2,
             "batch_size": 10,
-            "epochs": 100, #was 100
+            "epochs": 100,  # was 100
         },
         "dataset": {
             "raw_data": images,
@@ -78,21 +79,20 @@ def run_oal(initial_structure, dbname):
     base_calc = Dummy(images)
 
     onlinecalc = OnlineActiveLearner(
-                 learner_params,
-                 trainer,
-                 images,
-                 parent_calc,
-                 base_calc,
-                 #trainer_calc,
-                 n_ensembles=10,
-                 n_cores='max'
-                 )
+        learner_params,
+        trainer,
+        images,
+        parent_calc,
+        base_calc,
+        # trainer_calc,
+        n_ensembles=10,
+        n_cores="max",
+    )
 
-    structure_optim = Relaxation(initial_structure,BFGS,fmax=0.05,steps = 100)
+    structure_optim = Relaxation(initial_structure, BFGS, fmax=0.05, steps=100)
 
-    if os.path.exists('dft_calls.db'):
-        os.remove('dft_calls.db')
-    structure_optim.run(onlinecalc,filename=dbname)
+    if os.path.exists("dft_calls.db"):
+        os.remove("dft_calls.db")
+    structure_optim.run(onlinecalc, filename=dbname)
 
     return structure_optim
-

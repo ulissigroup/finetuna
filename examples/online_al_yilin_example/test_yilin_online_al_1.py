@@ -16,7 +16,9 @@ from ase.utils.eos import EquationOfState
 from al_mlp.atomistic_methods import Relaxation
 import os
 from al_mlp.ensemble_calc import EnsembleCalc
-#from dummy.py import Dummy
+
+# from dummy.py import Dummy
+
 
 class Dummy(Calculator):
     implemented_properties = ["energy", "forces"]
@@ -34,27 +36,31 @@ class Dummy(Calculator):
         self.results["energy"] = energy
         self.results["forces"] = forces
 
-from concurrent.futures import ThreadPoolExecutor
-#executor = ThreadPoolExecutor(8)
 
-#Set up dask
+from concurrent.futures import ThreadPoolExecutor
+
+# executor = ThreadPoolExecutor(8)
+
+# Set up dask
 from dask_kubernetes import KubeCluster
 from dask.distributed import Client
 
 num_workers = 10
-cluster = KubeCluster.from_yaml("/home/jovyan/al_mlp/examples/online_al_yilin_example/dask-worker-cpu-spec.yml")
+cluster = KubeCluster.from_yaml(
+    "/home/jovyan/al_mlp/examples/online_al_yilin_example/dask-worker-cpu-spec.yml"
+)
 client = Client(cluster)
 cluster.adapt(minimum=num_workers, maximum=num_workers)
 executor = client
 
-#client.upload_file('dummy.py')#pass dask workers changed files (TEMPORARY)
+# client.upload_file('dummy.py')#pass dask workers changed files (TEMPORARY)
 
 EnsembleCalc.set_executor(executor)
 
-#Set up parent calculator and image environment
+# Set up parent calculator and image environment
 parent_calculator = EMT()
 
-initial_db = ase.io.read("/home/jovyan/scripts/test_yilin/Pt-init-images.db",":")
+initial_db = ase.io.read("/home/jovyan/scripts/test_yilin/Pt-init-images.db", ":")
 images = [initial_db[1]]
 images[0].calc = EMT()
 
@@ -69,15 +75,15 @@ Gs = {
     },
 }
 
-elements = ["Pt" ]
-learner_params = { 
-        "max_iterations": 10,
-        "samples_to_retrain": 1,
-        "filename":"relax_example",
-        "file_dir":"./",
-        "uncertain_tol": 2,
-        "relative_variance": True
-        }
+elements = ["Pt"]
+learner_params = {
+    "max_iterations": 10,
+    "samples_to_retrain": 1,
+    "filename": "relax_example",
+    "file_dir": "./",
+    "uncertain_tol": 2,
+    "relative_variance": True,
+}
 
 config = {
     "model": {"get_forces": True, "num_layers": 3, "num_nodes": 5},
@@ -86,7 +92,7 @@ config = {
         "force_coefficient": 0.04,
         "lr": 1e-2,
         "batch_size": 10,
-        "epochs": 100, #was 100
+        "epochs": 100,  # was 100
     },
     "dataset": {
         "raw_data": images,
@@ -109,25 +115,22 @@ cutoff = Gs["default"]["cutoff"]
 parent_calc = EMT()
 trainer = AtomsTrainer(config)
 trainer_calc = AMPtorch
-#base_calc = MultiMorse(images, cutoff, combo="mean")
+# base_calc = MultiMorse(images, cutoff, combo="mean")
 base_calc = Dummy(images)
 
 onlinecalc = OnlineActiveLearner(
-             learner_params,
-             trainer,
-             images,
-             parent_calc,
-             base_calc,
-             #trainer_calc,
-             n_ensembles=num_workers,
-             n_cores='max'
-             )
+    learner_params,
+    trainer,
+    images,
+    parent_calc,
+    base_calc,
+    # trainer_calc,
+    n_ensembles=num_workers,
+    n_cores="max",
+)
 
-structure_optim = Relaxation(images[0],BFGS,fmax=0.05,steps = 100)
+structure_optim = Relaxation(images[0], BFGS, fmax=0.05, steps=100)
 
-if os.path.exists('dft_calls.db'):
-    os.remove('dft_calls.db')
-structure_optim.run(onlinecalc,filename="relax_oal")
-
-
-
+if os.path.exists("dft_calls.db"):
+    os.remove("dft_calls.db")
+structure_optim.run(onlinecalc, filename="relax_oal")
