@@ -16,13 +16,13 @@ class TestMethods(unittest.TestCase):
     def test_delta_add(self):
         test_delta_add()
 
-    def oal_CuNP_energy(self):
+    def test_oal_CuNP_energy(self):
         oal_CuNP_energy()
 
-    def oal_CuNP_forces(self):
+    def test_oal_CuNP_forces(self):
         oal_CuNP_forces()
 
-    def oal_CuNP_calls(self):
+    def test_oal_CuNP_calls(self):
         oal_CuNP_calls()
 
 
