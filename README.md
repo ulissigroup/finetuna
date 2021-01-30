@@ -9,7 +9,12 @@ Install dependencies:
 
 1. Ensure conda is up-to-date: ```conda update conda```
 
-2. Create conda environment: ```conda env create -f env_cpu.yml```
+2. Merge the amptorch conda environment with this one and create it:
+```
+wget https://raw.githubusercontent.com/ulissigroup/amptorch/master/env_cpu.yml -O env_amptorch_cpu.yml
+conda-merge env_amptorch_cpu.yml env_cpu.yml > env.yml
+conda env create -f env.yml
+```
 
 3. Activate the conda environment `conda activate al_mlp` and install the package with `pip install -e .`
 
