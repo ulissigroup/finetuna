@@ -6,7 +6,7 @@ repository.
 import unittest
 
 from .delta_energy_test import test_delta_sub, test_delta_add
-from .oal_CuNP import oal_CuNP_energy, oal_CuNP_forces
+from .oal_CuNP import oal_CuNP_energy, oal_CuNP_forces, oal_CuNP_calls
 
 
 class TestMethods(unittest.TestCase):
@@ -21,6 +21,9 @@ class TestMethods(unittest.TestCase):
 
     def oal_CuNP_forces(self):
         oal_CuNP_forces()
+
+    def oal_CuNP_calls(self):
+        oal_CuNP_calls()
 
 
 if __name__ == "__main__":

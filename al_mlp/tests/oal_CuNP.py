@@ -42,3 +42,9 @@ def oal_CuNP_forces():
     OAL_image.set_calculator(EMT())
 
     assert allclose(EMT_traj[-1].get_forces(), OAL_traj[-1].get_forces(), atol=0.05)
+
+def oal_CuNP_calls():
+    OAL_images = OAL_structure_optim.get_trajectory()
+    EMT_images = EMT_structure_optim.get_trajectory()
+
+    assert len(OAL_images)<0.5*len(EMT_IMAGES)
