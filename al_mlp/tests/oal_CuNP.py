@@ -44,6 +44,9 @@ def oal_CuNP_forces():
     assert allclose(EMT_traj[-1].get_forces(), OAL_traj[-1].get_forces(), atol=0.05)
 
 def oal_CuNP_calls():
+
+    # What I want here is the number of EMT calls; I don't think that this is
+    # what get_trajectory actually does
     OAL_images = OAL_structure_optim.get_trajectory()
     EMT_images = EMT_structure_optim.get_trajectory()
 
