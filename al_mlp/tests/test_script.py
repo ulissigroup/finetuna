@@ -21,8 +21,5 @@ class TestMethods(unittest.TestCase):
     def oal_CuNP_forces(self):
         oal_CuNP_forces()
 
-    #def oal_PtNP_energy(self):
-    #    oal_PtNP_energy(self):
-
 if __name__ == "__main__":
     unittest.main(warnings="ignore")
