@@ -18,7 +18,9 @@ import os
 from al_mlp.ensemble_calc import EnsembleCalc
 from al_mlp.base_calcs.dummy import Dummy
 
-def run_oal(initial_structure):
+def run_oal(initial_structure, dbname):
+    
+    images = [initial_structure]
     Gs = {
         "default": {
             "G2": {
@@ -30,7 +32,8 @@ def run_oal(initial_structure):
         },
     }
 
-    elements = ["Pt" ]
+    elements = np.unique(initial_structure.get_chemical_symbols())
+
     learner_params = { 
             "max_iterations": 10,
             "samples_to_retrain": 1,
@@ -50,7 +53,7 @@ def run_oal(initial_structure):
             "epochs": 100, #was 100
         },
         "dataset": {
-            "raw_data": [initial_structure],
+            "raw_data": images,
             "val_split": 0,
             "elements": elements,
             "fp_params": Gs,
@@ -94,15 +97,7 @@ def run_oal(initial_structure):
 
     if os.path.exists('dft_calls.db'):
         os.remove('dft_calls.db')
-    structure_optim.run(onlinecalc,filename="relax_oal")
+    structure_optim.run(onlinecalc,filename=dbname)
 
     return structure_optim
 
-def test_Pt_NP_oal():
-    #Set up parent calculator and image environment
-    initial_structure = ase.io.read("./relaxation_test_structures/Pt-NP.traj")
-    initial_structure.set_calculator(EMT())
-
-    EMT_structure_optim = Relaxation(initial_structure,BFGS,fmax=0.05,steps = 100)
-    EMT_structure_optim.run(EMT)
-    test_oal(initial_structure)
