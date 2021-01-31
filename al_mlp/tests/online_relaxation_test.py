@@ -64,7 +64,7 @@ def run_oal(atomistic_method,
             "elements": elements,
             "fp_params": Gs,
             "save_fps": True,
-            "scaling": {"type": "normalize", "range": (0, 1)}
+            "scaling": {"type": "standardize"}
         },
         "cmd": {
             "debug": False,
