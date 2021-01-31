@@ -100,6 +100,13 @@ class OnlineActiveLearner(Calculator):
         )
 
     def calculate(self, atoms, properties, system_changes):
+
+        if (len(self.parent_dataset) == 1 and np.all(self.parent_dataset[0].positions == atoms.positions)):
+            # We only have one training data, and we are calculating the energy/force for that point
+            self.results["energy"] = self.parent_dataset[0].get_potential_energy(apply_constraint=False)
+            self.results["forces"] = self.parent_dataset[0].get_forces(apply_constraint=False)
+            return
+
         Calculator.calculate(self, atoms, properties, system_changes)
 
         ensemble_calc_copy = copy.deepcopy(self.ensemble_calc)

@@ -46,8 +46,16 @@ class DeltaCalc(LinearCombinationCalculator):
 
         if "energy" in self.results:
             if self.mode == "sub":
-                self.results["energy"] -= self.refs[0].get_potential_energy()
-                self.results["energy"] += self.refs[1].get_potential_energy()
+                self.results["energy"] -= self.refs[0].get_potential_energy(apply_constraint=False)
+                self.results["energy"] += self.refs[1].get_potential_energy(apply_constraint=False)
             else:
-                self.results["energy"] -= self.refs[1].get_potential_energy()
-                self.results["energy"] += self.refs[0].get_potential_energy()
+                self.results["energy"] -= self.refs[1].get_potential_energy(apply_constraint=False)
+                self.results["energy"] += self.refs[0].get_potential_energy(apply_constraint=False)
+
+        if "forces" in self.results:
+            if self.mode == "sub":
+                self.results["forces"] -= self.refs[0].get_forces()
+                self.results["forces"] += self.refs[1].get_forces()
+            else:
+                self.results["forces"] -= self.refs[1].get_forces()
+                self.results["forces"] += self.refs[0].get_forces()

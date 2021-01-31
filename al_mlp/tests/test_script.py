@@ -10,11 +10,11 @@ from .oal_CuNP import oal_CuNP_energy, oal_CuNP_forces, oal_CuNP_calls
 
 
 class TestMethods(unittest.TestCase):
-    def test_delta_sub(self):
-        test_delta_sub()
+    #def test_delta_sub(self):
+    #    test_delta_sub()
 
-    def test_delta_add(self):
-        test_delta_add()
+    #def test_delta_add(self):
+    #    test_delta_add()
 
     def test_oal_CuNP_energy(self):
         oal_CuNP_energy()

@@ -96,4 +96,3 @@ def test_delta_add():
     ), "Energies don't match!"
 
 
-test_delta_add()

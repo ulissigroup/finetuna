@@ -17,7 +17,7 @@ from al_mlp.atomistic_methods import Relaxation
 import os
 from al_mlp.ensemble_calc import EnsembleCalc
 from al_mlp.base_calcs.dummy import Dummy
-
+import torch
 
 def run_oal(atomistic_method,
             images,
@@ -52,10 +52,11 @@ def run_oal(atomistic_method,
         "model": {"get_forces": True, "num_layers": 3, "num_nodes": 5},
         "optim": {
             "device": "cpu",
-            "force_coefficient": 0.04,
+            "force_coefficient": 1.0,
             "lr": 1e-2,
             "batch_size": 10,
             "epochs": 100,  # was 100
+            "optimizer": torch.optim.LBFGS
         },
         "dataset": {
             "raw_data": images,
@@ -63,6 +64,7 @@ def run_oal(atomistic_method,
             "elements": elements,
             "fp_params": Gs,
             "save_fps": True,
+            "scaling": {"type": "normalize", "range": (0, 1)}
         },
         "cmd": {
             "debug": False,
