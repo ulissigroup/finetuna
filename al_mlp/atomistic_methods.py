@@ -68,16 +68,19 @@ class MDsimulate:
 
 
 class Relaxation:
-    def __init__(self, initial_geometry, optimizer, fmax=0.05, steps=None):
+    def __init__(self, initial_geometry, optimizer, fmax=0.05, steps=None, maxstep=0.04):
         self.initial_geometry = initial_geometry
         self.optimizer = optimizer
         self.fmax = fmax
         self.steps = steps
+        self.maxstep = maxstep
 
     def run(self, calc, filename):
         structure = self.initial_geometry.copy()
         structure.set_calculator(calc)
-        dyn = self.optimizer(structure, trajectory="{}.traj".format(filename))
+        dyn = self.optimizer(structure,
+                             maxstep = self.maxstep,
+                             trajectory="{}.traj".format(filename))
         dyn.run(fmax=self.fmax, steps=self.steps)
 
     def get_trajectory(self, filename):
