@@ -1,6 +1,7 @@
 import ase.io
 from .online_relaxation_test import run_oal
 from al_mlp.atomistic_methods import Relaxation
+from al_mlp.utils import CounterCalc
 from ase.calculators.emt import EMT
 import numpy as np
 from ase.cluster.icosahedron import Icosahedron
@@ -14,9 +15,10 @@ initial_structure.set_cell([20, 20, 20])
 
 
 EMT_initial_structure = initial_structure.copy()
-EMT_initial_structure.set_calculator(EMT())
+emt_counter = CounterCalc(EMT())
+EMT_initial_structure.set_calculator(emt_counter)
 EMT_structure_optim = Relaxation(EMT_initial_structure, BFGS, fmax=0.05, steps=30)
-EMT_structure_optim.run(EMT(), "CuNP_emt")
+EMT_structure_optim.run(emt_counter, "CuNP_emt")
 
 OAL_initial_structure = initial_structure.copy()
 OAL_initial_structure.set_calculator(EMT())
@@ -53,6 +55,6 @@ def oal_CuNP_calls():
 
     # What I want here is the number of EMT calls; I don't think that this is
     # what get_trajectory actually does
-    EMT_images = EMT_structure_optim.get_trajectory('CuNP_emt')
+    EMT_images = emt_counter.force_calls
 
     assert OAL_learner.parent_calls < 0.5*len(EMT_images)
