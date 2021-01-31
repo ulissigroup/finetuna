@@ -55,4 +55,4 @@ def oal_CuNP_calls():
 
     # What I want here is the number of EMT calls; I don't think that this is
     # what get_trajectory actually does
-    assert OAL_learner.parent_calls < 0.5*len(emt_counter.force_calls)
+    assert OAL_learner.parent_calls < 0.5*emt_counter.force_calls
