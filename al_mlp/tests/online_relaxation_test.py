@@ -77,6 +77,13 @@ def run_oal(atomistic_method,
         },
     }
 
+    if learner_params['use_dask']:
+        from dask.distributed import Client, LocalCluster
+        cluster = LocalCluster(n_workers=4,processes=True,threads_per_worker=1)
+        client = Client(cluster)
+        EnsembleCalc.set_executor(client)
+
+
     cutoff = Gs["default"]["cutoff"]
     trainer = AtomsTrainer(config)
     trainer_calc = AMPtorch

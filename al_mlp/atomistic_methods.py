@@ -68,7 +68,7 @@ class MDsimulate:
 
 
 class Relaxation:
-    def __init__(self, initial_geometry, optimizer, fmax=0.05, steps=None, maxstep=0.04):
+    def __init__(self, initial_geometry, optimizer, fmax=0.05, steps=None, maxstep=0.2):
         self.initial_geometry = initial_geometry
         self.optimizer = optimizer
         self.fmax = fmax

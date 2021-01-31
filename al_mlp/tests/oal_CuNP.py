@@ -22,10 +22,10 @@ EMT_structure_optim.run(emt_counter, "CuNP_emt")
 
 OAL_initial_structure = initial_structure.copy()
 OAL_initial_structure.set_calculator(EMT())
-OAL_relaxation = Relaxation(OAL_initial_structure, BFGS, fmax=0.05, steps=30)
-OAL_learner, OAL_structure_optim = run_oal(OAL_relaxation, 
+OAL_relaxation = Relaxation(OAL_initial_structure, BFGS, fmax=0.05, steps=30, maxstep = 0.04)
+OAL_learner, OAL_structure_optim = run_oal(OAL_relaxation,
                                            [OAL_initial_structure],
-                                           "CuNP_oal", 
+                                           "CuNP_oal",
                                            EMT())
 
 
