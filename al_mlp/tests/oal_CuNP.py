@@ -43,13 +43,10 @@ def oal_CuNP_energy():
 
 
 def oal_CuNP_forces():
-    EMT_image = EMT_structure_optim.get_trajectory('CuNP_emt')[-1]
-    EMT_image.set_calculator(EMT())
     OAL_image = OAL_structure_optim.get_trajectory('CuNP_oal')[-1]
     OAL_image.set_calculator(EMT())
 
-    assert np.allclose(EMT_image.get_forces(),
-                       OAL_image.get_forces(), atol=0.05)
+    assert np.max(np.abs(OAL_image.get_forces())) < 0.05
 
 def oal_CuNP_calls():
 

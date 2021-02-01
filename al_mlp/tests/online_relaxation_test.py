@@ -53,7 +53,7 @@ def run_oal(atomistic_method, images, dbname, parent_calc):
             "force_coefficient": 1.0,
             "lr": 1e-2,
             "batch_size": 10,
-            "epochs": 100,  # was 100
+            "epochs": 400,  # was 100
             "optimizer": torch.optim.LBFGS,
         },
         "dataset": {
@@ -71,14 +71,14 @@ def run_oal(atomistic_method, images, dbname, parent_calc):
             "identifier": "test",
             "verbose": True,
             # "logger": True,
-            "single-threaded": False,
+            "single-threaded": True,
         },
     }
 
     if learner_params["use_dask"]:
         from dask.distributed import Client, LocalCluster
 
-        cluster = LocalCluster(n_workers=4, processes=True, threads_per_worker=1)
+        cluster = LocalCluster(n_workers=10, processes=True, threads_per_worker=1)
         client = Client(cluster)
         EnsembleCalc.set_executor(client)
 

@@ -50,8 +50,8 @@ class EnsembleCalc(Calculator):
         median_idx = np.argsort(energies)[len(energies) // 2]
         energy_median = energies[median_idx]
         forces_median = forces[median_idx]
-        max_forces_var = np.max(np.var(forces, axis=0))
-        max_energy_var = np.var(energies)
+        max_forces_var = np.nanmax(np.nanvar(forces, axis=0))
+        max_energy_var = np.nanvar(energies)
         return (
             energy_median,
             forces_median,
