@@ -8,6 +8,7 @@ from al_mlp.utils import copy_images
 from amptorch.trainer import AtomsTrainer
 from torch.multiprocessing import Pool
 import torch
+import uuid
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 from dask.distributed import Client
@@ -115,9 +116,14 @@ class EnsembleCalc(Calculator):
         randomlist = [random.randint(0, 4294967295) for set in ensemble_sets]
         for i in range(len(ensemble_sets)):
             set = ensemble_sets[i]
-            trainer_copy = AtomsTrainer(copy.deepcopy(trainer.config))
-            trainer_copy.config["cmd"]["seed"] = randomlist[i]
-            trainer_copy.load_rng_seed()
+
+            copy_config = copy.deepcopy(trainer.config)
+            copy_config["cmd"]["seed"] = randomlist[i]
+            copy_config["cmd"]["identifier"] = copy_config["cmd"]["identifier"] + str(
+                uuid.uuid4()
+            )
+
+            trainer_copy = AtomsTrainer(copy_config)
             base_calc_copy = copy.deepcopy(base_calc)
             refs_copy = copy_images(refs)
             tuples.append((set, trainer_copy, base_calc_copy, refs_copy))

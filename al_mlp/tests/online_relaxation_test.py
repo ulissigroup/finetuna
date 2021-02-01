@@ -18,12 +18,10 @@ import os
 from al_mlp.ensemble_calc import EnsembleCalc
 from al_mlp.base_calcs.dummy import Dummy
 import torch
+import uuid
 
-def run_oal(atomistic_method,
-            images,
-            dbname,
-            parent_calc):
 
+def run_oal(atomistic_method, images, dbname, parent_calc):
 
     Gs = {
         "default": {
@@ -45,7 +43,7 @@ def run_oal(atomistic_method,
         "file_dir": "./",
         "uncertain_tol": 2,
         "relative_variance": True,
-        "use_dask": False,
+        "use_dask": True,
     }
 
     config = {
@@ -56,15 +54,15 @@ def run_oal(atomistic_method,
             "lr": 1e-2,
             "batch_size": 10,
             "epochs": 100,  # was 100
-            "optimizer": torch.optim.LBFGS
+            "optimizer": torch.optim.LBFGS,
         },
         "dataset": {
             "raw_data": images,
             "val_split": 0,
             "elements": elements,
             "fp_params": Gs,
-            "save_fps": True,
-            "scaling": {"type": "standardize"}
+            "save_fps": False,
+            "scaling": {"type": "standardize"},
         },
         "cmd": {
             "debug": False,
@@ -77,12 +75,12 @@ def run_oal(atomistic_method,
         },
     }
 
-    if learner_params['use_dask']:
+    if learner_params["use_dask"]:
         from dask.distributed import Client, LocalCluster
-        cluster = LocalCluster(n_workers=4,processes=True,threads_per_worker=1)
+
+        cluster = LocalCluster(n_workers=4, processes=True, threads_per_worker=1)
         client = Client(cluster)
         EnsembleCalc.set_executor(client)
-
 
     cutoff = Gs["default"]["cutoff"]
     trainer = AtomsTrainer(config)
