@@ -94,5 +94,3 @@ def test_delta_add():
         np.abs(add_energy - ((base_energy + parent_energy) + (parent_ref - base_ref)))
         < 1e-5
     ), "Energies don't match!"
-
-

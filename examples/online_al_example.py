@@ -1,15 +1,14 @@
 import numpy as np
-import ase
 import copy
 from al_mlp.online_learner import OnlineActiveLearner
 from ase.calculators.emt import EMT
 from al_mlp.base_calcs.morse import MultiMorse
-from ase import Atoms
+from al_mlp.atomistic_methods import Relaxation
 from amptorch.ase_utils import AMPtorch
 from amptorch.trainer import AtomsTrainer
 from ase.build import fcc100, add_adsorbate, molecule
 from ase.constraints import FixAtoms
-from ase.optimize import BFGS, QuasiNewton
+from ase.optimize import BFGS
 from ase.build import bulk
 from ase.utils.eos import EquationOfState
 

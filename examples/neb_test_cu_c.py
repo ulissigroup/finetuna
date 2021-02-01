@@ -94,8 +94,8 @@ class NEBcalc:
         opti.run(fmax=0.01, steps=100)
         print("NEB DONE")
 
-        """ 
-      The following code is used to visualise the NEB at every iteration 
+        """
+      The following code is used to visualise the NEB at every iteration
       """
 
         built_neb = NEBTools(images)

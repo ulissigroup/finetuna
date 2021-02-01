@@ -1,7 +1,8 @@
 import ase.io
-from online_relaxation_test import run_oal
+from al_mlp.tests.online_relaxation_test import run_oal
 from al_mlp.atomistic_methods import Relaxation
 from ase.calculators.emt import EMT
+from ase.optimize import BFGS
 import numpy as np
 
 # Set up parent calculator and image environment
@@ -14,6 +15,6 @@ run_oal = run_oal(initial_structure)
 
 
 def oal_PtNP_energy():
-    assert allclose(
-        EMT_structure_optim.get_potential_energy(), test_oal.get_potential_energy()
+    assert np.allclose(
+        EMT_structure_optim.get_potential_energy(), run_oal.get_potential_energy()
     )

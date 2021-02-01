@@ -1,4 +1,3 @@
-import ase.io
 from .online_relaxation_test import run_oal
 from al_mlp.atomistic_methods import Relaxation
 from al_mlp.utils import CounterCalc
@@ -22,17 +21,18 @@ EMT_structure_optim.run(emt_counter, "CuNP_emt")
 
 OAL_initial_structure = initial_structure.copy()
 OAL_initial_structure.set_calculator(EMT())
-OAL_relaxation = Relaxation(OAL_initial_structure, BFGS, fmax=0.05, steps=30, maxstep = 0.04)
-OAL_learner, OAL_structure_optim = run_oal(OAL_relaxation,
-                                           [OAL_initial_structure],
-                                           "CuNP_oal",
-                                           EMT())
+OAL_relaxation = Relaxation(
+    OAL_initial_structure, BFGS, fmax=0.05, steps=30, maxstep=0.04
+)
+OAL_learner, OAL_structure_optim = run_oal(
+    OAL_relaxation, [OAL_initial_structure], "CuNP_oal", EMT()
+)
 
 
 def oal_CuNP_energy():
-    EMT_image = EMT_structure_optim.get_trajectory('CuNP_emt')[-1]
+    EMT_image = EMT_structure_optim.get_trajectory("CuNP_emt")[-1]
     EMT_image.set_calculator(EMT())
-    OAL_image = OAL_structure_optim.get_trajectory('CuNP_oal')[-1]
+    OAL_image = OAL_structure_optim.get_trajectory("CuNP_oal")[-1]
     OAL_image.set_calculator(EMT())
 
     assert np.allclose(
@@ -43,16 +43,16 @@ def oal_CuNP_energy():
 
 
 def oal_CuNP_forces():
-    EMT_image = EMT_structure_optim.get_trajectory('CuNP_emt')[-1]
+    EMT_image = EMT_structure_optim.get_trajectory("CuNP_emt")[-1]
     EMT_image.set_calculator(EMT())
-    OAL_image = OAL_structure_optim.get_trajectory('CuNP_oal')[-1]
+    OAL_image = OAL_structure_optim.get_trajectory("CuNP_oal")[-1]
     OAL_image.set_calculator(EMT())
 
-    assert np.allclose(EMT_image.get_forces(),
-                       OAL_image.get_forces(), atol=0.05)
+    assert np.allclose(EMT_image.get_forces(), OAL_image.get_forces(), atol=0.05)
+
 
 def oal_CuNP_calls():
 
     # What I want here is the number of EMT calls; I don't think that this is
     # what get_trajectory actually does
-    assert OAL_learner.parent_calls < 0.5*emt_counter.force_calls
+    assert OAL_learner.parent_calls < 0.5 * emt_counter.force_calls

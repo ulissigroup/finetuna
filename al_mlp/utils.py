@@ -3,6 +3,7 @@ import copy
 from ase.calculators.singlepoint import SinglePointCalculator as sp
 from ase.calculators.calculator import Calculator
 
+
 def convert_to_singlepoint(images):
     """
     Replaces the attached calculators with singlepoint calculators
@@ -78,7 +79,8 @@ def copy_images(images):
 def write_to_db(database, queried_images):
     for image in queried_images:
         database.write(image)
-        
+
+
 class CounterCalc(Calculator):
     implemented_properties = ["energy", "forces", "uncertainty"]
     """

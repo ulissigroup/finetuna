@@ -1,13 +1,10 @@
-import os
-import sys
+
 import copy
 import numpy as np
-import pandas as pd
 from ase.db import connect
 from ase.calculators.singlepoint import SinglePointCalculator as sp
 from ase.calculators.calculator import Calculator
 from al_mlp.utils import convert_to_singlepoint, compute_with_calc
-from al_mlp.bootstrap import bootstrap_ensemble
 from al_mlp.bootstrap import non_bootstrap_ensemble
 from al_mlp.ensemble_calc import EnsembleCalc
 from al_mlp.calcs import DeltaCalc
@@ -101,10 +98,16 @@ class OnlineActiveLearner(Calculator):
 
     def calculate(self, atoms, properties, system_changes):
 
-        if (len(self.parent_dataset) == 1 and np.all(self.parent_dataset[0].positions == atoms.positions)):
+        if len(self.parent_dataset) == 1 and np.all(
+            self.parent_dataset[0].positions == atoms.positions
+        ):
             # We only have one training data, and we are calculating the energy/force for that point
-            self.results["energy"] = self.parent_dataset[0].get_potential_energy(apply_constraint=False)
-            self.results["forces"] = self.parent_dataset[0].get_forces(apply_constraint=False)
+            self.results["energy"] = self.parent_dataset[0].get_potential_energy(
+                apply_constraint=False
+            )
+            self.results["forces"] = self.parent_dataset[0].get_forces(
+                apply_constraint=False
+            )
             return
 
         Calculator.calculate(self, atoms, properties, system_changes)
@@ -130,7 +133,6 @@ class OnlineActiveLearner(Calculator):
 
         db = connect("dft_calls.db")
 
-        cwd = os.getcwd()
         print(
             "uncertainty: "
             + str(uncertainty)
@@ -155,6 +157,7 @@ class OnlineActiveLearner(Calculator):
             try:
                 db.write(new_data)
             except:
+                print('failed to write to db file')
                 pass
             self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
                 self.parent_dataset,

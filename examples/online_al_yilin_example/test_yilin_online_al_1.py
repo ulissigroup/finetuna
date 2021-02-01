@@ -37,7 +37,7 @@ class Dummy(Calculator):
         self.results["forces"] = forces
 
 
-from concurrent.futures import ThreadPoolExecutor
+# from concurrent.futures import ThreadPoolExecutor
 
 # executor = ThreadPoolExecutor(8)
 
