@@ -10,7 +10,6 @@ import copy
 
 import torch
 import ase
-import functools
 
 from ase.db import connect
 

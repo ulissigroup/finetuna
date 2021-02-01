@@ -1,10 +1,16 @@
 # https://wiki.fysik.dtu.dk/ase/tutorials/neb/diffusion.html#diffusion-tutorial
 # Surface Diffusion Energy Barriers
 # Building your structure
+import ase
+from ase.build import fcc100, add_adsorbate
+from ase.constraints import FixAtoms
+from ase.optimize import BFGS
+from al_mlp.utils import CounterCalc, convert_to_singlepoint
 
 
 def construct_geometries(parent_calc, ml2relax):
     counter_calc = CounterCalc(parent_calc, "parent_database")
+    # CounterCalc doesn't seem to exist yet
     # Initial structure guess
     initial_slab = fcc100("Cu", size=(2, 2, 3))
     add_adsorbate(initial_slab, "O", 1.7, "hollow")
@@ -28,14 +34,15 @@ def construct_geometries(parent_calc, ml2relax):
         print("BUILDING FINAL")
         qn = BFGS(final_slab, trajectory="final.traj", logfile="final_relax_log.txt")
         qn.run(fmax=0.01, steps=100)
-        initial_slab = read("initial.traj", "-1")
-        final_slab = read("final.traj", "-1")
-        # If there is already a pre-existing initial and final relaxed parent state we can read that to use as a starting point
+        initial_slab = ase.io.read("initial.traj", "-1")
+        final_slab = ase.io.read("final.traj", "-1")
+        # If there is already a pre-existing initial and final relaxed parent state
+        # we can read that to use as a starting point
         # initial_slab = read("/content/parent_initial.traj")
         # final_slab = read("/content/parent_final.traj")
     else:
-        initial_slab = attach_sp_calc(initial_slab)
-        final_slab = attach_sp_calc(final_slab)
+        initial_slab = convert_to_singlepoint(initial_slab)
+        final_slab = convert_to_singlepoint(final_slab)
 
     initial_force_calls = counter_calc.force_calls
     return initial_slab, final_slab, initial_force_calls

@@ -45,7 +45,7 @@ class MDsimulate:
         dyn.attach(traj.write, interval=1)
         try:
             fixed_atoms = len(slab.constraints[0].get_indices())
-        except:
+        except Exception:
             fixed_atoms = 0
             pass
 

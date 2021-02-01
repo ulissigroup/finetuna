@@ -1,32 +1,18 @@
 import ase
-from ase.calculators.calculator import Calculator
 from ase.calculators.emt import EMT
-from ase.calculators.singlepoint import SinglePointCalculator as sp
-from ase.optimize import QuasiNewton
-from ase.neb import NEB, SingleCalculatorNEB
-from ase.optimize import BFGS, FIRE, BFGSLineSearch
-from ase import Atoms, Atom, units
-from ase.build import molecule
-from ase.visualize import view
-from ase.io import read, write
-from ase.io.trajectory import TrajectoryReader, Trajectory
-from ase.build import fcc100, add_adsorbate, bcc100, fcc111
+from ase.neb import SingleCalculatorNEB
+from ase.optimize import BFGS
+from ase.io import read
+from ase.build import fcc100, add_adsorbate
 from ase.constraints import FixAtoms
 from ase.neb import NEBTools
 import matplotlib.pyplot as plt
 import numpy as np
 import copy
 import torch
-from ase.eos import EquationOfState
-from ase.build import bulk
-from ase.build import fcc100, add_adsorbate, molecule
-from ase.constraints import FixAtoms
-from ase.optimize import BFGS
-from ase.calculators.emt import EMT
 
 from al_mlp.offline_active_learner import OfflineActiveLearner
 from al_mlp.base_calcs.morse import MultiMorse
-from al_mlp.atomistic_methods import Relaxation
 
 from amptorch.trainer import AtomsTrainer
 
@@ -43,7 +29,8 @@ class NEBcalc:
         ml2relax: boolean. True to use ML to relax the initial and final structure guesses.
         False if initial and final structures were relaxed beforehand.
 
-        intermediate_samples: int. Number of intermediate samples to be used in constructing the NEB"""
+        intermediate_samples:
+        int. Number of intermediate samples to be used in constructing the NEB"""
 
         self.starting_images = copy.deepcopy(starting_images)
         self.ml2relax = ml2relax
@@ -100,8 +87,8 @@ class NEBcalc:
 
         built_neb = NEBTools(images)
         barrier, dE = built_neb.get_barrier()
-        max_force = built_neb.get_fmax()
-        fig = built_neb.plot_band()
+        # max_force = built_neb.get_fmax()
+        # fig = built_neb.plot_band()
         plt.show()
 
     def get_trajectory(self, filename):
@@ -143,7 +130,8 @@ def construct_geometries(parent_calc, ml2relax):
         qn.run(fmax=0.01, steps=100)
         initial_slab = read("initial.traj", "-1")
         final_slab = read("final.traj", "-1")
-        # If there is already a pre-existing initial and final relaxed parent state we can read that to use as a starting point
+        # If there is already a pre-existing initial and
+        # final relaxed parent state we can read that to use as a starting point
         # initial_slab = read("/content/parent_initial.traj")
         # final_slab = read("/content/parent_final.traj")
     else:
@@ -153,10 +141,6 @@ def construct_geometries(parent_calc, ml2relax):
     # initial_force_calls = counter_calc.force_calls
     return initial_slab, final_slab  # , initial_force_calls
 
-
-from al_mlp.offline_active_learner import OfflineActiveLearner
-from al_mlp.utils import convert_to_singlepoint, compute_with_calc, write_to_db
-import random
 
 '''
 class NEBLearner(OfflineActiveLearner):
@@ -198,8 +182,12 @@ Gs = {
     },
 }
 
-ml2relax = True  # use machine learning to relax the initial and final states rather than DFT as is the norm
-total_neb_images = 5  # N + 2 where N is the number of intermediate images and 2 is for initial and final structures
+ml2relax = True
+# use machine learning to relax the initial and
+# final states rather than DFT as is the norm
+total_neb_images = 5
+# N + 2 where N is the number of intermediate images and
+# 2 is for initial and final structures
 initial, final = construct_geometries(parent_calc=parent_calc, ml2relax=ml2relax)
 
 images = [initial]

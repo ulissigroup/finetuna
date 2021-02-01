@@ -127,7 +127,8 @@ class OfflineActiveLearner:
 
     def query_data(self):
         """
-        Queries data from a list of images. Calculates the properties and adds them to the training data.
+        Queries data from a list of images. Calculates the properties and adds them to the training
+        data.
 
         Parameters
         ----------

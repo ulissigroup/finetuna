@@ -4,20 +4,15 @@ from ase.build import fcc100, add_adsorbate, molecule
 from ase.constraints import FixAtoms
 from ase.optimize import BFGS
 from ase.calculators.emt import EMT
-from ase import Atoms, Atom
 import numpy as np
 import copy
-import sys
-import random
 import torch
 
 
-from al_mlp.offline_active_learner import OfflineActiveLearner
 from al_mlp.preset_learners.ensemble_learner import EnsembleLearner
 from al_mlp.base_calcs.morse import MultiMorse
 from al_mlp.atomistic_methods import Relaxation
 
-from amptorch.ase_utils import AMPtorch
 from amptorch.trainer import AtomsTrainer
 
 

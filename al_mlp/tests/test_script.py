@@ -5,8 +5,8 @@ repository.
 
 import unittest
 
-from .delta_energy_test import test_delta_sub, test_delta_add
-from .oal_CuNP import oal_CuNP_energy, oal_CuNP_forces, oal_CuNP_calls
+# from al_mlp.tests.delta_energy_test import test_delta_sub, test_delta_add
+from al_mlp.tests.oal_CuNP import oal_CuNP_energy, oal_CuNP_forces, oal_CuNP_calls
 
 
 class TestMethods(unittest.TestCase):

@@ -1,4 +1,3 @@
-
 import copy
 import numpy as np
 from ase.db import connect
@@ -156,8 +155,8 @@ class OnlineActiveLearner(Calculator):
 
             try:
                 db.write(new_data)
-            except:
-                print('failed to write to db file')
+            except Exception:
+                print("failed to write to db file")
                 pass
             self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
                 self.parent_dataset,

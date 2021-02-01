@@ -3,16 +3,12 @@ from ase.calculators.calculator import Calculator
 import random
 from al_mlp.calcs import DeltaCalc
 import copy
-import dask.bag as daskbag
 from al_mlp.utils import copy_images
 from amptorch.trainer import AtomsTrainer
-from torch.multiprocessing import Pool
 import torch
 import uuid
 
 torch.multiprocessing.set_sharing_strategy("file_system")
-from dask.distributed import Client
-from concurrent.futures import ThreadPoolExecutor
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -51,7 +47,7 @@ class EnsembleCalc(Calculator):
         energy_median = energies[median_idx]
         forces_median = forces[median_idx]
         max_forces_var = np.nanmax(np.nanvar(forces, axis=0))
-        max_energy_var = np.nanvar(energies)
+        # max_energy_var = np.nanvar(energies)
         return (
             energy_median,
             forces_median,
@@ -94,9 +90,11 @@ class EnsembleCalc(Calculator):
     @classmethod
     def make_ensemble(cls, ensemble_sets, trainer, base_calc, refs):
         """
-        Uses Dask to parallelize, must have previously set up cluster, image to use, and pool of workers
+        Uses Dask to parallelize, must have previously set up cluster,
+        image to use, and pool of workers
         """
-        # method for training trainer on ensemble sets, then create neural net calc, combine with base calc, return additive delta calc
+        # method for training trainer on ensemble sets, then create neural net calc,
+        # combine with base calc, return additive delta calc
         def train_and_combine(args_tuple):
             ensemble_set = args_tuple[0]
             trainer = args_tuple[1]
@@ -110,7 +108,8 @@ class EnsembleCalc(Calculator):
             trained_calc = DeltaCalc((trainer.get_calc(), base_calc), "add", refs)
             return trained_calc
 
-        # split ensemble sets into separate tuples, clone: trainer, base calc and add to tuples, add: refs to tuples
+        # split ensemble sets into separate tuples, clone: trainer,
+        # base calc and add to tuples, add: refs to tuples
         tuples = []
         random.seed(trainer.config["cmd"]["seed"])
         randomlist = [random.randint(0, 4294967295) for set in ensemble_sets]
@@ -131,7 +130,8 @@ class EnsembleCalc(Calculator):
         # map training method, returns array of delta calcs
         # tuples_bag = daskbag.from_sequence(tuples)
         # tuples_bag_computed = tuples_bag.map(train_and_combine)
-        # if "single-threaded" in  trainer.config["cmd"] and trainer.config["cmd"]["single-threaded"]:
+        # if "single-threaded" in  trainer.config["cmd"] and
+        # trainer.config["cmd"]["single-threaded"]:
         #     trained_calcs = tuples_bag_computed.compute(scheduler='single-threaded')
         # else:
         #     trained_calcs = tuples_bag_computed.compute()

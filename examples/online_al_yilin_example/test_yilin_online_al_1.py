@@ -1,21 +1,18 @@
 import numpy as np
 import ase
-import copy
 from al_mlp.online_learner import OnlineActiveLearner
 from ase.calculators.emt import EMT
+from ase.optimize import BFGS
 from ase.calculators.calculator import Calculator, all_changes
-from al_mlp.base_calcs.morse import MultiMorse
-from ase import Atoms
+
+# from al_mlp.base_calcs.morse import MultiMorse
 from amptorch.ase_utils import AMPtorch
 from amptorch.trainer import AtomsTrainer
-from ase.build import fcc100, add_adsorbate, molecule
-from ase.constraints import FixAtoms
-from ase.optimize import BFGS, QuasiNewton
-from ase.build import bulk
-from ase.utils.eos import EquationOfState
 from al_mlp.atomistic_methods import Relaxation
 import os
 from al_mlp.ensemble_calc import EnsembleCalc
+from dask_kubernetes import KubeCluster
+from dask.distributed import Client
 
 # from dummy.py import Dummy
 
@@ -42,8 +39,6 @@ class Dummy(Calculator):
 # executor = ThreadPoolExecutor(8)
 
 # Set up dask
-from dask_kubernetes import KubeCluster
-from dask.distributed import Client
 
 num_workers = 10
 cluster = KubeCluster.from_yaml(

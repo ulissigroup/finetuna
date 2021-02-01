@@ -1,24 +1,12 @@
 import numpy as np
-import ase
-import copy
 from al_mlp.online_learner import OnlineActiveLearner
-from ase.calculators.emt import EMT
-from ase.calculators.calculator import Calculator, all_changes
-from al_mlp.base_calcs.morse import MultiMorse
-from ase import Atoms
-from amptorch.ase_utils import AMPtorch
 from amptorch.trainer import AtomsTrainer
-from ase.build import fcc100, add_adsorbate, molecule
-from ase.constraints import FixAtoms
-from ase.optimize import BFGS, QuasiNewton
-from ase.build import bulk
-from ase.utils.eos import EquationOfState
-from al_mlp.atomistic_methods import Relaxation
 import os
 from al_mlp.ensemble_calc import EnsembleCalc
 from al_mlp.base_calcs.dummy import Dummy
 import torch
-import uuid
+
+# from amptorch.ase_utils import AMPtorch
 
 
 def run_oal(atomistic_method, images, dbname, parent_calc):
@@ -82,9 +70,9 @@ def run_oal(atomistic_method, images, dbname, parent_calc):
         client = Client(cluster)
         EnsembleCalc.set_executor(client)
 
-    cutoff = Gs["default"]["cutoff"]
+    # cutoff = Gs["default"]["cutoff"]
     trainer = AtomsTrainer(config)
-    trainer_calc = AMPtorch
+    # trainer_calc = AMPtorch
     base_calc = Dummy(images)
 
     onlinecalc = OnlineActiveLearner(

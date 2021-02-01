@@ -9,12 +9,16 @@ class DeltaCalc(LinearCombinationCalculator):
         """Implementation of sum of calculators.
 
         calcs: list
-            List of two :mod:`ase.calculators` objects. First calculator must be the parent Calculator in "sub" mode,
-            or the delta trained Calculator in "add" mode. Second calculator must be the base Calculator.
+            List of two :mod:`ase.calculators` objects.
+            First calculator must be the parent Calculator in "sub" mode,
+            or the delta trained Calculator in "add" mode.
+            Second calculator must be the base Calculator.
         mode: string
-            "sub" or "add" is used to specify if the difference or the sum of the results are calculated.
+            "sub" or "add" is used to specify if the difference
+            or the sum of the results are calculated.
         refs: list of atoms
-            Same atoms with respective calculators attached. The first atoms must have the parent Calculator.
+            Same atoms with respective calculators attached.
+            The first atoms must have the parent Calculator.
             The second atoms must have the base Calculator.
         atoms: Atoms object
             Optional :class:`~ase.Atoms` object to which the calculator will be attached.
@@ -38,7 +42,8 @@ class DeltaCalc(LinearCombinationCalculator):
         """Calculates the desired property.
         Supports single point calculators with precalculated properties.
         "sub" mode: calculates the delta between the two given calculators.
-        "add" mode: calculates the predicted value given the predicted delta calculator and the base calc.
+        "add" mode: calculates the predicted value given the predicted delta
+        calculator and the base calc.
         """
         self.calcs[0].results = self.parent_results
         self.calcs[1].results = self.base_results
