@@ -43,7 +43,7 @@ def run_oal(atomistic_method, images, dbname, parent_calc):
             "batch_size": 10,
             "epochs": 100,  # was 100
             "optimizer": torch.optim.LBFGS,
-            "optimizer_args": {"optimizer__line_search_fn": "strong_wolfe"}
+            "optimizer_args": {"optimizer__line_search_fn": "strong_wolfe"},
         },
         "dataset": {
             "raw_data": images,
