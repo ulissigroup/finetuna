@@ -9,7 +9,7 @@ from ase.calculators.calculator import Calculator
 from al_mlp.utils import convert_to_singlepoint, compute_with_calc
 from al_mlp.bootstrap import bootstrap_ensemble
 from al_mlp.bootstrap import non_bootstrap_ensemble
-from al_mlp.ensemble_calc import EnsembleCalc
+from al_mlp.ensemble_calc import EnsembleCalc, make_ensemble
 from al_mlp.calcs import DeltaCalc
 from al_mlp.utils import copy_images
 
@@ -39,12 +39,10 @@ class OnlineActiveLearner(Calculator):
         self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
             parent_dataset, n_ensembles=n_ensembles
         )
-        self.ensemble_calc = make_ensemble(
-            self.ensemble_sets, self.trainer, self.base_calc, self.refs
-        )
+        trained_calcs = make_ensemble(self.ensemble_sets, self.trainer)
+        self.ensemble_calc = EnsembleCalc(trained_calcs)
         self.uncertain_tol = learner_params["uncertain_tol"]
         self.parent_calls = 0
-        self.init_training_data()
 
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
@@ -54,8 +52,10 @@ class OnlineActiveLearner(Calculator):
         force_pred = ensemble_calc_copy.get_forces(atoms)
         uncertainty = atoms.info["uncertainty"][0]
         uncertainty_tol = self.uncertain_tol
+        print(uncertainty)
 
-        if uncertainty >= uncertainty_tol:
+        # if uncertainty >= uncertainty_tol:
+        if self.parent_calls > 2:
             print("DFT required")
             new_data = atoms.copy()
             new_data.set_calculator(copy.copy(self.parent_calc))
@@ -68,10 +68,14 @@ class OnlineActiveLearner(Calculator):
 
             self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
                 self.parent_dataset,
-                compute_with_calc([new_data], self.delta_sub_calc),
+                compute_with_calc([new_data], self.parent_calc),
                 n_ensembles=self.n_ensembles,
             )
-            self.parent_calls += 1
+            # self.parent_calls += 1
+
+            trained_calcs = make_ensemble(self.ensemble_sets, self.trainer)
+            self.ensemble_calc = EnsembleCalc(trained_calcs)
+        self.parent_calls += 1
 
         self.results["energy"] = energy_pred
         self.results["forces"] = force_pred

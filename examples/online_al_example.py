@@ -99,10 +99,9 @@ onlinecalc = OnlineActiveLearner(
              trainer,
              images,
              parent_calc,
-             base_calc,
-             trainer_calc,
              n_ensembles=5,
              n_cores='max')
+
 
 structure_optim = Relaxation(slab,BFGS,fmax=0.05,steps = 100)
 

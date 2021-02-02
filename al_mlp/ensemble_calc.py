@@ -70,7 +70,7 @@ def train_and_combine(args_tuple):
         check_path = trainer.cp_dir
         trainer = AtomsTrainer()
         trainer.load_pretrained(checkpoint_path=check_path)
-        return trained_calc
+        return trainer
 
 
 def make_ensemble(ensemble_sets, trainer):

@@ -109,15 +109,12 @@ config = {
 cutoff = Gs["default"]["cutoff"]
 parent_calc = EMT()
 trainer = AtomsTrainer(config)
-trainer_calc = AMPtorch
-base_calc = Dummy(images)
 
 onlinecalc = OnlineActiveLearner(
              learner_params,
              trainer,
              images,
              parent_calc,
-             base_calc,
              n_ensembles=num_workers,
              n_cores='max'
              )
