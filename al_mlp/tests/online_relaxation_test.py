@@ -38,11 +38,12 @@ def run_oal(atomistic_method, images, dbname, parent_calc):
         "model": {"get_forces": True, "num_layers": 3, "num_nodes": 5},
         "optim": {
             "device": "cpu",
-            "force_coefficient": 1.0,
-            "lr": 1e-2,
+            "force_coefficient": 4.0,
+            "lr": 1,
             "batch_size": 10,
-            "epochs": 400,  # was 100
+            "epochs": 100,  # was 100
             "optimizer": torch.optim.LBFGS,
+            "optimizer_args": {"optimizer__line_search_fn": "strong_wolfe"}
         },
         "dataset": {
             "raw_data": images,
