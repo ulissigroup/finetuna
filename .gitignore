@@ -20,6 +20,7 @@ al_mlp.egg-info
 *.png
 *.json
 *.h5
+*.dirlock
 
 .ipynb_checkpoints
 */checkpoints/*
