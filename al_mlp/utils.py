@@ -3,6 +3,7 @@ import copy
 from ase.calculators.singlepoint import SinglePointCalculator as sp
 from ase.calculators.calculator import Calculator
 
+
 class CounterCalc(Calculator):
     implemented_properties = ["energy", "forces", "uncertainty"]
     """
@@ -21,6 +22,7 @@ class CounterCalc(Calculator):
         self.results["energy"] = calc.get_potential_energy(atoms)
         self.results["forces"] = calc.get_forces(atoms)
         self.force_calls += 1
+
 
 def convert_to_singlepoint(images):
     """
@@ -97,4 +99,3 @@ def copy_images(images):
 def write_to_db(database, queried_images):
     for image in queried_images:
         database.write(image)
-
