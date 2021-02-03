@@ -1,9 +1,7 @@
 import numpy as np
 from ase.calculators.calculator import Calculator
 import random
-from al_mlp.calcs import DeltaCalc
 import copy
-from al_mlp.utils import copy_images
 from amptorch.trainer import AtomsTrainer
 import torch
 import uuid
@@ -60,9 +58,14 @@ class EnsembleCalc(Calculator):
         forces = []
 
         def evaluate_ef(tuple):
+            """
+            accepts a tuple of an atoms image and a calculator
+            evaluates the energies and forces of the atom using the calculator
+            and returns them as a tuple
+            """
             atoms_image = tuple[0]
             calc = tuple[1]
-            calc.calcs[0].trainer.config["dataset"]["save_fps"] = False
+            calc.trainer.config["dataset"]["save_fps"] = False
             return (
                 calc.get_potential_energy(atoms_image),
                 calc.get_forces(atoms_image),
@@ -71,7 +74,8 @@ class EnsembleCalc(Calculator):
         if self.executor is not None:
             futures = []
             for calc in self.trained_calcs:
-                futures.append(self.executor.submit(evaluate_ef, (atoms, calc)))
+                big_future = self.executor.scatter((atoms, calc))
+                futures.append(self.executor.submit(evaluate_ef, big_future))
             energies = [future.result()[0] for future in futures]
             forces = [future.result()[1] for future in futures]
         else:
@@ -88,25 +92,25 @@ class EnsembleCalc(Calculator):
         atoms.info["uncertainty"] = np.array([uncertainty])
 
     @classmethod
-    def make_ensemble(cls, ensemble_sets, trainer, base_calc, refs):
+    def make_ensemble(cls, ensemble_sets, trainer):
         """
         Uses Dask to parallelize, must have previously set up cluster,
         image to use, and pool of workers
         """
-        # method for training trainer on ensemble sets, then create neural net calc,
-        # combine with base calc, return additive delta calc
         def train_and_combine(args_tuple):
+            """
+            method for training trainer on ensemble sets, then create neural net calc,
+            returns trained calc
+            """
             ensemble_set = args_tuple[0]
             trainer = args_tuple[1]
-            base_calc = args_tuple[2]
-            refs = args_tuple[3]
 
             trainer.train(raw_data=ensemble_set)
             check_path = trainer.cp_dir
             trainer = AtomsTrainer()
             trainer.load_pretrained(checkpoint_path=check_path)
-            trained_calc = DeltaCalc((trainer.get_calc(), base_calc), "add", refs)
-            return trained_calc
+            trainer_calc = trainer.get_calc()
+            return trainer_calc
 
         # split ensemble sets into separate tuples, clone: trainer,
         # base calc and add to tuples, add: refs to tuples
@@ -123,23 +127,15 @@ class EnsembleCalc(Calculator):
             )
 
             trainer_copy = AtomsTrainer(copy_config)
-            base_calc_copy = copy.deepcopy(base_calc)
-            refs_copy = copy_images(refs)
-            tuples.append((set, trainer_copy, base_calc_copy, refs_copy))
+            tuples.append((set, trainer_copy))
 
         # map training method, returns array of delta calcs
-        # tuples_bag = daskbag.from_sequence(tuples)
-        # tuples_bag_computed = tuples_bag.map(train_and_combine)
-        # if "single-threaded" in  trainer.config["cmd"] and
-        # trainer.config["cmd"]["single-threaded"]:
-        #     trained_calcs = tuples_bag_computed.compute(scheduler='single-threaded')
-        # else:
-        #     trained_calcs = tuples_bag_computed.compute()
         trained_calcs = []
         if cls.executor is not None:
             futures = []
             for tuple in tuples:
-                futures.append(cls.executor.submit(train_and_combine, tuple))
+                big_future = cls.executor.scatter(tuple)
+                futures.append(cls.executor.submit(train_and_combine, big_future))
             trained_calcs = [future.result() for future in futures]
         else:
             for tuple in tuples:
