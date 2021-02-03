@@ -1,6 +1,7 @@
 from al_mlp.offline_active_learner import OfflineActiveLearner
 
-#Specific NEB querying strategy
+# Specific NEB querying strategy
+
 
 class NEBLearner(OfflineActiveLearner):
     def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc):
