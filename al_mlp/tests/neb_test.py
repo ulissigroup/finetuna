@@ -1,5 +1,7 @@
+from offline_neb_Cu_C_utils import construct_geometries
+from al_mlp.utils import CounterCalc
+from al_mlp.atomistic_methods import NEBcalc
 from offline_neb_learner import offline_neb
-from offline_neb_Cu_C_utils import construct_geometries, NEBcalc, CounterCalc
 import ase
 from ase.calculators.emt import EMT
 import numpy as np
@@ -38,7 +40,6 @@ def neb_CuC_energy():
     EMT_image.set_calculator(EMT())
     neb_AL_image = get_trajectory("example_iter_" + str(iter))[-saddle_pt]
     neb_AL_image.set_calculator(EMT())
-
     assert np.allclose(
         EMT_image.get_potential_energy(),
         neb_AL_image.get_potential_energy(),
