@@ -129,16 +129,15 @@ class OnlineActiveLearner(Calculator):
                     base_uncertainty = image.info["uncertainty"][0]
             uncertainty_tol = self.uncertain_tol * base_uncertainty
 
-        db = connect("dft_calls.db")
-
         print(
             "uncertainty: "
             + str(uncertainty)
             + ", uncertainty_tol: "
             + str(uncertainty_tol)
         )  # FIX ME remove me
-        if uncertainty >= uncertainty_tol or len(self.parent_dataset) == 1:
+        if len(self.parent_dataset) == 1 or uncertainty >= uncertainty_tol:
             print("Parent call required")
+            db = connect("dft_calls.db")
             new_data = atoms.copy()
             new_data.set_calculator(copy.copy(self.parent_calc))
             # os.makedirs("./temp", exist_ok=True)
