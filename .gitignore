@@ -21,6 +21,7 @@ al_mlp.egg-info
 *.json
 *.h5
 *.dirlock
+*.lock
 
 test_figs/
 
