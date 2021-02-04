@@ -14,12 +14,12 @@ def plot_forces_hist(self) -> None:
         os.makedirs('test_figs')
 
     plt.figure(1)
-    plt.hist(self.EMT_image.get_forces().flatten, bins=100)
+    plt.hist(self.EMT_image.get_forces().flatten(), bins=100)
     plt.title(self.description+' EMT forces distribution')
     plt.savefig('test_figs/'+self.description+'_EMT_hist')
 
     plt.figure(2)
-    plt.hist(self.OAL_image.get_forces().flatten, bins=100)
+    plt.hist(self.OAL_image.get_forces().flatten(), bins=100)
     plt.title(self.description+' OAL forces distribution')
     plt.savefig('test_figs/'+self.description+'_OAL_hist')
 
@@ -37,7 +37,7 @@ CuNP_suite = loader.loadTestsFromTestCase(oal_CuNP)
 # PtNP_suite = loader.loadTestsFromTestCase(oal_PtNP)
 
 # add cleanup methods to test cases
-CuNP_suite._tests[0].addCleanup(plot_forces_hist)
+CuNP_suite._tests[0].addCleanup(plot_forces_hist, CuNP_suite._tests[0])
 # PtNP_suite._tests[0]._tests[0].addCleanup(plot_forces_hist)
 
 # add tests cases to the test suite
