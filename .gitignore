@@ -22,6 +22,8 @@ al_mlp.egg-info
 *.h5
 *.dirlock
 
+test_figs/
+
 .ipynb_checkpoints
 */checkpoints/*
 stored-primes/
