@@ -29,7 +29,7 @@ def run_oal(atomistic_method, images, dbname, parent_calc):
         "samples_to_retrain": 1,
         "filename": "relax_example",
         "file_dir": "./",
-        "uncertain_tol": 2,
+        "uncertain_tol": 1.1,
         "relative_variance": True,
         "use_dask": True,
     }

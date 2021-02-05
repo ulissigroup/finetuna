@@ -13,6 +13,7 @@ suite = unittest.TestSuite()
 # add tests to the test suite
 suite.addTests(loader.loadTestsFromTestCase(oal_CuNP))
 # suite.addTests(loader.loadTestsFromTestCase(oal_PtNP))
+# add more tests here
 
 # Deprecated below, call using pytest instead
 # initialize a runner, pass it your suite and run it
