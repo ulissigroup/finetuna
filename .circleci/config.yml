@@ -47,8 +47,8 @@ jobs:
             source /home/circleci/miniconda/etc/profile.d/conda.sh
             conda activate al_mlp
             pip install -e .
-            ls
             pytest al_mlp/tests/light_test_suite.py 
+            no_output_timeout: 1.5h
 
       - run:
           name: Run black
