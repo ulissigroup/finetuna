@@ -7,3 +7,4 @@ dependencies:
  - dask-kubernetes
  - pip:
    - git+https://github.com/ulissigroup/amptorch.git
+   - pytest
