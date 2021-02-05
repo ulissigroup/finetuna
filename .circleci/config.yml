@@ -47,7 +47,7 @@ jobs:
             source /home/circleci/miniconda/etc/profile.d/conda.sh
             conda activate al_mlp
             pip install -e .
-            OMP_NUM_THREADS=1 python -m unittest
+            pytest al_mlp/al_mlp/tests/light_test_suite.py 
 
       - run:
           name: Run black

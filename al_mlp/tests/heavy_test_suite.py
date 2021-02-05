@@ -14,7 +14,8 @@ suite = unittest.TestSuite()
 suite.addTests(loader.loadTestsFromTestCase(oal_CuNP))
 # suite.addTests(loader.loadTestsFromTestCase(oal_PtNP))
 
+# Deprecated below, call using pytest instead
 # initialize a runner, pass it your suite and run it
-runner = unittest.TextTestRunner(verbosity=3)
-if __name__ == "__main__":
-    result = runner.run(suite)
+# runner = unittest.TextTestRunner(verbosity=3)
+# if __name__ == "__main__":
+#     result = runner.run(suite)
