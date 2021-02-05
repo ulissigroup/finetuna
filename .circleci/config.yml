@@ -48,7 +48,7 @@ jobs:
             conda activate al_mlp
             pip install -e .
             pytest al_mlp/tests/light_test_suite.py 
-          no_output_timeout: 1.5h
+          no_output_timeout: 0.5h
 
       - run:
           name: Run black
