@@ -65,10 +65,3 @@ class DeltaCalc(LinearCombinationCalculator):
                     apply_constraint=False
                 )
 
-        if "forces" in self.results:
-            if self.mode == "sub":
-                self.results["forces"] -= self.refs[0].get_forces()
-                self.results["forces"] += self.refs[1].get_forces()
-            else:
-                self.results["forces"] -= self.refs[1].get_forces()
-                self.results["forces"] += self.refs[0].get_forces()

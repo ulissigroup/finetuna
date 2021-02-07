@@ -119,14 +119,15 @@ class OnlineActiveLearner(Calculator):
             "relative_variance" in self.learner_params
             and self.learner_params["relative_variance"]
         ):
-            trained_calc_copy = copy.deepcopy(self.trained_calc)
-            copied_images = copy_images(self.parent_dataset)
-            base_uncertainty = 0
-            for image in copied_images:
-                trained_calc_copy.reset()
-                trained_calc_copy.get_forces(image)
-                if image.info["uncertainty"][0] > base_uncertainty:
-                    base_uncertainty = image.info["uncertainty"][0]
+            #trained_calc_copy = copy.deepcopy(self.trained_calc)
+            #copied_images = copy_images(self.parent_dataset)
+            #base_uncertainty = 0
+            #for image in copied_images:
+            #    trained_calc_copy.reset()
+            #    trained_calc_copy.get_forces(image)
+            #    if image.info["uncertainty"][0] > base_uncertainty:
+            #        base_uncertainty = image.info["uncertainty"][0]
+            base_uncertainty = np.nanmax(np.nanvar(force_pred))
             uncertainty_tol = self.uncertain_tol * base_uncertainty
 
         print(
