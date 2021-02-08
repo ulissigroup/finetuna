@@ -97,6 +97,7 @@ class EnsembleCalc(Calculator):
         Uses Dask to parallelize, must have previously set up cluster,
         image to use, and pool of workers
         """
+
         def train_and_combine(args_tuple):
             """
             method for training trainer on ensemble sets, then create neural net calc,

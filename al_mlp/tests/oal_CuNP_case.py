@@ -10,7 +10,6 @@ from ase.optimize import BFGS
 
 
 class oal_CuNP(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls) -> None:
         # Set up parent calculator and image environment
@@ -22,7 +21,9 @@ class oal_CuNP(unittest.TestCase):
         EMT_initial_structure = initial_structure.copy()
         cls.emt_counter = CounterCalc(EMT())
         EMT_initial_structure.set_calculator(cls.emt_counter)
-        cls.EMT_structure_optim = Relaxation(EMT_initial_structure, BFGS, fmax=0.05, steps=30)
+        cls.EMT_structure_optim = Relaxation(
+            EMT_initial_structure, BFGS, fmax=0.05, steps=30
+        )
         cls.EMT_structure_optim.run(cls.emt_counter, "CuNP_emt")
 
         OAL_initial_structure = initial_structure.copy()
@@ -37,7 +38,7 @@ class oal_CuNP(unittest.TestCase):
         cls.EMT_image.set_calculator(EMT())
         cls.OAL_image = cls.OAL_structure_optim.get_trajectory("CuNP_oal")[-1]
         cls.OAL_image.set_calculator(EMT())
-        cls.description = 'CuNP'
+        cls.description = "CuNP"
         return super().setUpClass()
 
     def test_oal_CuNP_energy(self):
@@ -49,9 +50,7 @@ class oal_CuNP(unittest.TestCase):
 
     def test_oal_CuNP_forces(self):
         assert np.allclose(
-            self.EMT_image.get_forces(),
-            self.OAL_image.get_forces(),
-            atol=0.05
+            self.EMT_image.get_forces(), self.OAL_image.get_forces(), atol=0.05
         )
 
     def test_oal_CuNP_calls(self):

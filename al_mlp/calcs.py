@@ -64,4 +64,3 @@ class DeltaCalc(LinearCombinationCalculator):
                 self.results["energy"] += self.refs[0].get_potential_energy(
                     apply_constraint=False
                 )
-

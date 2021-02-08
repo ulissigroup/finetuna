@@ -7,6 +7,7 @@ from al_mlp.tests.oal_CuNP_case import oal_CuNP
 # import and set executor client
 from dask.distributed import Client, LocalCluster
 from al_mlp.ensemble_calc import EnsembleCalc
+
 cluster = LocalCluster(n_workers=4, processes=True, threads_per_worker=1)
 client = Client(cluster)
 EnsembleCalc.set_executor(client)

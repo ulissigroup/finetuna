@@ -3,6 +3,7 @@ import unittest
 
 # import test modules
 from al_mlp.tests.oal_CuNP_case import oal_CuNP
+
 # from al_mlp.tests.oal_PtNP_case import oal_PtNP
 
 
@@ -10,22 +11,23 @@ from al_mlp.tests.oal_CuNP_case import oal_CuNP
 def plot_forces_hist(self) -> None:
     import matplotlib.pyplot as plt
     import os
-    if not os.path.exists('test_figs'):
-        os.makedirs('test_figs')
+
+    if not os.path.exists("test_figs"):
+        os.makedirs("test_figs")
 
     plt.figure(1)
     plt.hist(self.EMT_image.get_forces().flatten(), bins=100)
     plt.xlim([-0.08, 0.08])
     plt.ylim([0, 4])
-    plt.title(self.description+' EMT forces distribution')
-    plt.savefig('test_figs/'+self.description+'_EMT_hist')
+    plt.title(self.description + " EMT forces distribution")
+    plt.savefig("test_figs/" + self.description + "_EMT_hist")
 
     plt.figure(2)
     plt.hist(self.OAL_image.get_forces().flatten(), bins=100)
     plt.xlim([-0.08, 0.08])
     plt.ylim([0, 4])
-    plt.title(self.description+' OAL forces distribution')
-    plt.savefig('test_figs/'+self.description+'_OAL_hist')
+    plt.title(self.description + " OAL forces distribution")
+    plt.savefig("test_figs/" + self.description + "_OAL_hist")
 
 
 # initialize the test suite
