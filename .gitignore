@@ -23,7 +23,8 @@ al_mlp.egg-info
 *.dirlock
 *.lock
 
-test_figs/
+*/test_figs/*
+*/dask-worker-space/*
 
 .ipynb_checkpoints
 */checkpoints/*
