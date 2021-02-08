@@ -22,6 +22,7 @@ al_mlp.egg-info
 *.h5
 *.dirlock
 *.lock
+*.swp
 
 */test_figs/*
 */dask-worker-space/*
