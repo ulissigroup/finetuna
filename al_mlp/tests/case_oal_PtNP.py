@@ -50,10 +50,10 @@ class oal_PtNP(unittest.TestCase):
             atol=0.1,
         )
 
-    def test_oal_CuNP_forces(self):
+    def test_oal_PtNP_forces(self):
         assert np.allclose(
             self.EMT_image.get_forces(), self.OAL_image.get_forces(), atol=0.05
         )
 
-    def test_oal_CuNP_calls(self):
+    def test_oal_PtNP_calls(self):
         assert self.OAL_learner.parent_calls < 0.5 * self.emt_counter.force_calls

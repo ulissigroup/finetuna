@@ -20,15 +20,17 @@ def plot_forces_hist(self) -> None:
 
     plt.figure(1)
     plt.hist(self.EMT_image.get_forces().flatten(), bins=100)
-    plt.xlim([-0.08, 0.08])
-    plt.ylim([0, 4])
     plt.title(self.description + " EMT forces distribution")
     plt.savefig("test_figs/" + self.description + "_EMT_hist")
 
+    # axes = plt.gca()
+    # xlim = axes.get_xlim()
+    # ylim = axes.get_ylim()
+
     plt.figure(2)
     plt.hist(self.OAL_image.get_forces().flatten(), bins=100)
-    plt.xlim([-0.08, 0.08])
-    plt.ylim([0, 4])
+    # plt.xlim(xlim)
+    # plt.ylim(ylim)
     plt.title(self.description + " OAL forces distribution")
     plt.savefig("test_figs/" + self.description + "_OAL_hist")
 
