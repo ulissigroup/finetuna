@@ -1,31 +1,29 @@
 import unittest
 
-from .test_setup.online_relaxation_test import run_oal
+import ase.io
+from al_mlp.tests.test_setup.online_relaxation_test import run_oal
 from al_mlp.atomistic_methods import Relaxation
 from al_mlp.calcs import CounterCalc
 from ase.calculators.emt import EMT
-import numpy as np
-from ase.cluster.icosahedron import Icosahedron
 from ase.optimize import BFGS
+import numpy as np
 
 
-class oal_CuNP(unittest.TestCase):
+class oal_PtNP(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         # Set up parent calculator and image environment
-        initial_structure = Icosahedron("Cu", 2)
-        initial_structure.rattle(0.1)
-        initial_structure.set_pbc(True)
-        initial_structure.set_cell([20, 20, 20])
+        initial_structure = ase.io.read("./relaxation_test_structures/Pt-NP.traj")
+        initial_structure.set_calculator(EMT())
 
         # Run relaxation with the parent calc
         EMT_initial_structure = initial_structure.copy()
         cls.emt_counter = CounterCalc(EMT())
         EMT_initial_structure.set_calculator(cls.emt_counter)
         cls.EMT_structure_optim = Relaxation(
-            EMT_initial_structure, BFGS, fmax=0.05, steps=30
+            EMT_initial_structure, BFGS, fmax=0.05, steps=100
         )
-        cls.EMT_structure_optim.run(cls.emt_counter, "CuNP_emt")
+        cls.EMT_structure_optim.run(cls.emt_counter, "PtNP_emt")
 
         # Run relaxation with active learning
         OAL_initial_structure = initial_structure.copy()
@@ -34,18 +32,18 @@ class oal_CuNP(unittest.TestCase):
             OAL_initial_structure, BFGS, fmax=0.05, steps=30, maxstep=0.04
         )
         cls.OAL_learner, cls.OAL_structure_optim = run_oal(
-            OAL_relaxation, [OAL_initial_structure], "CuNP_oal", EMT()
+            OAL_relaxation, [OAL_initial_structure], "PtNP_oal", EMT()
         )
 
         # Retain images of the final structure from both relaxations
-        cls.EMT_image = cls.EMT_structure_optim.get_trajectory("CuNP_emt")[-1]
+        cls.EMT_image = cls.EMT_structure_optim.get_trajectory("PtNP_emt")[-1]
         cls.EMT_image.set_calculator(EMT())
-        cls.OAL_image = cls.OAL_structure_optim.get_trajectory("CuNP_oal")[-1]
+        cls.OAL_image = cls.OAL_structure_optim.get_trajectory("PtNP_oal")[-1]
         cls.OAL_image.set_calculator(EMT())
-        cls.description = "CuNP"
+        cls.description = "PtNP"
         return super().setUpClass()
 
-    def test_oal_CuNP_energy(self):
+    def test_oal_PtNP_energy(self):
         assert np.allclose(
             self.EMT_image.get_potential_energy(),
             self.OAL_image.get_potential_energy(),
@@ -58,7 +56,4 @@ class oal_CuNP(unittest.TestCase):
         )
 
     def test_oal_CuNP_calls(self):
-
-        # What I want here is the number of EMT calls; I don't think that this is
-        # what get_trajectory actually does
         assert self.OAL_learner.parent_calls < 0.5 * self.emt_counter.force_calls
