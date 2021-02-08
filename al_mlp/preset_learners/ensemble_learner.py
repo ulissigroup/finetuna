@@ -79,7 +79,7 @@ class EnsembleLearner(OfflineActiveLearner):
             [atoms.info["uncertainty"][0] for atoms in self.sample_candidates]
         )
         query_idx = np.argpartition(uncertainty, -1 * self.samples_to_retrain)[
-            -1 * self.samples_to_retrain :
+            -self.samples_to_retrain :
         ]
         queried_images = [self.sample_candidates[idx] for idx in query_idx]
         # write_to_db(queries_db, queried_images) bugged unique ID

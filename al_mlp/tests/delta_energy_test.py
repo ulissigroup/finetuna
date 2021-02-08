@@ -1,39 +1,33 @@
 # Tests if delta calculator is working properly with simple assertion function
 from al_mlp.calcs import DeltaCalc
 from ase.calculators.emt import EMT
-from ase.calculators.morse import MorsePotential
 import numpy as np
-import ase
 import copy
-from al_mlp.offline_active_learner import OfflineActiveLearner
-from ase.calculators.emt import EMT
-from ase.calculators.morse import MorsePotential
-from ase import Atoms
 from ase.build import fcc100, add_adsorbate, molecule
 from ase.constraints import FixAtoms
-from ase.optimize import BFGS, QuasiNewton
 from ase.build import bulk
 from ase.utils.eos import EquationOfState
 from al_mlp.base_calcs.morse import MultiMorse
+
 parent_calculator = EMT()
 energies = []
 volumes = []
 LC = [3.5, 3.55, 3.6, 3.65, 3.7, 3.75]
 
 for a in LC:
-   cu_bulk = bulk('Cu', 'fcc', a=a)
-   calc = EMT()
-   cu_bulk.set_calculator(calc)
-   e = cu_bulk.get_potential_energy()
-   energies.append(e)
-   volumes.append(cu_bulk.get_volume())
+    cu_bulk = bulk("Cu", "fcc", a=a)
+    calc = EMT()
+    cu_bulk.set_calculator(calc)
+    e = cu_bulk.get_potential_energy()
+    energies.append(e)
+    volumes.append(cu_bulk.get_volume())
 
 
 eos = EquationOfState(volumes, energies)
 v0, e0, B = eos.fit()
-aref=3.6
-vref = bulk('Cu', 'fcc', a=aref).get_volume()
-copper_lattice_constant = (v0/vref)**(1/3)*aref
+aref = 3.6
+vref = bulk("Cu", "fcc", a=aref).get_volume()
+copper_lattice_constant = (v0 / vref) ** (1 / 3) * aref
 slab = fcc100("Cu", a=copper_lattice_constant, size=(2, 2, 3))
 ads = molecule("C")
 add_adsorbate(slab, ads, 2, offset=(1, 1))
@@ -63,28 +57,33 @@ Gs = {
 cutoff = Gs["default"]["cutoff"]
 base_calc = MultiMorse(images, cutoff, combo="mean")
 slab_base = slab.copy()
-slab_base.set_calculator(base_calc) 
+slab_base.set_calculator(base_calc)
 base_energy = base_ref = slab_base.get_potential_energy()
 
-#Add
-delta_calc = DeltaCalc([parent_calculator,base_calc],"add",[slab,slab_base])
-#Set slab calculator to delta calc and evaluate energy
+# Add
+delta_calc = DeltaCalc([parent_calculator, base_calc], "add", [slab, slab_base])
+# Set slab calculator to delta calc and evaluate energy
 slab_add = slab.copy()
 slab_add.set_calculator(delta_calc)
 add_energy = slab_add.get_potential_energy()
 
 
-#Sub
-delta_calc = DeltaCalc([parent_calculator,base_calc],"sub",[slab,slab_base])
-#Set slab calculator to delta calc and evaluate energy
+# Sub
+delta_calc = DeltaCalc([parent_calculator, base_calc], "sub", [slab, slab_base])
+# Set slab calculator to delta calc and evaluate energy
 slab_sub = slab.copy()
 slab_sub.set_calculator(delta_calc)
 sub_energy = slab_sub.get_potential_energy()
 
 
-def test_delta_sub():  
-    assert sub_energy == ((parent_energy - base_energy)+(-parent_ref + base_ref)), "Energies don't match!"
+def test_delta_sub():
+    assert sub_energy == (
+        (parent_energy - base_energy) + (-parent_ref + base_ref)
+    ), "Energies don't match!"
+
 
 def test_delta_add():
-    assert np.abs(add_energy - ((base_energy + parent_energy)+(parent_ref - base_ref))) < 1e-5, "Energies don't match!"   
-test_delta_add()
+    assert (
+        np.abs(add_energy - ((base_energy + parent_energy) + (parent_ref - base_ref)))
+        < 1e-5
+    ), "Energies don't match!"

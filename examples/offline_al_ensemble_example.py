@@ -4,20 +4,15 @@ from ase.build import fcc100, add_adsorbate, molecule
 from ase.constraints import FixAtoms
 from ase.optimize import BFGS
 from ase.calculators.emt import EMT
-from ase import Atoms, Atom
 import numpy as np
 import copy
-import sys
-import random
 import torch
 
 
-from al_mlp.offline_active_learner import OfflineActiveLearner
 from al_mlp.preset_learners.ensemble_learner import EnsembleLearner
 from al_mlp.base_calcs.morse import MultiMorse
 from al_mlp.atomistic_methods import Relaxation
 
-from amptorch.ase_utils import AMPtorch
 from amptorch.trainer import AtomsTrainer
 
 
@@ -111,16 +106,18 @@ base_calc = MultiMorse(images, cutoff, combo="mean")
 
 
 learner_params = {
-        "atomistic_method": Relaxation(
+    "atomistic_method": Relaxation(
         initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=50
     ),
-        "max_iterations": 10,
-        "samples_to_retrain": 5,
-        "filename":"relax_example",
-        "file_dir":"./",
-        "query_method":"max_uncertainty",
-        "use_dask":False
-        }
+    "max_iterations": 10,
+    "samples_to_retrain": 5,
+    "filename": "relax_example",
+    "file_dir": "./",
+    "query_method": "max_uncertainty",
+    "use_dask": False,
+}
 
-learner = EnsembleLearner(learner_params, trainer, images, parent_calc, base_calc,ensemble=3)
+learner = EnsembleLearner(
+    learner_params, trainer, images, parent_calc, base_calc, ensemble=3
+)
 learner.learn()

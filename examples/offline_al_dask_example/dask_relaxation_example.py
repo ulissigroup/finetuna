@@ -10,7 +10,6 @@ import copy
 
 import torch
 import ase
-import functools
 
 from ase.db import connect
 
@@ -23,7 +22,9 @@ from amptorch.trainer import AtomsTrainer
 from dask_kubernetes import KubeCluster
 from dask.distributed import Client
 
-cluster = KubeCluster.from_yaml("/home/jovyan/al_mlp/examples/offline_al_dask_example/dask-worker-cpu-spec.yml")
+cluster = KubeCluster.from_yaml(
+    "/home/jovyan/al_mlp/examples/offline_al_dask_example/dask-worker-cpu-spec.yml"
+)
 client = Client(cluster)
 cluster.adapt(minimum=0, maximum=4)
 

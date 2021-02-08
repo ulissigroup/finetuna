@@ -1,6 +1,7 @@
 from ase.calculators.calculator import Calculator, all_changes
 import numpy as np
 
+
 class Dummy(Calculator):
     implemented_properties = ["energy", "forces"]
 

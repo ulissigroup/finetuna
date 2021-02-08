@@ -25,16 +25,18 @@ def bootstrap_ensemble(
             ensemble_sets.append(random.choices(parent_dataset, k=len(parent_dataset)))
     return ensemble_sets, parent_dataset
 
+
 def non_bootstrap_ensemble(parent_dataset, new_data=None, n_ensembles=1):
     if new_data:
         if isinstance(new_data, list):
             for datum in new_data:
                 parent_dataset.append(datum)
-        elif isinstance(new_data,Atoms):
+        elif isinstance(new_data, Atoms):
             parent_dataset.append(new_data)
         else:
-            print("new_data is not an Atoms object or list of Atoms, non_bootstrap_ensemble() failed!")
+            print(
+                "new_data is not an Atoms object or list of Atoms, non_bootstrap_ensemble() failed!"
+            )
     for i in range(n_ensembles):
         ensemble_sets = [parent_dataset.copy() for i in range(n_ensembles)]
     return ensemble_sets, parent_dataset
-

@@ -1,16 +1,12 @@
 import numpy as np
 from ase.calculators.calculator import Calculator
 import random
-from al_mlp.calcs import DeltaCalc
 import copy
-import dask.bag as daskbag
-from al_mlp.utils import copy_images
 from amptorch.trainer import AtomsTrainer
-from torch.multiprocessing import Pool
 import torch
+import uuid
+
 torch.multiprocessing.set_sharing_strategy("file_system")
-from dask.distributed import Client
-from concurrent.futures import ThreadPoolExecutor
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -48,9 +44,13 @@ class EnsembleCalc(Calculator):
         median_idx = np.argsort(energies)[len(energies) // 2]
         energy_median = energies[median_idx]
         forces_median = forces[median_idx]
-        max_forces_var = np.max(np.var(forces, axis=0))
-        max_energy_var = np.var(energies)
-        return energy_median, forces_median, max_forces_var #change back to max forces var
+        max_forces_var = np.nanmax(np.nanvar(forces, axis=0))
+        # max_energy_var = np.nanvar(energies)
+        return (
+            energy_median,
+            forces_median,
+            max_forces_var,
+        )  # change back to max forces var
 
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
@@ -58,22 +58,31 @@ class EnsembleCalc(Calculator):
         forces = []
 
         def evaluate_ef(tuple):
+            """
+            accepts a tuple of an atoms image and a calculator
+            evaluates the energies and forces of the atom using the calculator
+            and returns them as a tuple
+            """
             atoms_image = tuple[0]
             calc = tuple[1]
-            calc.calcs[0].trainer.config['dataset']['save_fps'] = False
-            return (calc.get_potential_energy(atoms_image), calc.get_forces(atoms_image))
+            calc.trainer.config["dataset"]["save_fps"] = False
+            return (
+                calc.get_potential_energy(atoms_image),
+                calc.get_forces(atoms_image),
+            )
+
         if self.executor is not None:
             futures = []
             for calc in self.trained_calcs:
-                futures.append(self.executor.submit(evaluate_ef, (atoms,calc)))
+                big_future = self.executor.scatter((atoms, calc))
+                futures.append(self.executor.submit(evaluate_ef, big_future))
             energies = [future.result()[0] for future in futures]
             forces = [future.result()[1] for future in futures]
         else:
             for calc in self.trained_calcs:
                 energies.append(calc.get_potential_energy(atoms))
                 forces.append(calc.get_forces(atoms))
-        
-        
+
         energies = np.array(energies)
         forces = np.array(forces)
         energy_pred, force_pred, uncertainty = self.calculate_stats(energies, forces)
@@ -83,58 +92,59 @@ class EnsembleCalc(Calculator):
         atoms.info["uncertainty"] = np.array([uncertainty])
 
     @classmethod
-    def make_ensemble(cls, ensemble_sets, trainer, base_calc, refs):
+    def make_ensemble(cls, ensemble_sets, trainer):
         """
-        Uses Dask to parallelize, must have previously set up cluster, image to use, and pool of workers
+        Uses Dask to parallelize, must have previously set up cluster,
+        image to use, and pool of workers
         """
-        #method for training trainer on ensemble sets, then create neural net calc, combine with base calc, return additive delta calc
+
         def train_and_combine(args_tuple):
+            """
+            method for training trainer on ensemble sets, then create neural net calc,
+            returns trained calc
+            """
             ensemble_set = args_tuple[0]
             trainer = args_tuple[1]
-            base_calc = args_tuple[2]
-            refs = args_tuple[3]
 
             trainer.train(raw_data=ensemble_set)
             check_path = trainer.cp_dir
             trainer = AtomsTrainer()
             trainer.load_pretrained(checkpoint_path=check_path)
-            trained_calc = DeltaCalc((trainer.get_calc(),base_calc),"add",refs)
-            return trained_calc
+            trainer_calc = trainer.get_calc()
+            return trainer_calc
 
-        #split ensemble sets into separate tuples, clone: trainer, base calc and add to tuples, add: refs to tuples
+        # split ensemble sets into separate tuples, clone: trainer,
+        # base calc and add to tuples, add: refs to tuples
         tuples = []
         random.seed(trainer.config["cmd"]["seed"])
-        randomlist = [random.randint(0,4294967295) for set in ensemble_sets]
+        randomlist = [random.randint(0, 4294967295) for set in ensemble_sets]
         for i in range(len(ensemble_sets)):
             set = ensemble_sets[i]
-            trainer_copy = AtomsTrainer(copy.deepcopy(trainer.config))
-            trainer_copy.config["cmd"]["seed"] = randomlist[i]
-            trainer_copy.load_rng_seed()
-            base_calc_copy = copy.deepcopy(base_calc)
-            refs_copy = copy_images(refs) 
-            tuples.append((set, trainer_copy, base_calc_copy, refs_copy))
-        
-        #map training method, returns array of delta calcs
-        # tuples_bag = daskbag.from_sequence(tuples)
-        # tuples_bag_computed = tuples_bag.map(train_and_combine)
-        # if "single-threaded" in  trainer.config["cmd"] and trainer.config["cmd"]["single-threaded"]:
-        #     trained_calcs = tuples_bag_computed.compute(scheduler='single-threaded')
-        # else:
-        #     trained_calcs = tuples_bag_computed.compute()
+
+            copy_config = copy.deepcopy(trainer.config)
+            copy_config["cmd"]["seed"] = randomlist[i]
+            copy_config["cmd"]["identifier"] = copy_config["cmd"]["identifier"] + str(
+                uuid.uuid4()
+            )
+
+            trainer_copy = AtomsTrainer(copy_config)
+            tuples.append((set, trainer_copy))
+
+        # map training method, returns array of delta calcs
         trained_calcs = []
         if cls.executor is not None:
             futures = []
             for tuple in tuples:
-                futures.append(cls.executor.submit(train_and_combine, tuple))
+                big_future = cls.executor.scatter(tuple)
+                futures.append(cls.executor.submit(train_and_combine, big_future))
             trained_calcs = [future.result() for future in futures]
         else:
             for tuple in tuples:
                 trained_calcs.append(train_and_combine(tuple))
 
-        #call init to construct ensemble calc from array of delta calcs
+        # call init to construct ensemble calc from array of delta calcs
         return cls(trained_calcs)
 
     @classmethod
-    def set_executor(cls,executor):
+    def set_executor(cls, executor):
         cls.executor = executor
-    

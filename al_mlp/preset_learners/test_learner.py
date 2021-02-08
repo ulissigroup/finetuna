@@ -2,14 +2,13 @@ from al_mlp.utils import compute_with_calc
 from al_mlp.offline_active_learner import OfflineActiveLearner
 import numpy as np
 
+
 class TestLearner(OfflineActiveLearner):
     """
     Replaces termination criteria with a max force in the constructor and the check_terminate method
     """
 
-    def __init__(
-        self, learner_params, trainer, training_data, parent_calc, base_calc
-    ):
+    def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc):
         super().__init__(learner_params, trainer, training_data, parent_calc, base_calc)
         self.max_evA = learner_params["max_evA"]
 

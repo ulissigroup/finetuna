@@ -10,7 +10,7 @@ jobs:
 
       - restore_cache:
           keys:
-          - v0.1-dependencies-{{ checksum "env_cpu.yml" }}
+          - v0.2-dependencies-{{ checksum "env_cpu.yml" }}
 
       - run:
           name: Install conda
@@ -32,12 +32,14 @@ jobs:
               source /home/circleci/miniconda/etc/profile.d/conda.sh
               conda activate base
               conda install -c conda-forge conda-merge
-              conda env create -f env_cpu.yml
+              wget https://raw.githubusercontent.com/ulissigroup/amptorch/master/env_cpu.yml -O env_amptorch_cpu.yml
+              conda-merge env_amptorch_cpu.yml env_cpu.yml > env.yml
+              conda env create -f env.yml
             fi
       - save_cache:
           paths:
             - /home/circleci/miniconda
-          key: v0.1-dependencies-{{ checksum "env_cpu.yml" }}
+          key: v0.2-dependencies-{{ checksum "env_cpu.yml" }}
 
       - run:
           name: Run tests
@@ -45,4 +47,13 @@ jobs:
             source /home/circleci/miniconda/etc/profile.d/conda.sh
             conda activate al_mlp
             pip install -e .
-            pytest -v 
+            OMP_NUM_THREADS=1 pytest al_mlp/tests/light_test_suite.py
+          no_output_timeout: 1.5h
+
+      - run:
+          name: Run black
+          command: |
+            source /home/circleci/miniconda/etc/profile.d/conda.sh
+            conda activate al_mlp
+            pip install black
+            black . --check
