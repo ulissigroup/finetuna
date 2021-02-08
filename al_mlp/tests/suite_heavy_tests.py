@@ -2,10 +2,18 @@
 import unittest
 
 # import test modules
+# from al_mlp.tests.oal_PtNP_case import oal_PtNP
 from al_mlp.tests.case_oal_CuNP import oal_CuNP
 
-# from al_mlp.tests.oal_PtNP_case import oal_PtNP
 
+# import make_ensemble and dask for setting parallelization
+from al_mlp.ensemble_calc import EnsembleCalc
+from dask.distributed import Client, LocalCluster
+
+# Set dask client in ensemble calc
+cluster = LocalCluster(processes=True, threads_per_worker=1)
+client = Client(cluster)
+EnsembleCalc.set_executor(client)
 
 # initialize the test suite
 loader = unittest.TestLoader()

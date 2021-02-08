@@ -2,9 +2,18 @@
 import unittest
 
 # import test modules
+from al_mlp.tests.case_oal_PtNP import oal_PtNP
 from al_mlp.tests.case_oal_CuNP import oal_CuNP
 
-# from al_mlp.tests.oal_PtNP_case import oal_PtNP
+# import make_ensemble and dask for setting parallelization
+from al_mlp.ensemble_calc import EnsembleCalc
+from dask.distributed import Client, LocalCluster
+
+
+# Set dask client in ensemble calc
+cluster = LocalCluster(processes=True, threads_per_worker=1)
+client = Client(cluster)
+EnsembleCalc.set_executor(client)
 
 
 # define extra plotting test code
@@ -35,20 +44,20 @@ loader = unittest.TestLoader()
 suite = unittest.TestSuite()
 
 # add methods to test case classes (Only works this way in Python 3.8+)
-# oal_CuNP.addClassCleanup(plot_forces_hist)
 # oal_PtNP.addClassCleanup(plot_forces_hist)
+# oal_CuNP.addClassCleanup(plot_forces_hist)
 
 # load test case classes
+PtNP_suite = loader.loadTestsFromTestCase(oal_PtNP)
 CuNP_suite = loader.loadTestsFromTestCase(oal_CuNP)
-# PtNP_suite = loader.loadTestsFromTestCase(oal_PtNP)
 
 # add cleanup methods to test cases
+PtNP_suite._tests[0].addCleanup(plot_forces_hist, PtNP_suite._tests[0])
 CuNP_suite._tests[0].addCleanup(plot_forces_hist, CuNP_suite._tests[0])
-# PtNP_suite._tests[0].addCleanup(plot_forces_hist, PtNP_suite._tests[0])
 
 # add tests cases to the test suite
+suite.addTests(PtNP_suite)
 suite.addTests(CuNP_suite)
-# suite.addTests(PtNP_suite)
 
 # initialize a runner, pass it your suite and run it
 runner = unittest.TextTestRunner(verbosity=3)
