@@ -11,9 +11,10 @@ from al_mlp.ensemble_calc import EnsembleCalc
 from dask.distributed import Client, LocalCluster
 
 # Set dask client in ensemble calc
-cluster = LocalCluster(processes=True, threads_per_worker=1)
-client = Client(cluster)
-EnsembleCalc.set_executor(client)
+if __name__ == "__main__":
+    cluster = LocalCluster(processes=True, threads_per_worker=1)
+    client = Client(cluster)
+    EnsembleCalc.set_executor(client)
 
 # initialize the test suite
 loader = unittest.TestLoader()

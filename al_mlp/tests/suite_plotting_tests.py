@@ -10,12 +10,6 @@ from al_mlp.ensemble_calc import EnsembleCalc
 from dask.distributed import Client, LocalCluster
 
 
-# Set dask client in ensemble calc
-cluster = LocalCluster(processes=True, threads_per_worker=1)
-client = Client(cluster)
-EnsembleCalc.set_executor(client)
-
-
 # define extra plotting test code
 def plot_forces_hist(self) -> None:
     import matplotlib.pyplot as plt
@@ -62,4 +56,10 @@ suite.addTests(CuNP_suite)
 # initialize a runner, pass it your suite and run it
 runner = unittest.TextTestRunner(verbosity=3)
 if __name__ == "__main__":
+    # Set dask client in ensemble calc
+    cluster = LocalCluster(processes=True, threads_per_worker=1)
+    client = Client(cluster)
+    EnsembleCalc.set_executor(client)
+
+    # run
     result = runner.run(suite)
