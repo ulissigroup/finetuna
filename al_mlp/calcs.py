@@ -1,5 +1,7 @@
 from ase.calculators.calculator import all_changes
 from ase.calculators.mixing import LinearCombinationCalculator
+from ase.calculators.calculator import Calculator
+import copy
 
 
 class DeltaCalc(LinearCombinationCalculator):
@@ -64,3 +66,23 @@ class DeltaCalc(LinearCombinationCalculator):
                 self.results["energy"] += self.refs[0].get_potential_energy(
                     apply_constraint=False
                 )
+
+
+class CounterCalc(Calculator):
+    implemented_properties = ["energy", "forces", "uncertainty"]
+    """
+    Parameters
+    --------------
+        calc: object. Parent calculator to track force calls"""
+
+    def __init__(self, calc, **kwargs):
+        super().__init__()
+        self.calc = copy.deepcopy(calc)
+        self.force_calls = 0
+
+    def calculate(self, atoms, properties, system_changes):
+        super().calculate(atoms, properties, system_changes)
+        calc = self.calc
+        self.results["energy"] = calc.get_potential_energy(atoms)
+        self.results["forces"] = calc.get_forces(atoms)
+        self.force_calls += 1

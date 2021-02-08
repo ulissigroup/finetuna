@@ -2,7 +2,7 @@ import unittest
 
 from .test_setup.online_relaxation_test import run_oal
 from al_mlp.atomistic_methods import Relaxation
-from al_mlp.utils import CounterCalc
+from al_mlp.calcs import CounterCalc
 from ase.calculators.emt import EMT
 import numpy as np
 from ase.cluster.icosahedron import Icosahedron

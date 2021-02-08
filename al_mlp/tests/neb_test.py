@@ -1,5 +1,5 @@
 from offline_neb_Cu_C_utils import construct_geometries
-from al_mlp.utils import CounterCalc
+from al_mlp.calcs import CounterCalc
 from al_mlp.atomistic_methods import NEBcalc
 from offline_neb_learner import offline_neb
 import ase
