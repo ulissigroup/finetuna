@@ -7,7 +7,6 @@ from al_mlp.utils import convert_to_singlepoint, compute_with_calc
 from al_mlp.bootstrap import non_bootstrap_ensemble
 from al_mlp.ensemble_calc import EnsembleCalc
 from al_mlp.calcs import DeltaCalc
-from al_mlp.utils import copy_images
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -73,7 +72,9 @@ class OnlineActiveLearner(Calculator):
         self.ensemble_calc = EnsembleCalc.make_ensemble(
             self.ensemble_sets, self.trainer
         )
-        self.trained_calc = DeltaCalc([self.ensemble_calc, self.base_calc], 'add', self.refs)
+        self.trained_calc = DeltaCalc(
+            [self.ensemble_calc, self.base_calc], "add", self.refs
+        )
 
         self.uncertain_tol = learner_params["uncertain_tol"]
         self.parent_calls = 0
@@ -119,15 +120,15 @@ class OnlineActiveLearner(Calculator):
             "relative_variance" in self.learner_params
             and self.learner_params["relative_variance"]
         ):
-            #trained_calc_copy = copy.deepcopy(self.trained_calc)
-            #copied_images = copy_images(self.parent_dataset)
-            #base_uncertainty = 0
-            #for image in copied_images:
+            # trained_calc_copy = copy.deepcopy(self.trained_calc)
+            # copied_images = copy_images(self.parent_dataset)
+            # base_uncertainty = 0
+            # for image in copied_images:
             #    trained_calc_copy.reset()
             #    trained_calc_copy.get_forces(image)
             #    if image.info["uncertainty"][0] > base_uncertainty:
             #        base_uncertainty = image.info["uncertainty"][0]
-            base_uncertainty = np.nanmax(np.nanvar(force_pred))
+            base_uncertainty = np.nanmax(np.abs(force_pred)) ** 2
             uncertainty_tol = self.uncertain_tol * base_uncertainty
 
         print(
@@ -147,8 +148,10 @@ class OnlineActiveLearner(Calculator):
             energy_pred = new_data.get_potential_energy(apply_constraint=False)
             force_pred = new_data.get_forces(apply_constraint=False)
             sp_energy_force = sp(atoms=new_data, energy=energy_pred, forces=force_pred)
-            sp_energy_force.implemented_properties = ['energy', 'forces']
-            delta_sub_sp = DeltaCalc((sp_energy_force, self.base_calc), 'sub', self.refs)
+            sp_energy_force.implemented_properties = ["energy", "forces"]
+            delta_sub_sp = DeltaCalc(
+                (sp_energy_force, self.base_calc), "sub", self.refs
+            )
             new_data.calc = delta_sub_sp
             new_data_list = convert_to_singlepoint([new_data])
             # os.chdir(cwd)
@@ -168,7 +171,9 @@ class OnlineActiveLearner(Calculator):
             self.ensemble_calc = EnsembleCalc.make_ensemble(
                 self.ensemble_sets, self.trainer
             )
-            self.trained_calc = DeltaCalc([self.ensemble_calc, self.base_calc], 'add', self.refs)
+            self.trained_calc = DeltaCalc(
+                [self.ensemble_calc, self.base_calc], "add", self.refs
+            )
 
             self.parent_calls += 1
         else:

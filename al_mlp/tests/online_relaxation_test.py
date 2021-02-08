@@ -29,7 +29,7 @@ def run_oal(atomistic_method, images, dbname, parent_calc):
         "samples_to_retrain": 1,
         "filename": "relax_example",
         "file_dir": "./",
-        "uncertain_tol": 1.1,
+        "uncertain_tol": 0.1,
         "relative_variance": True,
         "use_dask": True,
     }
@@ -67,7 +67,7 @@ def run_oal(atomistic_method, images, dbname, parent_calc):
     if learner_params["use_dask"] and EnsembleCalc.executor is None:
         from dask.distributed import Client, LocalCluster
 
-        cluster = LocalCluster(processes=True, threads_per_worker=1)
+        cluster = LocalCluster(n_workers=4, processes=True, threads_per_worker=1)
         client = Client(cluster)
         EnsembleCalc.set_executor(client)
 
