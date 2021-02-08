@@ -53,7 +53,7 @@ def neb_CuC_forces():
     neb_AL_image = get_trajectory("example_iter_" + str(iter))[-saddle_pt]
     neb_AL_image.set_calculator(EMT())
 
-    assert np.allclose(EMT_image.get_forces(), neb_AL_image.get_forces(), atol=0.05)
+    assert np.max(np.abs(neb_AL_image.get_forces())) <= 0.05
 
 
 def neb_CuC_calls():
