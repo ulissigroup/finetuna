@@ -97,6 +97,7 @@ class OnlineActiveLearner(Calculator):
 
     def calculate(self, atoms, properties, system_changes):
 
+        # check if calculating values for the only point already trained on
         if len(self.parent_dataset) == 1 and np.all(
             self.parent_dataset[0].positions == atoms.positions
         ):
@@ -109,12 +110,16 @@ class OnlineActiveLearner(Calculator):
             )
             return
 
+        # call super calculate method
         Calculator.calculate(self, atoms, properties, system_changes)
 
+        # evaluate current calculator for the given atoms and get the uncertainty
         trained_calc_copy = copy.deepcopy(self.trained_calc)
         energy_pred = trained_calc_copy.get_potential_energy(atoms)
         force_pred = trained_calc_copy.get_forces(atoms)
         uncertainty = atoms.info["uncertainty"][0]
+
+        # evaluate the current uncertainty tolerance
         uncertainty_tol = self.uncertain_tol
         if (
             "relative_variance" in self.learner_params
@@ -131,12 +136,17 @@ class OnlineActiveLearner(Calculator):
             base_uncertainty = np.nanmax(np.abs(force_pred)) ** 2
             uncertainty_tol = self.uncertain_tol * base_uncertainty
 
+        # after evaluating, print the uncertainty and uncertainty tolerance
         print(
             "uncertainty: "
             + str(uncertainty)
             + ", uncertainty_tol: "
             + str(uncertainty_tol)
-        )  # FIX ME remove me
+        )
+
+        # if uncertainty exceeds the uncertainty tolerance,
+        # or if there aren't enough points in the dataset then
+        # retrain the ensemble
         if len(self.parent_dataset) == 1 or uncertainty >= uncertainty_tol:
             print("Parent call required")
             db = connect("dft_calls.db")
