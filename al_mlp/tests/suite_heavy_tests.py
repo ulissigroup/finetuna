@@ -2,7 +2,7 @@
 import unittest
 
 # import test modules
-from al_mlp.tests.oal_CuNP_case import oal_CuNP
+from al_mlp.tests.case_oal_CuNP import oal_CuNP
 
 # from al_mlp.tests.oal_PtNP_case import oal_PtNP
 

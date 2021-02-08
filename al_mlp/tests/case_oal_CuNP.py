@@ -1,6 +1,6 @@
 import unittest
 
-from .online_relaxation_test import run_oal
+from .test_setup.online_relaxation_test import run_oal
 from al_mlp.atomistic_methods import Relaxation
 from al_mlp.utils import CounterCalc
 from ase.calculators.emt import EMT

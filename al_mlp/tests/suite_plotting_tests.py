@@ -2,7 +2,7 @@
 import unittest
 
 # import test modules
-from al_mlp.tests.oal_CuNP_case import oal_CuNP
+from al_mlp.tests.case_oal_CuNP import oal_CuNP
 
 # from al_mlp.tests.oal_PtNP_case import oal_PtNP
 
@@ -34,7 +34,7 @@ def plot_forces_hist(self) -> None:
 loader = unittest.TestLoader()
 suite = unittest.TestSuite()
 
-# add methods to test case classes
+# add methods to test case classes (Only works this way in Python 3.8+)
 # oal_CuNP.addClassCleanup(plot_forces_hist)
 # oal_PtNP.addClassCleanup(plot_forces_hist)
 
@@ -44,7 +44,7 @@ CuNP_suite = loader.loadTestsFromTestCase(oal_CuNP)
 
 # add cleanup methods to test cases
 CuNP_suite._tests[0].addCleanup(plot_forces_hist, CuNP_suite._tests[0])
-# PtNP_suite._tests[0]._tests[0].addCleanup(plot_forces_hist)
+# PtNP_suite._tests[0].addCleanup(plot_forces_hist, PtNP_suite._tests[0])
 
 # add tests cases to the test suite
 suite.addTests(CuNP_suite)
