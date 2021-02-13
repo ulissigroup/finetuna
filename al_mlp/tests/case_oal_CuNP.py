@@ -34,7 +34,11 @@ class oal_CuNP(unittest.TestCase):
             OAL_initial_structure, BFGS, fmax=0.05, steps=30, maxstep=0.04
         )
         cls.OAL_learner, cls.OAL_structure_optim = run_oal(
-            OAL_relaxation, [], ['Cu'], "CuNP_oal", EMT(),
+            OAL_relaxation,
+            [],
+            ["Cu"],
+            "CuNP_oal",
+            EMT(),
         )
 
         # Retain images of the final structure from both relaxations
