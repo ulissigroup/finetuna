@@ -63,6 +63,7 @@ class oal_CuNP(unittest.TestCase):
 
     def test_oal_CuNP_calls(self):
 
-        # What I want here is the number of EMT calls; I don't think that this is
-        # what get_trajectory actually does
-        assert self.OAL_learner.parent_calls < 0.5 * self.emt_counter.force_calls
+        print("OAL calls: %d" % self.OAL_learner.parent_calls)
+        print("EMT calls: %d" % self.emt_counter.force_calls)
+
+        assert self.OAL_learner.parent_calls < 0.6 * self.emt_counter.force_calls

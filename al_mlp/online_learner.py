@@ -1,6 +1,5 @@
 import copy
 import numpy as np
-from ase.calculators.singlepoint import SinglePointCalculator as sp
 from ase.calculators.calculator import Calculator
 from al_mlp.utils import convert_to_singlepoint
 from al_mlp.bootstrap import non_bootstrap_ensemble
@@ -60,24 +59,22 @@ class OnlineLearner(Calculator):
 
     def add_data_and_retrain(self, atoms):
         print("OnlineLearner: Parent calculation required")
-        new_data = atoms.copy()
-        new_data.set_calculator(copy.copy(self.parent_calc))
 
-        energy_actual = new_data.get_potential_energy(apply_constraint=False)
-        force_actual = new_data.get_forces(apply_constraint=False)
+        atoms_copy = atoms.copy()
+        atoms_copy.set_calculator(copy.copy(self.parent_calc))
+        new_data = convert_to_singlepoint([atoms_copy])
 
-        new_data.set_calculator(
-            sp(atoms=new_data, energy=energy_actual, forces=force_actual)
-        )
+        energy_actual = new_data[0].get_potential_energy(apply_constraint=False)
+        force_actual = new_data[0].get_forces(apply_constraint=False)
 
         self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
             self.parent_dataset,
-            [new_data],
+            new_data,
             n_ensembles=self.n_ensembles,
         )
 
         # Don't bother training if
-        if len(self.parent_dataset) > 1:
+        if len(self.parent_dataset) >= 2:
             self.ensemble_calc = EnsembleCalc.make_ensemble(
                 self.ensemble_sets, self.trainer
             )
