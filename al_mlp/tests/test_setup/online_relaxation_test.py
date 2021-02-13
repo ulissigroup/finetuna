@@ -1,5 +1,5 @@
 import numpy as np
-from al_mlp.online_learner import OnlineActiveLearner
+from al_mlp.online_learner import OnlineLearner
 from amptorch.trainer import AtomsTrainer
 import os
 from al_mlp.ensemble_calc import EnsembleCalc
@@ -9,7 +9,7 @@ import torch
 # from amptorch.ase_utils import AMPtorch
 
 
-def run_oal(atomistic_method, images, dbname, parent_calc):
+def run_oal(atomistic_method, images, elements, dbname, parent_calc):
 
     Gs = {
         "default": {
@@ -21,8 +21,6 @@ def run_oal(atomistic_method, images, dbname, parent_calc):
             "cutoff": 6,
         },
     }
-
-    elements = np.unique(images[0].get_chemical_symbols())
 
     learner_params = {
         "max_iterations": 10,
@@ -71,18 +69,13 @@ def run_oal(atomistic_method, images, dbname, parent_calc):
         client = Client(cluster)
         EnsembleCalc.set_executor(client)
 
-    # cutoff = Gs["default"]["cutoff"]
     trainer = AtomsTrainer(config)
-    # trainer_calc = AMPtorch
-    base_calc = Dummy(images)
 
-    onlinecalc = OnlineActiveLearner(
+    onlinecalc = OnlineLearner(
         learner_params,
         trainer,
         images,
         parent_calc,
-        base_calc,
-        # trainer_calc,
         n_ensembles=10,
         n_cores="max",
     )
