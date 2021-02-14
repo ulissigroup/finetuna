@@ -23,7 +23,8 @@ class DeltaCalc(LinearCombinationCalculator):
             The first atoms must have the parent Calculator.
             The second atoms must have the base Calculator.
         atoms: Atoms object
-            Optional :class:`~ase.Atoms` object to which the calculator will be attached.
+            Optional :class:`~ase.Atoms` object to which the calculator will
+            be attached.
         """
         if mode == "sub":
             weights = [1, -1]
@@ -39,6 +40,7 @@ class DeltaCalc(LinearCombinationCalculator):
         self.mode = mode
         self.parent_results = calcs[0].results
         self.base_results = calcs[1].results
+        self.force_calls = 0
 
     def calculate(self, atoms=None, properties=["energy"], system_changes=all_changes):
         """Calculates the desired property.
@@ -66,6 +68,7 @@ class DeltaCalc(LinearCombinationCalculator):
                 self.results["energy"] += self.refs[0].get_potential_energy(
                     apply_constraint=False
                 )
+        self.force_calls += 1
 
 
 class CounterCalc(Calculator):

@@ -2,6 +2,7 @@ import random
 from al_mlp.calcs import DeltaCalc
 from al_mlp.utils import convert_to_singlepoint, compute_with_calc, write_to_db
 import ase
+import numpy as np
 
 
 class OfflineActiveLearner:
@@ -36,6 +37,7 @@ class OfflineActiveLearner:
         self.calcs = [parent_calc, base_calc]
         self.init_learner()
         self.init_training_data()
+        self.max_evA = learner_params["max_evA"]
 
     def init_learner(self):
         """
@@ -44,7 +46,8 @@ class OfflineActiveLearner:
         global compute_with_calc
         global convert_to_singlepoint
         if self.learner_params["use_dask"]:
-            from al_mlp.dask_calculate import compute_with_calc, convert_to_singlepoint
+            from al_mlp.dask_calculate import compute_with_calc
+            from al_mlp.dask_calculate import convert_to_singlepoint
 
         self.iterations = 0
         self.parent_calls = 0
@@ -95,7 +98,8 @@ class OfflineActiveLearner:
         """
         if self.iterations > 0:
             self.query_data()
-        self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
+        self.fn_label = f"{self.file_dir}{self.filename}\
+            _iter_{self.iterations}"
 
     def do_train(self):
         """
@@ -127,8 +131,8 @@ class OfflineActiveLearner:
 
     def query_data(self):
         """
-        Queries data from a list of images. Calculates the properties and adds them to the training
-        data.
+        Queries data from a list of images. Calculates the properties
+        and adds them to the training data.
 
         Parameters
         ----------
@@ -142,7 +146,11 @@ class OfflineActiveLearner:
         """
         Default termination function.
         """
+        final_point_image = [self.sample_candidates[-1]]
+        final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
         if self.iterations >= self.max_iterations:
+            return True
+        elif np.max(np.abs(final_point_evA[0].get_forces())) <= self.max_evA:
             return True
         return False
 
@@ -153,16 +161,19 @@ class OfflineActiveLearner:
         queries_db = ase.db.connect("queried_images.db")
         random.seed()
         query_idx = random.sample(
-            range(1, len(self.sample_candidates)), self.samples_to_retrain
+            range(1, len(self.sample_candidates) - 1),
+            self.samples_to_retrain - 1,
         )
         queried_images = [self.sample_candidates[idx] for idx in query_idx]
+        query_idx = np.append(query_idx, [len(self.sample_candidates) - 1])
         write_to_db(queries_db, queried_images)
         self.parent_calls += len(queried_images)
         return queried_images
 
     def make_trainer_calc(self, trainer=None):
         """
-        Default trainer calc after train. Assumes trainer has a 'get_calc' method.
+        Default trainer calc after train. Assumes trainer has a 'get_calc'
+        method.
         If trainer is passed in, it will get its calculator instead
         """
         if trainer is not None:
