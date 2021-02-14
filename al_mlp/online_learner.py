@@ -19,7 +19,7 @@ class OnlineLearner(Calculator):
         parent_dataset,
         parent_calc,
         n_ensembles=10,
-        n_cores="max",
+        n_cores="1",
     ):
         Calculator.__init__(self)
 
@@ -46,11 +46,14 @@ class OnlineLearner(Calculator):
     def unsafe_prediction(self, atoms, energy_pred, force_pred):
 
         # Set the desired tolerance based on the current max predcited force
-        uncertainty = atoms.info["uncertainty"][0]
-        base_uncertainty = np.nanmax(np.abs(force_pred)) ** 2
+        uncertainty = atoms.info["uncertainty"][0] ** 0.5
+        base_uncertainty = np.nanmax(np.abs(force_pred))
         uncertainty_tol = self.uncertain_tol * base_uncertainty
 
-        print("uncertainty: %f, uncertainty_tol: %f" % (uncertainty, uncertainty_tol))
+        print(
+            "Max Force Std: %1.3f eV/A, Max Force Threshold: %1.3f eV/A"
+            % (uncertainty, uncertainty_tol)
+        )
 
         if uncertainty > uncertainty_tol:
             return True

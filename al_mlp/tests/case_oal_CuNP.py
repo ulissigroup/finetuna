@@ -66,4 +66,4 @@ class oal_CuNP(unittest.TestCase):
         print("OAL calls: %d" % self.OAL_learner.parent_calls)
         print("EMT calls: %d" % self.emt_counter.force_calls)
 
-        assert self.OAL_learner.parent_calls < 0.6 * self.emt_counter.force_calls
+        assert self.OAL_learner.parent_calls < 0.5 * self.emt_counter.force_calls

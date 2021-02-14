@@ -2,8 +2,6 @@ import numpy as np
 from al_mlp.online_learner import OnlineLearner
 from amptorch.trainer import AtomsTrainer
 import os
-from al_mlp.ensemble_calc import EnsembleCalc
-from al_mlp.base_calcs.dummy import Dummy
 import torch
 
 # from amptorch.ase_utils import AMPtorch
@@ -27,7 +25,7 @@ def run_oal(atomistic_method, images, elements, dbname, parent_calc):
         "samples_to_retrain": 1,
         "filename": "relax_example",
         "file_dir": "./",
-        "uncertain_tol": 0.1,
+        "uncertain_tol": 0.5,
         "relative_variance": True,
         "use_dask": True,
     }
@@ -56,18 +54,18 @@ def run_oal(atomistic_method, images, elements, dbname, parent_calc):
             "run_dir": "./",
             "seed": 1,
             "identifier": "test",
-            "verbose": True,
+            "verbose": False,
             # "logger": True,
             "single-threaded": True,
         },
     }
 
-    if learner_params["use_dask"] and EnsembleCalc.executor is None:
-        from dask.distributed import Client, LocalCluster
+    # if learner_params["use_dask"] and EnsembleCalc.executor is None:
+    #    from dask.distributed import Client, LocalCluster
 
-        cluster = LocalCluster(n_workers=4, processes=True, threads_per_worker=1)
-        client = Client(cluster)
-        EnsembleCalc.set_executor(client)
+    #    cluster = LocalCluster(n_workers=4, processes=True, threads_per_worker=1)
+    #    client = Client(cluster)
+    #    EnsembleCalc.set_executor(client)
 
     trainer = AtomsTrainer(config)
 
