@@ -7,7 +7,7 @@ from amptorch.trainer import AtomsTrainer
 from torch.nn import Tanh
 
 
-def offline_neb(images,parent_calc, iter=4, intermediate_images=3):
+def offline_neb(images, parent_calc, iter=4, intermediate_images=3):
     torch.set_num_threads(1)
 
     parent_calc = parent_calc
@@ -25,7 +25,12 @@ def offline_neb(images,parent_calc, iter=4, intermediate_images=3):
 
     elements = ["Cu", "C"]
     config = {
-        "model": {"get_forces": True, "num_layers": 3, "num_nodes": 20, "activation": Tanh},
+        "model": {
+            "get_forces": True,
+            "num_layers": 3,
+            "num_nodes": 20,
+            "activation": Tanh,
+        },
         "optim": {
             "device": "cpu",
             "force_coefficient": 20,
