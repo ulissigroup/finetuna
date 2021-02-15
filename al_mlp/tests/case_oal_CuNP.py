@@ -8,6 +8,9 @@ import numpy as np
 from ase.cluster.icosahedron import Icosahedron
 from ase.optimize import BFGS
 
+FORCE_THRESHOLD = 0.05
+ENERGY_THRESHOLD = 0.01
+
 
 class oal_CuNP(unittest.TestCase):
     @classmethod
@@ -23,7 +26,7 @@ class oal_CuNP(unittest.TestCase):
         cls.emt_counter = CounterCalc(EMT())
         EMT_initial_structure.set_calculator(cls.emt_counter)
         cls.EMT_structure_optim = Relaxation(
-            EMT_initial_structure, BFGS, fmax=0.05, steps=30
+            EMT_initial_structure, BFGS, fmax=FORCE_THRESHOLD, steps=30
         )
         cls.EMT_structure_optim.run(cls.emt_counter, "CuNP_emt")
 
@@ -53,13 +56,11 @@ class oal_CuNP(unittest.TestCase):
         assert np.allclose(
             self.EMT_image.get_potential_energy(),
             self.OAL_image.get_potential_energy(),
-            atol=0.1,
+            atol=ENERGY_THRESHOLD,
         )
 
     def test_oal_CuNP_forces(self):
-        assert np.allclose(
-            self.EMT_image.get_forces(), self.OAL_image.get_forces(), atol=0.05
-        )
+        assert np.all(self.OAL_image.get_forces() <= FORCE_THRESHOLD)
 
     def test_oal_CuNP_calls(self):
 

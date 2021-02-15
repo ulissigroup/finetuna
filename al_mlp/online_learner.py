@@ -18,12 +18,10 @@ class OnlineLearner(Calculator):
         trainer,
         parent_dataset,
         parent_calc,
-        n_ensembles=10,
         n_cores="1",
     ):
         Calculator.__init__(self)
 
-        self.n_ensembles = n_ensembles
         self.parent_calc = parent_calc
         self.trainer = trainer
         self.learner_params = learner_params
@@ -34,11 +32,28 @@ class OnlineLearner(Calculator):
         # as the uncertainty is meaningless
         if len(self.parent_dataset) > 1:
             self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
-                parent_dataset, n_ensembles=n_ensembles
+                parent_dataset, n_ensembles=self.learner_params["n_ensembles"]
             )
             self.ensemble_calc = EnsembleCalc.make_ensemble(
                 self.ensemble_sets, self.trainer
             )
+
+        if isinstance(self.learner_params["parent_verification"], float):
+
+            def verify(atoms, energy_pred, force_pred):
+                # This won't work correctly if the atoms has a constraint; will fix later
+                return (
+                    np.max(np.abs(force_pred))
+                    < self.learner_params["parent_verification"]
+                )
+
+            self.parent_verification = verify
+
+        elif self.learner_params["parent_verification"] is None:
+            self.parent_verification = lambda x: False
+
+        else:
+            self.parent_verification = self.learner_params["parent_verification"]
 
         self.uncertain_tol = learner_params["uncertain_tol"]
         self.parent_calls = 0
@@ -73,7 +88,7 @@ class OnlineLearner(Calculator):
         self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
             self.parent_dataset,
             new_data,
-            n_ensembles=self.n_ensembles,
+            n_ensembles=self.learner_params["n_ensembles"],
         )
 
         # Don't bother training if
@@ -102,7 +117,9 @@ class OnlineLearner(Calculator):
         force_pred = self.ensemble_calc.get_forces(atoms)
 
         # Check if we are extrapolating too far, and if so add/retrain
-        if self.unsafe_prediction(atoms, energy_pred, force_pred):
+        if self.unsafe_prediction(
+            atoms, energy_pred, force_pred
+        ) or self.parent_verification(atoms, energy_pred, force_pred):
             # We ran DFT, so just use that energy/force
             energy, force = self.add_data_and_retrain(atoms)
         else:

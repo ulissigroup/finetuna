@@ -25,8 +25,10 @@ def run_oal(atomistic_method, images, elements, dbname, parent_calc):
         "samples_to_retrain": 1,
         "filename": "relax_example",
         "file_dir": "./",
-        "uncertain_tol": 0.5,
+        "uncertain_tol": 5.0,
+        "parent_verification": 0.05,  # eV/AA
         "relative_variance": True,
+        "n_ensembles": 10,
         "use_dask": True,
     }
 
@@ -74,7 +76,6 @@ def run_oal(atomistic_method, images, elements, dbname, parent_calc):
         trainer,
         images,
         parent_calc,
-        n_ensembles=10,
         n_cores="max",
     )
 
