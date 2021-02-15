@@ -23,7 +23,7 @@ def run_oal(atomistic_method, images, elements, dbname, parent_calc):
         "filename": "relax_example",
         "file_dir": "./",
         "uncertain_tol": 5.0,
-        "parent_verification": 0.05,  # eV/AA
+        "fmax_verify_threshold": 0.05,  # eV/AA
         "relative_variance": True,
         "n_ensembles": 10,
         "use_dask": True,
