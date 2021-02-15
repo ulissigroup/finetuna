@@ -64,8 +64,11 @@ class oal_CuNP(unittest.TestCase):
         )
 
     def test_oal_CuNP_forces(self):
-        assert np.all(self.OAL_image.get_forces() <= FORCE_THRESHOLD), str(
-            "Learner forces inconsistent:\n"+str(self.OAL_image.get_forces()) +
+        forces = self.OAL_image.get_forces()
+        fmax = np.sqrt((forces ** 2).sum(axis=1).max())
+        
+        assert fmax <= FORCE_THRESHOLD, str(
+            "Learner forces inconsistent:\n"+str(fmax) +
             "\nwith Force Threshold: "+FORCE_THRESHOLD
         )
 
