@@ -40,10 +40,10 @@ class OnlineLearner(Calculator):
 
         if isinstance(self.learner_params["parent_verification"], float):
 
-            def verify(atoms, energy_pred, force_pred):
+            def verify(atoms):
                 # This won't work correctly if the atoms has a constraint; will fix later
                 return (
-                    np.max(np.abs(force_pred))
+                    np.max(np.abs(atoms.get_forces()))
                     < self.learner_params["parent_verification"]
                 )
 
@@ -58,11 +58,11 @@ class OnlineLearner(Calculator):
         self.uncertain_tol = learner_params["uncertain_tol"]
         self.parent_calls = 0
 
-    def unsafe_prediction(self, atoms, energy_pred, force_pred):
+    def unsafe_prediction(self, atoms):
 
         # Set the desired tolerance based on the current max predcited force
         uncertainty = atoms.info["uncertainty"][0] ** 0.5
-        base_uncertainty = np.nanmax(np.abs(force_pred))
+        base_uncertainty = np.nanmax(np.abs(atoms.get_forces()))
         uncertainty_tol = self.uncertain_tol * base_uncertainty
 
         print(
@@ -115,15 +115,18 @@ class OnlineLearner(Calculator):
         # Get the predicted energy/force from the ensemble
         energy_pred = self.ensemble_calc.get_potential_energy(atoms)
         force_pred = self.ensemble_calc.get_forces(atoms)
+        atoms_copy = atoms.copy()
+        atoms_copy.set_calculator(self.ensemble_calc)
+        atoms_ML, = convert_to_singlepoint([atoms_copy])
 
         # Check if we are extrapolating too far, and if so add/retrain
-        if self.unsafe_prediction(
-            atoms, energy_pred, force_pred
-        ) or self.parent_verification(atoms, energy_pred, force_pred):
+        if self.unsafe_prediction(atoms_ML) or \
+                self.parent_verification(atoms_ML):
             # We ran DFT, so just use that energy/force
             energy, force = self.add_data_and_retrain(atoms)
         else:
-            energy, force = energy_pred, force_pred
+            energy, force = atoms_ML.get_potential_energy(apply_constraint=False), \
+                            atoms_ML.get_forces(apply_constraint=False)
 
         # Return the energy/force
         self.results["energy"] = energy
