@@ -60,16 +60,16 @@ class oal_CuNP(unittest.TestCase):
         ), str(
             "Learner energy inconsistent:\n"+str(self.EMT_image.get_potential_energy()) +
             "or Parent energy inconsistent:\n"+str(self.OAL_image.get_potential_energy()) +
-            "\nwith Energy Threshold: "+ENERGY_THRESHOLD
+            "\nwith Energy Threshold: "+str(ENERGY_THRESHOLD)
         )
 
     def test_oal_CuNP_forces(self):
         forces = self.OAL_image.get_forces()
         fmax = np.sqrt((forces ** 2).sum(axis=1).max())
-        
+
         assert fmax <= FORCE_THRESHOLD, str(
             "Learner forces inconsistent:\n"+str(fmax) +
-            "\nwith Force Threshold: "+FORCE_THRESHOLD
+            "\nwith Force Threshold: "+str(FORCE_THRESHOLD)
         )
 
     def test_oal_CuNP_calls(self):
