@@ -35,11 +35,11 @@ class OnlineLearner(Calculator):
             self.ensemble_calc = EnsembleCalc.make_ensemble(
                 self.ensemble_sets, self.trainer
             )
-            
-        if 'fmax_verify_threshold' in self.learner_params:
-            self.fmax_verify_threshold = self.learner_params['fmax_verify_threshold']
+
+        if "fmax_verify_threshold" in self.learner_params:
+            self.fmax_verify_threshold = self.learner_params["fmax_verify_threshold"]
         else:
-            self.fmax_verify_threshold = np.nan # always False
+            self.fmax_verify_threshold = np.nan  # always False
 
         self.uncertain_tol = learner_params["uncertain_tol"]
         self.parent_calls = 0
@@ -72,7 +72,6 @@ class OnlineLearner(Calculator):
         self.results["energy"] = energy
         self.results["forces"] = force
 
-        
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force
         uncertainty = atoms.info["uncertainty"][0] ** 0.5
@@ -88,7 +87,7 @@ class OnlineLearner(Calculator):
             return True
         else:
             return False
-        
+
     def parent_verify(self, atoms):
         forces = atoms.get_forces()
         fmax = np.sqrt((forces ** 2).sum(axis=1).max())
@@ -119,4 +118,3 @@ class OnlineLearner(Calculator):
         self.parent_calls += 1
 
         return energy_actual, force_actual
-
