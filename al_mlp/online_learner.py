@@ -76,7 +76,7 @@ class OnlineLearner(Calculator):
 
         atoms_copy = atoms.copy()
         atoms_copy.set_calculator(copy.copy(self.parent_calc))
-        new_data, = convert_to_singlepoint([atoms_copy])
+        (new_data,) = convert_to_singlepoint([atoms_copy])
 
         energy_actual = new_data.get_potential_energy(apply_constraint=False)
         force_actual = new_data.get_forces(apply_constraint=False)
@@ -111,11 +111,10 @@ class OnlineLearner(Calculator):
         # Make a copy of the atoms with ensemble energies as a SP
         atoms_copy = atoms.copy()
         atoms_copy.set_calculator(self.ensemble_calc)
-        atoms_ML, = convert_to_singlepoint([atoms_copy])
+        (atoms_ML,) = convert_to_singlepoint([atoms_copy])
 
         # Check if we are extrapolating too far, and if so add/retrain
-        if self.unsafe_prediction(atoms_ML) or \
-                self.parent_verification(atoms_ML):
+        if self.unsafe_prediction(atoms_ML) or self.parent_verification(atoms_ML):
             # We ran DFT, so just use that energy/force
             energy, force = self.add_data_and_retrain(atoms)
         else:
