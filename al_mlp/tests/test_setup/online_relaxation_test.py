@@ -4,9 +4,6 @@ from amptorch.trainer import AtomsTrainer
 import os
 import torch
 
-# from amptorch.ase_utils import AMPtorch
-
-
 def run_oal(atomistic_method, images, elements, dbname, parent_calc):
 
     Gs = {
@@ -39,7 +36,7 @@ def run_oal(atomistic_method, images, elements, dbname, parent_calc):
             "force_coefficient": 4.0,
             "lr": 1,
             "batch_size": 10,
-            "epochs": 100,  # was 100
+            "epochs": 100,
             "optimizer": torch.optim.LBFGS,
             "optimizer_args": {"optimizer__line_search_fn": "strong_wolfe"},
         },
@@ -61,13 +58,6 @@ def run_oal(atomistic_method, images, elements, dbname, parent_calc):
             "single-threaded": True,
         },
     }
-
-    # if learner_params["use_dask"] and EnsembleCalc.executor is None:
-    #    from dask.distributed import Client, LocalCluster
-
-    #    cluster = LocalCluster(n_workers=4, processes=True, threads_per_worker=1)
-    #    client = Client(cluster)
-    #    EnsembleCalc.set_executor(client)
 
     trainer = AtomsTrainer(config)
 
