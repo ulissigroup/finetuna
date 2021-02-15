@@ -3,7 +3,6 @@ import unittest
 
 # import test modules
 from al_mlp.tests.case_oal_CuNP import oal_CuNP
-from al_mlp.tests.case_offline_CuNP import offline_CuNP
 
 # import and set executor client
 from dask.distributed import Client, LocalCluster
@@ -19,7 +18,6 @@ suite = unittest.TestSuite()
 
 # add tests to the test suite
 suite.addTests(loader.loadTestsFromModule(oal_CuNP))
-suite.addTests(loader.loadTestsFromModule(offline_CuNP))
 
 # Deprecated below, call using pytest instead
 # initialize a runner, pass it your suite and run it
