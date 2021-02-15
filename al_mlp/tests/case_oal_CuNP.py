@@ -57,14 +57,24 @@ class oal_CuNP(unittest.TestCase):
             self.EMT_image.get_potential_energy(),
             self.OAL_image.get_potential_energy(),
             atol=ENERGY_THRESHOLD,
+        ), str(
+            "Learner energy inconsistent:\n"+str(self.EMT_image.get_potential_energy()) +
+            "or Parent energy inconsistent:\n"+str(self.OAL_image.get_potential_energy()) +
+            "\nwith Energy Threshold: "+ENERGY_THRESHOLD
         )
 
     def test_oal_CuNP_forces(self):
-        assert np.all(self.OAL_image.get_forces() <= FORCE_THRESHOLD)
+        assert np.all(self.OAL_image.get_forces() <= FORCE_THRESHOLD), str(
+            "Learner forces inconsistent:\n"+str(self.OAL_image.get_forces()) +
+            "\nwith Force Threshold: "+FORCE_THRESHOLD
+        )
 
     def test_oal_CuNP_calls(self):
 
         print("OAL calls: %d" % self.OAL_learner.parent_calls)
         print("EMT calls: %d" % self.emt_counter.force_calls)
 
-        assert self.OAL_learner.parent_calls < 0.5 * self.emt_counter.force_calls
+        assert self.OAL_learner.parent_calls < 0.5 * self.emt_counter.force_calls, str(
+            "total calls: "+str(self.OAL_learner.parent_calls) +
+            " not less than: " + str(0.5*self.emt_counter.force_calls)
+        )
