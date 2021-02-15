@@ -7,7 +7,8 @@ from al_mlp.calcs import DeltaCalc
 from al_mlp.bootstrap import bootstrap_ensemble
 from al_mlp.ensemble_calc import EnsembleCalc
 from al_mlp.offline_active_learner import OfflineActiveLearner
-from torch.multiprocessing import Pool
+
+# from torch.multiprocessing import Pool
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 
@@ -55,11 +56,17 @@ class EnsembleLearner(OfflineActiveLearner):
             queried_images = self.query_func()
             self.parent_dataset, self.training_data = self.add_data(queried_images)
             self.parent_calls += len(queried_images)
-        self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
+        self.fn_label = f"{self.file_dir}{self.filename}\
+            _iter_{self.iterations}"
         self.ensemble_sets = self.training_data
 
     def do_train(self):
-        self.make_ensemble()
+        self.ensemble_calc = EnsembleCalc.make_ensemble(
+            self.ensemble_sets, self.trainer
+        )
+        self.trained_calc = DeltaCalc(
+            [self.ensemble_calc, self.base_calc], "add", self.refs
+        )
 
     def do_after_train(self):
         self.atomistic_method.run(calc=self.trained_calc, filename=self.fn_label)
@@ -78,9 +85,8 @@ class EnsembleLearner(OfflineActiveLearner):
         uncertainty = np.array(
             [atoms.info["uncertainty"][0] for atoms in self.sample_candidates]
         )
-        query_idx = np.argpartition(uncertainty, -1 * self.samples_to_retrain)[
-            -self.samples_to_retrain :
-        ]
+        n_retrain = self.samples_to_retrain
+        query_idx = np.argpartition(uncertainty, -1 * n_retrain)[-n_retrain:]
         queried_images = [self.sample_candidates[idx] for idx in query_idx]
         # write_to_db(queries_db, queried_images) bugged unique ID
         return queried_images
@@ -102,10 +108,17 @@ class EnsembleLearner(OfflineActiveLearner):
         trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
         return trained_calc
 
-    def make_ensemble(self):
-        pool = Pool(self.ncores)
-        trained_calcs = pool.map(self.ensemble_train_trainer, self.ensemble_sets)
-        pool.close()
-        pool.join()
-        ensemble_calc = EnsembleCalc(trained_calcs)
-        self.trained_calc = ensemble_calc
+    # def make_ensemble(self):
+    #     pool = Pool(self.ncores)
+    #     trained_calcs = pool.map(self.ensemble_train_trainer,
+    # self.ensemble_sets)
+    #     pool.close()
+    #     pool.join()
+    #     ensemble_calc = EnsembleCalc(trained_calcs)
+    #     self.trained_calc = ensemble_calc
+    # def make_ensemble(self):
+    #     trained_calcs = []
+    #     for ensemble_set in self.ensemble_sets:
+    #         trained_calcs.append(self.ensemble_train_trainer(ensemble_set))
+    #     ensemble_calc= EnsembleCalc(trained_calcs)
+    #     self.trained_calc= ensemble_calc
