@@ -21,7 +21,7 @@ emt_counter = CounterCalc(EMT())
 ml2relax = True
 total_neb_images = 5
 intermediate_images = 3
-iter = 4
+iter = 6
 initial, final = construct_geometries(parent_calc=emt_counter, ml2relax=ml2relax)
 images = [initial, final]
 EMT_neb = NEBcalc(images)

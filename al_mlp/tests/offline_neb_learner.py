@@ -5,6 +5,7 @@ from offline_neb_Cu_C_utils import construct_geometries
 from al_mlp.atomistic_methods import NEBcalc
 from al_mlp.base_calcs.morse import MultiMorse
 from amptorch.trainer import AtomsTrainer
+from torch.nn import Tanh
 
 
 def offline_neb(parent_calc, iter=4, intermediate_images=3):
@@ -30,13 +31,13 @@ def offline_neb(parent_calc, iter=4, intermediate_images=3):
 
     elements = ["Cu", "C"]
     config = {
-        "model": {"get_forces": True, "num_layers": 3, "num_nodes": 5},
+        "model": {"get_forces": True, "num_layers": 3, "num_nodes": 20, "activation": Tanh},
         "optim": {
             "device": "cpu",
-            "force_coefficient": 0.04,
+            "force_coefficient": 20,
             "lr": 1e-2,
             "batch_size": 1000,
-            "epochs": 100,
+            "epochs": 500,
             "loss": "mse",
             "metric": "mse",
             "optimizer": torch.optim.LBFGS,
@@ -81,6 +82,7 @@ def offline_neb(parent_calc, iter=4, intermediate_images=3):
         "filename": "example",
         "file_dir": "./",
         "use_dask": False,
+        "max_evA": 0.01,
     }
 
     learner = NEBLearner(learner_params, trainer, images, parent_calc, base_calc)
