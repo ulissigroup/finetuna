@@ -76,7 +76,6 @@ def run_oal(atomistic_method, images, elements, dbname, parent_calc):
         trainer,
         images,
         parent_calc,
-        n_cores="max",
     )
 
     if os.path.exists("dft_calls.db"):

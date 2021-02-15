@@ -18,14 +18,12 @@ class OnlineLearner(Calculator):
         trainer,
         parent_dataset,
         parent_calc,
-        n_cores="1",
     ):
         Calculator.__init__(self)
 
         self.parent_calc = parent_calc
         self.trainer = trainer
         self.learner_params = learner_params
-        self.n_cores = n_cores
         self.parent_dataset = convert_to_singlepoint(parent_dataset)
 
         # Don't bother making an ensemble with only one data point,
@@ -40,14 +38,12 @@ class OnlineLearner(Calculator):
 
         if isinstance(self.learner_params["parent_verification"], float):
 
-            def verify(atoms):
-                # This won't work correctly if the atoms has a constraint; will fix later
-                return (
-                    np.max(np.abs(atoms.get_forces()))
-                    < self.learner_params["parent_verification"]
-                )
+            def verify_fmax(atoms):
+                forces = atoms.get_forces()
+                fmax = np.sqrt((forces ** 2).sum(axis=1).max())
+                return fmax < self.learner_params["parent_verification"]
 
-            self.parent_verification = verify
+            self.parent_verification = verify_fmax
 
         elif self.learner_params["parent_verification"] is None:
             self.parent_verification = lambda x: False
@@ -80,10 +76,10 @@ class OnlineLearner(Calculator):
 
         atoms_copy = atoms.copy()
         atoms_copy.set_calculator(copy.copy(self.parent_calc))
-        new_data = convert_to_singlepoint([atoms_copy])
+        new_data, = convert_to_singlepoint([atoms_copy])
 
-        energy_actual = new_data[0].get_potential_energy(apply_constraint=False)
-        force_actual = new_data[0].get_forces(apply_constraint=False)
+        energy_actual = new_data.get_potential_energy(apply_constraint=False)
+        force_actual = new_data.get_forces(apply_constraint=False)
 
         self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
             self.parent_dataset,
@@ -91,7 +87,7 @@ class OnlineLearner(Calculator):
             n_ensembles=self.learner_params["n_ensembles"],
         )
 
-        # Don't bother training if
+        # Don't bother training if we have less than two datapoints
         if len(self.parent_dataset) >= 2:
             self.ensemble_calc = EnsembleCalc.make_ensemble(
                 self.ensemble_sets, self.trainer
@@ -112,22 +108,19 @@ class OnlineLearner(Calculator):
             self.results["forces"] = force
             return
 
-        # Get the predicted energy/force from the ensemble
-        energy_pred = self.ensemble_calc.get_potential_energy(atoms)
-        force_pred = self.ensemble_calc.get_forces(atoms)
+        # Make a copy of the atoms with ensemble energies as a SP
         atoms_copy = atoms.copy()
         atoms_copy.set_calculator(self.ensemble_calc)
-        (atoms_ML,) = convert_to_singlepoint([atoms_copy])
+        atoms_ML, = convert_to_singlepoint([atoms_copy])
 
         # Check if we are extrapolating too far, and if so add/retrain
-        if self.unsafe_prediction(atoms_ML) or self.parent_verification(atoms_ML):
+        if self.unsafe_prediction(atoms_ML) or \
+                self.parent_verification(atoms_ML):
             # We ran DFT, so just use that energy/force
             energy, force = self.add_data_and_retrain(atoms)
         else:
-            energy, force = (
-                atoms_ML.get_potential_energy(apply_constraint=False),
-                atoms_ML.get_forces(apply_constraint=False),
-            )
+            energy = atoms_ML.get_potential_energy(apply_constraint=False)
+            force = atoms_ML.get_forces(apply_constraint=False)
 
         # Return the energy/force
         self.results["energy"] = energy
