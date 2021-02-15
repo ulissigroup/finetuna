@@ -1,14 +1,13 @@
 import torch
 from al_mlp.preset_learners.neb_learner import NEBLearner
 import numpy as np
-from offline_neb_Cu_C_utils import construct_geometries
 from al_mlp.atomistic_methods import NEBcalc
 from al_mlp.base_calcs.morse import MultiMorse
 from amptorch.trainer import AtomsTrainer
 from torch.nn import Tanh
 
 
-def offline_neb(parent_calc, iter=4, intermediate_images=3):
+def offline_neb(images,parent_calc, iter=4, intermediate_images=3):
     torch.set_num_threads(1)
 
     parent_calc = parent_calc
@@ -23,11 +22,6 @@ def offline_neb(parent_calc, iter=4, intermediate_images=3):
             "cutoff": 5.0,
         },
     }
-
-    ml2relax = True  # use machine learning to relax the initial and final states rather than DFT as is the norm
-    initial, final = construct_geometries(parent_calc=parent_calc, ml2relax=ml2relax)
-    images = [initial]
-    images.append(final)
 
     elements = ["Cu", "C"]
     config = {
@@ -65,16 +59,15 @@ def offline_neb(parent_calc, iter=4, intermediate_images=3):
 
     # building base morse calculator as base calculator
     cutoff = Gs["default"]["cutoff"]
-
-    base_calc = MultiMorse(images, cutoff, combo="mean")
+    neb_images = images.copy()
+    base_calc = MultiMorse(neb_images, cutoff, combo="mean")
     # base_calc = Dummy(images)
 
     # define learner_params OfflineActiveLearner
 
     learner_params = {
         "atomistic_method": NEBcalc(
-            starting_images=images,
-            ml2relax=ml2relax,
+            starting_images=neb_images,
             intermediate_samples=intermediate_images,
         ),
         "max_iterations": iter,
@@ -87,5 +80,4 @@ def offline_neb(parent_calc, iter=4, intermediate_images=3):
 
     learner = NEBLearner(learner_params, trainer, images, parent_calc, base_calc)
     learner.learn()
-
     return learner
