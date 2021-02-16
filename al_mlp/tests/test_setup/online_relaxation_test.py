@@ -1,15 +1,11 @@
 import numpy as np
-from al_mlp.online_learner import OnlineActiveLearner
+from al_mlp.online_learner import OnlineLearner
 from amptorch.trainer import AtomsTrainer
 import os
-from al_mlp.ensemble_calc import EnsembleCalc
-from al_mlp.base_calcs.dummy import Dummy
 import torch
 
-# from amptorch.ase_utils import AMPtorch
 
-
-def run_oal(atomistic_method, images, dbname, parent_calc):
+def run_oal(atomistic_method, images, elements, dbname, parent_calc):
 
     Gs = {
         "default": {
@@ -22,15 +18,15 @@ def run_oal(atomistic_method, images, dbname, parent_calc):
         },
     }
 
-    elements = np.unique(images[0].get_chemical_symbols())
-
     learner_params = {
         "max_iterations": 10,
         "samples_to_retrain": 1,
         "filename": "relax_example",
         "file_dir": "./",
-        "uncertain_tol": 0.1,
+        "uncertain_tol": 5.0,
+        "fmax_verify_threshold": 0.05,  # eV/AA
         "relative_variance": True,
+        "n_ensembles": 10,
         "use_dask": True,
     }
 
@@ -41,7 +37,7 @@ def run_oal(atomistic_method, images, dbname, parent_calc):
             "force_coefficient": 4.0,
             "lr": 1,
             "batch_size": 10,
-            "epochs": 100,  # was 100
+            "epochs": 100,
             "optimizer": torch.optim.LBFGS,
             "optimizer_args": {"optimizer__line_search_fn": "strong_wolfe"},
         },
@@ -58,33 +54,19 @@ def run_oal(atomistic_method, images, dbname, parent_calc):
             "run_dir": "./",
             "seed": 1,
             "identifier": "test",
-            "verbose": True,
+            "verbose": False,
             # "logger": True,
             "single-threaded": True,
         },
     }
 
-    if learner_params["use_dask"] and EnsembleCalc.executor is None:
-        from dask.distributed import Client, LocalCluster
-
-        cluster = LocalCluster(n_workers=4, processes=True, threads_per_worker=1)
-        client = Client(cluster)
-        EnsembleCalc.set_executor(client)
-
-    # cutoff = Gs["default"]["cutoff"]
     trainer = AtomsTrainer(config)
-    # trainer_calc = AMPtorch
-    base_calc = Dummy(images)
 
-    onlinecalc = OnlineActiveLearner(
+    onlinecalc = OnlineLearner(
         learner_params,
         trainer,
         images,
         parent_calc,
-        base_calc,
-        # trainer_calc,
-        n_ensembles=10,
-        n_cores="max",
     )
 
     if os.path.exists("dft_calls.db"):

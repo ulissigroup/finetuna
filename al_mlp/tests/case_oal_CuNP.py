@@ -8,6 +8,9 @@ import numpy as np
 from ase.cluster.icosahedron import Icosahedron
 from ase.optimize import BFGS
 
+FORCE_THRESHOLD = 0.05
+ENERGY_THRESHOLD = 0.01
+
 
 class oal_CuNP(unittest.TestCase):
     @classmethod
@@ -23,7 +26,7 @@ class oal_CuNP(unittest.TestCase):
         cls.emt_counter = CounterCalc(EMT())
         EMT_initial_structure.set_calculator(cls.emt_counter)
         cls.EMT_structure_optim = Relaxation(
-            EMT_initial_structure, BFGS, fmax=0.05, steps=30
+            EMT_initial_structure, BFGS, fmax=FORCE_THRESHOLD, steps=30
         )
         cls.EMT_structure_optim.run(cls.emt_counter, "CuNP_emt")
 
@@ -34,7 +37,11 @@ class oal_CuNP(unittest.TestCase):
             OAL_initial_structure, BFGS, fmax=0.05, steps=60, maxstep=0.04
         )
         cls.OAL_learner, cls.OAL_structure_optim = run_oal(
-            OAL_relaxation, [OAL_initial_structure], "CuNP_oal", EMT()
+            OAL_relaxation,
+            [],
+            ["Cu"],
+            "CuNP_oal",
+            EMT(),
         )
 
         # Retain images of the final structure from both relaxations
@@ -49,16 +56,35 @@ class oal_CuNP(unittest.TestCase):
         assert np.allclose(
             self.EMT_image.get_potential_energy(),
             self.OAL_image.get_potential_energy(),
-            atol=0.1,
+            atol=ENERGY_THRESHOLD,
+        ), str(
+            "Learner energy inconsistent:\n"
+            + str(self.EMT_image.get_potential_energy())
+            + "or Parent energy inconsistent:\n"
+            + str(self.OAL_image.get_potential_energy())
+            + "\nwith Energy Threshold: "
+            + str(ENERGY_THRESHOLD)
         )
 
     def test_oal_CuNP_forces(self):
-        assert np.allclose(
-            self.EMT_image.get_forces(), self.OAL_image.get_forces(), atol=0.05
+        forces = self.OAL_image.get_forces()
+        fmax = np.sqrt((forces ** 2).sum(axis=1).max())
+
+        assert fmax <= FORCE_THRESHOLD, str(
+            "Learner forces inconsistent:\n"
+            + str(fmax)
+            + "\nwith Force Threshold: "
+            + str(FORCE_THRESHOLD)
         )
 
     def test_oal_CuNP_calls(self):
 
-        # What I want here is the number of EMT calls; I don't think that this is
-        # what get_trajectory actually does
-        assert self.OAL_learner.parent_calls < 0.5 * self.emt_counter.force_calls
+        print("OAL calls: %d" % self.OAL_learner.parent_calls)
+        print("EMT calls: %d" % self.emt_counter.force_calls)
+
+        assert self.OAL_learner.parent_calls <= 0.5 * self.emt_counter.force_calls, str(
+            "total calls: "
+            + str(self.OAL_learner.parent_calls)
+            + " not less than: "
+            + str(0.5 * self.emt_counter.force_calls)
+        )

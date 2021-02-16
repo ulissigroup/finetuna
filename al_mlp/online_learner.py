@@ -1,51 +1,15 @@
 import copy
 import numpy as np
-from ase.db import connect
-from ase.calculators.singlepoint import SinglePointCalculator as sp
 from ase.calculators.calculator import Calculator
-from al_mlp.utils import convert_to_singlepoint, compute_with_calc
+from al_mlp.utils import convert_to_singlepoint
 from al_mlp.bootstrap import non_bootstrap_ensemble
 from al_mlp.ensemble_calc import EnsembleCalc
-from al_mlp.calcs import DeltaCalc
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
 
 
-class OnlineActiveLearner(Calculator):
-    """Online Active Learner
-    Parameters
-    ----------
-     learner_params: dict
-         Dictionary of learner parameters and settings.
-
-     trainer: object
-         An isntance of a trainer that has a train and predict method.
-
-     parent_dataset: list
-         A list of ase.Atoms objects that have attached calculators.
-         Used as the first set of training data.
-
-     parent_calc: ase Calculator object
-         Calculator used for querying training data.
-
-     n_ensembles: int.
-          n_ensemble of models to make predictions.
-
-     n_cores: int.
-          n_cores used to train ensembles.
-
-     parent_calc: ase Calculator object
-         Calculator used for querying training data.
-
-     base_calc: ase Calculator object
-         Calculator used to calculate delta data for training.
-
-     trainer_calc: uninitialized ase Calculator object
-         The trainer_calc should produce an ase Calculator instance
-         capable of force and energy calculations via TrainerCalc(trainer)
-    """
-
+class OnlineLearner(Calculator):
     implemented_properties = ["energy", "forces"]
 
     def __init__(
@@ -54,140 +18,103 @@ class OnlineActiveLearner(Calculator):
         trainer,
         parent_dataset,
         parent_calc,
-        base_calc,
-        n_ensembles=10,
-        n_cores="max",
     ):
         Calculator.__init__(self)
 
-        self.n_ensembles = n_ensembles
-        self.parent_dataset = parent_dataset
         self.parent_calc = parent_calc
-        self.base_calc = base_calc
-        self.calcs = [parent_calc, base_calc]
         self.trainer = trainer
         self.learner_params = learner_params
-        self.n_cores = n_cores
-        self.init_training_data()
-        self.ensemble_calc = EnsembleCalc.make_ensemble(
-            self.ensemble_sets, self.trainer
-        )
-        self.trained_calc = DeltaCalc(
-            [self.ensemble_calc, self.base_calc], "add", self.refs
-        )
+        self.parent_dataset = convert_to_singlepoint(parent_dataset)
 
-        self.uncertain_tol = learner_params["uncertain_tol"]
-        self.parent_calls = 0
-        self.init_training_data()
-
-    def init_training_data(self):
-        """
-        Prepare the training data by attaching delta values for training.
-        """
-        raw_data = self.parent_dataset
-        sp_raw_data = convert_to_singlepoint(raw_data)
-        parent_ref_image = sp_raw_data[0]
-        base_ref_image = compute_with_calc(sp_raw_data[:1], self.base_calc)[0]
-        self.refs = [parent_ref_image, base_ref_image]
-        self.delta_sub_calc = DeltaCalc(self.calcs, "sub", self.refs)
-        self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
-            compute_with_calc(sp_raw_data, self.delta_sub_calc),
-            n_ensembles=self.n_ensembles,
-        )
-
-    def calculate(self, atoms, properties, system_changes):
-
-        # check if calculating values for the only point already trained on
-        if len(self.parent_dataset) == 1 and np.all(
-            self.parent_dataset[0].positions == atoms.positions
-        ):
-            # We only have one training data, and we are calculating the energy/force for that point
-            self.results["energy"] = self.parent_dataset[0].get_potential_energy(
-                apply_constraint=False
-            )
-            self.results["forces"] = self.parent_dataset[0].get_forces(
-                apply_constraint=False
-            )
-            return
-
-        # call super calculate method
-        Calculator.calculate(self, atoms, properties, system_changes)
-
-        # evaluate current calculator for the given atoms and get the uncertainty
-        trained_calc_copy = copy.deepcopy(self.trained_calc)
-        energy_pred = trained_calc_copy.get_potential_energy(atoms)
-        force_pred = trained_calc_copy.get_forces(atoms)
-        uncertainty = atoms.info["uncertainty"][0]
-
-        # evaluate the current uncertainty tolerance
-        uncertainty_tol = self.uncertain_tol
-        if (
-            "relative_variance" in self.learner_params
-            and self.learner_params["relative_variance"]
-        ):
-            # trained_calc_copy = copy.deepcopy(self.trained_calc)
-            # copied_images = copy_images(self.parent_dataset)
-            # base_uncertainty = 0
-            # for image in copied_images:
-            #    trained_calc_copy.reset()
-            #    trained_calc_copy.get_forces(image)
-            #    if image.info["uncertainty"][0] > base_uncertainty:
-            #        base_uncertainty = image.info["uncertainty"][0]
-            base_uncertainty = np.nanmax(np.abs(force_pred)) ** 2
-            uncertainty_tol = self.uncertain_tol * base_uncertainty
-
-        # after evaluating, print the uncertainty and uncertainty tolerance
-        print(
-            "uncertainty: "
-            + str(uncertainty)
-            + ", uncertainty_tol: "
-            + str(uncertainty_tol)
-        )
-
-        # if uncertainty exceeds the uncertainty tolerance,
-        # or if there aren't enough points in the dataset then
-        # retrain the ensemble
-        if len(self.parent_dataset) == 1 or uncertainty >= uncertainty_tol:
-            print("Parent call required")
-            db = connect("dft_calls.db")
-            new_data = atoms.copy()
-            new_data.set_calculator(copy.copy(self.parent_calc))
-            # os.makedirs("./temp", exist_ok=True)
-            # os.chdir("./temp")
-
-            energy_pred = new_data.get_potential_energy(apply_constraint=False)
-            force_pred = new_data.get_forces(apply_constraint=False)
-            sp_energy_force = sp(atoms=new_data, energy=energy_pred, forces=force_pred)
-            sp_energy_force.implemented_properties = ["energy", "forces"]
-            delta_sub_sp = DeltaCalc(
-                (sp_energy_force, self.base_calc), "sub", self.refs
-            )
-            new_data.calc = delta_sub_sp
-            new_data_list = convert_to_singlepoint([new_data])
-            # os.chdir(cwd)
-            # os.system("rm -rf ./temp")
-
-            try:
-                db.write(new_data)
-            except Exception:
-                print("failed to write to db file")
-                pass
+        # Don't bother making an ensemble with only one data point,
+        # as the uncertainty is meaningless
+        if len(self.parent_dataset) > 1:
             self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
-                self.parent_dataset,
-                new_data_list,
-                n_ensembles=self.n_ensembles,
+                parent_dataset, n_ensembles=self.learner_params["n_ensembles"]
             )
-
             self.ensemble_calc = EnsembleCalc.make_ensemble(
                 self.ensemble_sets, self.trainer
             )
-            self.trained_calc = DeltaCalc(
-                [self.ensemble_calc, self.base_calc], "add", self.refs
+
+        if "fmax_verify_threshold" in self.learner_params:
+            self.fmax_verify_threshold = self.learner_params["fmax_verify_threshold"]
+        else:
+            self.fmax_verify_threshold = np.nan  # always False
+
+        self.uncertain_tol = learner_params["uncertain_tol"]
+        self.parent_calls = 0
+
+    def calculate(self, atoms, properties, system_changes):
+        Calculator.calculate(self, atoms, properties, system_changes)
+
+        # If we have less than two data points, uncertainty is not
+        # well calibrated so just use DFT
+        if len(self.parent_dataset) < 2:
+            energy, force = self.add_data_and_retrain(atoms)
+            self.results["energy"] = energy
+            self.results["forces"] = force
+            return
+
+        # Make a copy of the atoms with ensemble energies as a SP
+        atoms_copy = atoms.copy()
+        atoms_copy.set_calculator(self.ensemble_calc)
+        (atoms_ML,) = convert_to_singlepoint([atoms_copy])
+
+        # Check if we are extrapolating too far, and if so add/retrain
+        if self.unsafe_prediction(atoms_ML) or self.parent_verify(atoms_ML):
+            # We ran DFT, so just use that energy/force
+            energy, force = self.add_data_and_retrain(atoms)
+        else:
+            energy = atoms_ML.get_potential_energy(apply_constraint=False)
+            force = atoms_ML.get_forces(apply_constraint=False)
+
+        # Return the energy/force
+        self.results["energy"] = energy
+        self.results["forces"] = force
+
+    def unsafe_prediction(self, atoms):
+        # Set the desired tolerance based on the current max predcited force
+        uncertainty = atoms.info["uncertainty"][0] ** 0.5
+        base_uncertainty = np.nanmax(np.abs(atoms.get_forces()))
+        uncertainty_tol = self.uncertain_tol * base_uncertainty
+
+        print(
+            "Max Force Std: %1.3f eV/A, Max Force Threshold: %1.3f eV/A"
+            % (uncertainty, uncertainty_tol)
+        )
+
+        if uncertainty > uncertainty_tol:
+            return True
+        else:
+            return False
+
+    def parent_verify(self, atoms):
+        forces = atoms.get_forces()
+        fmax = np.sqrt((forces ** 2).sum(axis=1).max())
+        return fmax <= self.fmax_verify_threshold
+
+    def add_data_and_retrain(self, atoms):
+        print("OnlineLearner: Parent calculation required")
+
+        atoms_copy = atoms.copy()
+        atoms_copy.set_calculator(copy.copy(self.parent_calc))
+        (new_data,) = convert_to_singlepoint([atoms_copy])
+
+        energy_actual = new_data.get_potential_energy(apply_constraint=False)
+        force_actual = new_data.get_forces(apply_constraint=False)
+
+        self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
+            self.parent_dataset,
+            new_data,
+            n_ensembles=self.learner_params["n_ensembles"],
+        )
+
+        # Don't bother training if we have less than two datapoints
+        if len(self.parent_dataset) >= 2:
+            self.ensemble_calc = EnsembleCalc.make_ensemble(
+                self.ensemble_sets, self.trainer
             )
 
-            self.parent_calls += 1
-        else:
-            print("")
-            # db.write(None)
-        self.results["energy"] = energy_pred
-        self.results["forces"] = force_pred
+        self.parent_calls += 1
+
+        return energy_actual, force_actual
