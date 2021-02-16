@@ -10,7 +10,7 @@ import numpy as np
 
 
 class NEBcalc:
-    def __init__(self, starting_images, ml2relax=True, intermediate_samples=3):
+    def __init__(self, starting_images, intermediate_samples=3):
         """
         Computes a NEB given an initial and final image.
 
@@ -18,13 +18,9 @@ class NEBcalc:
         ----------
         starting_images: list. Initial and final images to be used for the NEB.
 
-        ml2relax: boolean. True to use ML to relax the initial and final structure guesses.
-        False if initial and final structures were relaxed beforehand.
-
         intermediate_samples: int. Number of intermediate samples to be used in constructing the NEB"""
 
         self.starting_images = copy.deepcopy(starting_images)
-        self.ml2relax = ml2relax
         self.intermediate_samples = intermediate_samples
 
     def run(self, calc, filename):
@@ -37,22 +33,21 @@ class NEBcalc:
 
         initial = self.starting_images[0].copy()
         final = self.starting_images[-1].copy()
-        if self.ml2relax:
-            # Relax initial and final images
-            ml_initial = initial
-            ml_initial.set_calculator(calc)
-            ml_final = final
-            ml_final.set_calculator(calc)
-            print("BUILDING INITIAL")
-            qn = BFGS(
-                ml_initial, trajectory="initial.traj", logfile="initial_relax_log.txt"
-            )
-            qn.run(fmax=0.01, steps=100)
-            print("BUILDING FINAL")
-            qn = BFGS(ml_final, trajectory="final.traj", logfile="final_relax_log.txt")
-            qn.run(fmax=0.01, steps=100)
-            initial = ml_initial.copy()
-            final = ml_final.copy()
+        # Relax initial and final images
+        ml_initial = initial
+        ml_initial.set_calculator(calc)
+        ml_final = final
+        ml_final.set_calculator(calc)
+        print("BUILDING INITIAL")
+        qn = BFGS(
+            ml_initial, trajectory="initial.traj", logfile="initial_relax_log.txt"
+        )
+        qn.run(fmax=0.01, steps=100)
+        print("BUILDING FINAL")
+        qn = BFGS(ml_final, trajectory="final.traj", logfile="final_relax_log.txt")
+        qn.run(fmax=0.01, steps=100)
+        initial = ml_initial.copy()
+        final = ml_final.copy()
 
         initial.set_calculator(calc)
         final.set_calculator(calc)

@@ -98,8 +98,7 @@ class OfflineActiveLearner:
         """
         if self.iterations > 0:
             self.query_data()
-        self.fn_label = f"{self.file_dir}{self.filename}\
-            _iter_{self.iterations}"
+        self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
 
     def do_train(self):
         """
