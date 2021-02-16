@@ -34,7 +34,7 @@ class oal_CuNP(unittest.TestCase):
         OAL_initial_structure = initial_structure.copy()
         OAL_initial_structure.set_calculator(EMT())
         OAL_relaxation = Relaxation(
-            OAL_initial_structure, BFGS, fmax=0.05, steps=30, maxstep=0.04
+            OAL_initial_structure, BFGS, fmax=0.05, steps=60, maxstep=0.04
         )
         cls.OAL_learner, cls.OAL_structure_optim = run_oal(
             OAL_relaxation,
