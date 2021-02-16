@@ -91,7 +91,7 @@ class OnlineLearner(Calculator):
     def parent_verify(self, atoms):
         forces = atoms.get_forces()
         fmax = np.sqrt((forces ** 2).sum(axis=1).max())
-        return fmax < self.fmax_verify_threshold
+        return fmax <= self.fmax_verify_threshold
 
     def add_data_and_retrain(self, atoms):
         print("OnlineLearner: Parent calculation required")
