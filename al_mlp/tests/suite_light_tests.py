@@ -1,4 +1,4 @@
-# tests/light_test_suite.py
+# tests/suite_light_tests.py
 import unittest
 
 # import test modules

@@ -1,4 +1,4 @@
-# tests/heavy_test_suite.py
+# tests/suite_verbose_tests.py
 import unittest
 
 # import test modules
