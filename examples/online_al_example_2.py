@@ -1,5 +1,4 @@
 from al_mlp.atomistic_methods import Relaxation
-
 from al_mlp.online_learner import OnlineLearner
 from amptorch.trainer import AtomsTrainer
 from ase.calculators.emt import EMT
@@ -9,6 +8,16 @@ from ase.optimize import BFGS
 import torch
 import os
 import copy
+
+# Set up ensemble parallelization
+if __name__ == "__main__":
+    # import make_ensemble and dask for setting parallelization
+    from al_mlp.ensemble_calc import EnsembleCalc
+    from dask.distributed import Client, LocalCluster
+
+    cluster = LocalCluster(processes=True, threads_per_worker=1)
+    client = Client(cluster)
+    EnsembleCalc.set_executor(client)
 
 # Set up parent calculator and image environment
 initial_structure = Icosahedron("Cu", 2)
@@ -46,7 +55,7 @@ learner_params = {
     "uncertain_tol": 5.0,
     "fmax_verify_threshold": 0.05,  # eV/AA
     "relative_variance": True,
-    "n_ensembles": 2,
+    "n_ensembles": 10,
     "use_dask": True,
 }
 
