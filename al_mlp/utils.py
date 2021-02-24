@@ -1,6 +1,7 @@
 import os
 import copy
 from ase.calculators.singlepoint import SinglePointCalculator as sp
+from al_mlp.calcs import DeltaCalc
 
 
 def convert_to_singlepoint(images):
@@ -45,13 +46,43 @@ def compute_with_calc(images, calculator):
 
     images: list
         List of ase atoms images to be calculated.
-    calc: ase Calculator object
+    calculator: ase Calculator object
         Calculator used to get forces and energies.
     """
 
     images = copy_images(images)
     for image in images:
         image.set_calculator(copy.deepcopy(calculator))
+    return convert_to_singlepoint(images)
+
+
+def subtract_deltas(images, base_calc, refs):
+    """
+    Produces the delta values of the image with precalculated values.
+    This function is intended to be used by images that have
+    precalculated forces and energies using the parent calc,
+    that are attached to the image via a singlepoint calculator.
+    This avoids having to recalculate results by a costly
+    parent calc.
+
+    Parameters
+    ----------
+
+    images: list
+        List of ase atoms images to be calculated.
+        Images should have singlepoint calculators with results.
+    base_calc: ase Calculator object
+        Calculator used as the baseline for taking delta subtraction.
+    refs: list
+        List of two images, they have results from parent and base calc
+        respectively
+    """
+
+    images = copy_images(images)
+    for image in images:
+        parent_calc_sp = image.calc
+        delta_sub_calc = DeltaCalc([parent_calc_sp, base_calc], "sub", refs)
+        image.set_calculator(delta_sub_calc)
     return convert_to_singlepoint(images)
 
 
