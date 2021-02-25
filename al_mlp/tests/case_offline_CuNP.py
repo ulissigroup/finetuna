@@ -7,6 +7,8 @@ from ase.cluster.icosahedron import Icosahedron
 from ase.optimize import BFGS
 import unittest
 
+FORCE_THRESHOLD = 0.05
+ENERGY_THRESHOLD = 0.01
 # Set up parent calculator and image environment
 
 
@@ -56,14 +58,18 @@ class offline_CuNP(unittest.TestCase):
             + "or Parent energy inconsistent:\n"
             + str(self.offline_final_structure.get_potential_energy())
             + "\nwith Energy Threshold: "
-            + str(0.01)
+            + str(ENERGY_THRESHOLD)
         )
 
     def test_offline_CuNP_forces(self):
-        assert np.allclose(
-            np.abs(self.EMT_image.get_forces()),
-            np.abs(self.offline_final_structure.get_forces()),
-            atol=0.05,
+        forces = self.offline_final_structure.get_forces()
+        fmax = np.sqrt((forces ** 2).sum(axis=1).max())
+
+        assert fmax <= FORCE_THRESHOLD, str(
+            "Learner forces inconsistent:\n"
+            + str(fmax)
+            + "\nwith Force Threshold: "
+            + str(FORCE_THRESHOLD)
         )
 
     def test_offline_CuNP_calls(self):
