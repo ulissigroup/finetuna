@@ -8,7 +8,7 @@ from ase.optimize import BFGS
 import unittest
 
 FORCE_THRESHOLD = 0.05
-ENERGY_THRESHOLD = 0.01
+ENERGY_THRESHOLD = 0.03
 # Set up parent calculator and image environment
 
 
@@ -25,14 +25,14 @@ class offline_CuNP(unittest.TestCase):
         cls.emt_counter = CounterCalc(parent_calc)
         EMT_initial_structure.set_calculator(cls.emt_counter)
         cls.EMT_structure_optim = Relaxation(
-            EMT_initial_structure, BFGS, fmax=0.05, steps=30
+            EMT_initial_structure, BFGS, fmax=0.01, steps=30
         )
         cls.EMT_structure_optim.run(cls.emt_counter, "CuNP_emt")
 
         offline_initial_structure = initial_structure.copy()
         offline_initial_structure.set_calculator(parent_calc)
         Offline_relaxation = Relaxation(
-            offline_initial_structure, BFGS, fmax=0.05, steps=30, maxstep=0.05
+            offline_initial_structure, BFGS, fmax=0.01, steps=30, maxstep=0.05
         )
         cls.offline_learner, cls.trained_calc, cls.Offline_traj = run_offline_al(
             Offline_relaxation,
@@ -51,7 +51,7 @@ class offline_CuNP(unittest.TestCase):
         assert np.allclose(
             self.EMT_image.get_potential_energy(),
             self.offline_final_structure.get_potential_energy(),
-            atol=0.01,
+            atol=ENERGY_THRESHOLD,
         ), str(
             "Learner energy inconsistent:\n"
             + str(self.EMT_image.get_potential_energy())
