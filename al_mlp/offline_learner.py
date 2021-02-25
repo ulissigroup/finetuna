@@ -2,7 +2,6 @@ import random
 from al_mlp.calcs import DeltaCalc
 from al_mlp.utils import convert_to_singlepoint, compute_with_calc, write_to_db
 import ase
-import numpy as np
 
 
 class OfflineActiveLearner:
@@ -37,7 +36,6 @@ class OfflineActiveLearner:
         self.calcs = [parent_calc, base_calc]
         self.init_learner()
         self.init_training_data()
-        self.max_evA = learner_params["max_evA"]
 
     def init_learner(self):
         """
@@ -138,11 +136,6 @@ class OfflineActiveLearner:
         sample_candidates: list
             List of ase atoms objects to query from.
         """
-        final_point_image = [self.sample_candidates[-1]]
-        final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
-        self.parent_calls += 1
-        self.training_data += compute_with_calc(final_point_image, self.delta_sub_calc)
-        self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
 
         queried_images = self.query_func()
         self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
@@ -153,14 +146,6 @@ class OfflineActiveLearner:
         """
         if self.iterations >= self.max_iterations:
             return True
-        else:
-            # final_point_image = [self.sample_candidates[-1]]
-            # final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
-            # self.parent_calls += 1
-            # self.training_data += compute_with_calc(final_point_image, self.delta_sub_calc)
-            # print(np.max(np.abs(final_point_evA[0].get_forces())))
-            if self.iterations > 0 and self.final_point_force <= self.max_evA:
-                return True
         return False
 
     def query_func(self):
@@ -170,11 +155,10 @@ class OfflineActiveLearner:
         queries_db = ase.db.connect("queried_images.db")
         random.seed()
         query_idx = random.sample(
-            range(1, len(self.sample_candidates) - 1),
-            self.samples_to_retrain - 1,
+            range(1, len(self.sample_candidates)),
+            self.samples_to_retrain,
         )
         queried_images = [self.sample_candidates[idx] for idx in query_idx]
-        query_idx = np.append(query_idx, [len(self.sample_candidates) - 1])
         write_to_db(queries_db, queried_images)
         self.parent_calls += len(queried_images)
         return queried_images

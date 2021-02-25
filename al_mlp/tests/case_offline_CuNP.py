@@ -8,7 +8,7 @@ from ase.optimize import BFGS
 import unittest
 
 FORCE_THRESHOLD = 0.05
-ENERGY_THRESHOLD = 0.03
+ENERGY_THRESHOLD = 0.01
 # Set up parent calculator and image environment
 
 
@@ -74,7 +74,7 @@ class offline_CuNP(unittest.TestCase):
 
     def test_offline_CuNP_calls(self):
         assert (
-            self.offline_learner.parent_calls <= 0.7 * self.emt_counter.force_calls
+            self.offline_learner.parent_calls <= 0.5 * self.emt_counter.force_calls
         ), str(
             "total calls:"
             + str(self.offline_learner.parent_calls)

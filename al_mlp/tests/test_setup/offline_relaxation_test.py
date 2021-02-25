@@ -2,7 +2,7 @@ import numpy as np
 
 # from al_mlp.ensemble_calc import EnsembleCalc
 
-from al_mlp.offline_learner import OfflineActiveLearner
+from al_mlp.preset_learners.fmax_learner import FmaxLearner
 from amptorch.trainer import AtomsTrainer
 import os
 
@@ -86,7 +86,7 @@ def run_offline_al(atomistic_method, images, dbname, parent_calc):
     cutoff = Gs["default"]["cutoff"]
     base_calc = MultiMorse(images, cutoff, combo="mean")
 
-    learner = OfflineActiveLearner(
+    learner = FmaxLearner(
         learner_params,
         trainer,
         images,

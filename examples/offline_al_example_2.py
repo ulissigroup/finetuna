@@ -84,7 +84,7 @@ learner_params = {
     "file_dir": "./",
     "query_method": "random",
     "use_dask": False,
-    "max_evA": 0.05,
+    # "max_evA": 0.05,
 }
 
 config = {
@@ -98,7 +98,7 @@ config = {
         "force_coefficient": 40,
         "lr": 0.1,
         "batch_size": 100,
-        "epochs": 200,  # was 100
+        "epochs": 100,  # was 100
         "loss": "mse",
         "metric": "mae",
         "optimizer": torch.optim.LBFGS,
