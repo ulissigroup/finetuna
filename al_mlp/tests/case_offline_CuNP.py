@@ -19,7 +19,8 @@ class offline_CuNP(unittest.TestCase):
         initial_structure.set_cell([20, 20, 20])
 
         EMT_initial_structure = initial_structure.copy()
-        cls.emt_counter = CounterCalc(EMT())
+        parent_calc = EMT()
+        cls.emt_counter = CounterCalc(parent_calc)
         EMT_initial_structure.set_calculator(cls.emt_counter)
         cls.EMT_structure_optim = Relaxation(
             EMT_initial_structure, BFGS, fmax=0.05, steps=30
@@ -27,15 +28,18 @@ class offline_CuNP(unittest.TestCase):
         cls.EMT_structure_optim.run(cls.emt_counter, "CuNP_emt")
 
         offline_initial_structure = initial_structure.copy()
-        offline_initial_structure.set_calculator(EMT())
+        offline_initial_structure.set_calculator(parent_calc)
         Offline_relaxation = Relaxation(
             offline_initial_structure, BFGS, fmax=0.05, steps=30, maxstep=0.05
         )
         cls.offline_learner, cls.trained_calc, cls.Offline_traj = run_offline_al(
-            Offline_relaxation, [offline_initial_structure], "CuNP_offline_al", EMT()
+            Offline_relaxation,
+            [offline_initial_structure],
+            "CuNP_offline_al",
+            parent_calc,
         )
         cls.EMT_image = cls.EMT_structure_optim.get_trajectory("CuNP_emt")[-1]
-        cls.EMT_image.set_calculator(EMT())
+        cls.EMT_image.set_calculator(parent_calc)
         cls.offline_final_structure = cls.Offline_traj[-1]
         cls.offline_final_structure.set_calculator(cls.trained_calc)
         cls.description = "CuNP"
@@ -45,13 +49,17 @@ class offline_CuNP(unittest.TestCase):
         assert np.allclose(
             self.EMT_image.get_potential_energy(),
             self.offline_final_structure.get_potential_energy(),
-            atol=0.05,
+            atol=0.01,
+        ), str(
+            "Learner energy inconsistent:\n"
+            + str(self.EMT_image.get_potential_energy())
+            + "or Parent energy inconsistent:\n"
+            + str(self.offline_final_structure.get_potential_energy())
+            + "\nwith Energy Threshold: "
+            + str(0.01)
         )
 
     def test_offline_CuNP_forces(self):
-        print(f"EMT force: {self.EMT_image.get_forces()}")
-        print(f"AL force: {self.offline_final_structure.get_forces()}")
-
         assert np.allclose(
             np.abs(self.EMT_image.get_forces()),
             np.abs(self.offline_final_structure.get_forces()),
@@ -59,4 +67,11 @@ class offline_CuNP(unittest.TestCase):
         )
 
     def test_offline_CuNP_calls(self):
-        assert self.offline_learner.iterations <= 0.7 * self.emt_counter.force_calls
+        assert (
+            self.offline_learner.parent_calls <= 0.7 * self.emt_counter.force_calls
+        ), str(
+            "total calls:"
+            + str(self.offline_learner.parent_calls)
+            + "not less than: "
+            + str(self.emt_counter.force_calls)
+        )

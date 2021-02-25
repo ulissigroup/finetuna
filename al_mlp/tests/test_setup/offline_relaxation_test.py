@@ -42,15 +42,15 @@ def run_offline_al(atomistic_method, images, dbname, parent_calc):
         "filename": "relax_example",
         "file_dir": "./",
         "query_method": "random",
-        "use_dask": True,
-        "max_evA": 0.03,
+        "use_dask": False,
+        "max_evA": 0.05,
     }
 
     config = {
         "model": {
             "get_forces": True,
             "num_layers": 3,
-            "num_nodes": 5,
+            "num_nodes": 20,
         },
         "optim": {
             "device": "cpu",

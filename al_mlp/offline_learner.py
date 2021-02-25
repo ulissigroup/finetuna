@@ -138,6 +138,12 @@ class OfflineActiveLearner:
         sample_candidates: list
             List of ase atoms objects to query from.
         """
+        final_point_image = [self.sample_candidates[-1]]
+        final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
+        self.parent_calls += 1
+        self.training_data += compute_with_calc(final_point_image, self.delta_sub_calc)
+        self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
+
         queried_images = self.query_func()
         self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
 
@@ -145,12 +151,16 @@ class OfflineActiveLearner:
         """
         Default termination function.
         """
-        final_point_image = [self.sample_candidates[-1]]
-        final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
         if self.iterations >= self.max_iterations:
             return True
-        elif np.max(np.abs(final_point_evA[0].get_forces())) <= self.max_evA:
-            return True
+        else:
+            # final_point_image = [self.sample_candidates[-1]]
+            # final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
+            # self.parent_calls += 1
+            # self.training_data += compute_with_calc(final_point_image, self.delta_sub_calc)
+            # print(np.max(np.abs(final_point_evA[0].get_forces())))
+            if self.iterations > 0 and self.final_point_force <= self.max_evA:
+                return True
         return False
 
     def query_func(self):
