@@ -33,13 +33,18 @@ def offline_neb(images, parent_calc, iter=4, intermediate_images=3):
         },
         "optim": {
             "device": "cpu",
-            "force_coefficient": 20,
+            "force_coefficient": 27,
             "lr": 1e-2,
             "batch_size": 1000,
-            "epochs": 500,
+            "epochs": 300,
             "loss": "mse",
             "metric": "mse",
             "optimizer": torch.optim.LBFGS,
+            "optimizer_args": {"optimizer__line_search_fn": "strong_wolfe"},
+            "scheduler": {
+                "policy": torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
+                "params": {"T_0": 10, "T_mult": 2},
+            },
         },
         "dataset": {
             "raw_data": images,
@@ -47,7 +52,7 @@ def offline_neb(images, parent_calc, iter=4, intermediate_images=3):
             "elements": elements,
             "fp_params": Gs,
             "save_fps": True,
-            "scaling": {"type": "standardize", "range": (0, 1)},
+            "scaling": {"type": "normalize", "range": (-1, 1)},
         },
         "cmd": {
             "debug": False,
@@ -80,7 +85,7 @@ def offline_neb(images, parent_calc, iter=4, intermediate_images=3):
         "filename": "example",
         "file_dir": "./",
         "use_dask": False,
-        "max_evA": 0.01,
+        # "max_evA": 0.01,
     }
 
     learner = NEBLearner(learner_params, trainer, images, parent_calc, base_calc)

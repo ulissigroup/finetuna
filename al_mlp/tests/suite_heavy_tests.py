@@ -5,7 +5,7 @@ import unittest
 # from al_mlp.tests.oal_PtNP_case import oal_PtNP
 from al_mlp.tests.case_oal_CuNP import oal_CuNP
 from al_mlp.tests.case_offline_CuNP import offline_CuNP
-
+from al_mlp.tests.case_CuC_offline_neb import offline_NEB
 
 # import make_ensemble and dask for setting parallelization
 from al_mlp.ensemble_calc import EnsembleCalc
@@ -24,6 +24,7 @@ suite = unittest.TestSuite()
 # add tests to the test suite
 suite.addTests(loader.loadTestsFromTestCase(offline_CuNP))
 suite.addTests(loader.loadTestsFromTestCase(oal_CuNP))
+suite.addTests(loader.loadTestsFromTestCase(offline_NEB))
 # suite.addTests(loader.loadTestsFromTestCase(oal_PtNP))
 # add more tests here
 
