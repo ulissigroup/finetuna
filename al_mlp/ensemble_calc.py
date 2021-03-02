@@ -57,14 +57,14 @@ class EnsembleCalc(Calculator):
         energies = []
         forces = []
 
-        def evaluate_ef(tuple):
+        def evaluate_ef(args_list):
             """
-            accepts a tuple of an atoms image and a calculator
+            accepts a args_list of an atoms image and a calculator
             evaluates the energies and forces of the atom using the calculator
-            and returns them as a tuple
+            and returns them as a args_list
             """
-            atoms_image = tuple[0]
-            calc = tuple[1]
+            atoms_image = args_list[0]
+            calc = args_list[1]
             calc.trainer.config["dataset"]["save_fps"] = False
             return (
                 calc.get_potential_energy(atoms_image),
@@ -98,13 +98,13 @@ class EnsembleCalc(Calculator):
         image to use, and pool of workers
         """
 
-        def train_and_combine(args_tuple):
+        def train_and_combine(args_list):
             """
             method for training trainer on ensemble sets, then create neural net calc,
             returns trained calc
             """
-            ensemble_set = args_tuple[0]
-            trainer = args_tuple[1]
+            ensemble_set = args_list[0]
+            trainer = args_list[1]
 
             trainer.train(raw_data=ensemble_set)
             check_path = trainer.cp_dir
@@ -113,9 +113,9 @@ class EnsembleCalc(Calculator):
             trainer_calc = trainer.get_calc()
             return trainer_calc
 
-        # split ensemble sets into separate tuples, clone: trainer,
-        # base calc and add to tuples, add: refs to tuples
-        tuples = []
+        # split ensemble sets into separate args_lists, clone: trainer,
+        # base calc and add to args_lists, add: refs to args_lists
+        args_lists = []
         random.seed(trainer.config["cmd"]["seed"])
         randomlist = [random.randint(0, 4294967295) for set in ensemble_sets]
         for i in range(len(ensemble_sets)):
@@ -128,19 +128,19 @@ class EnsembleCalc(Calculator):
             )
 
             trainer_copy = AtomsTrainer(copy_config)
-            tuples.append((set, trainer_copy))
+            args_lists.append((set, trainer_copy))
 
         # map training method, returns array of delta calcs
         trained_calcs = []
         if cls.executor is not None:
             futures = []
-            for tuple in tuples:
-                big_future = cls.executor.scatter(tuple)
+            for args_list in args_lists:
+                big_future = cls.executor.scatter(args_list)
                 futures.append(cls.executor.submit(train_and_combine, big_future))
             trained_calcs = [future.result() for future in futures]
         else:
-            for tuple in tuples:
-                trained_calcs.append(train_and_combine(tuple))
+            for args_list in args_lists:
+                trained_calcs.append(train_and_combine(args_list))
 
         # call init to construct ensemble calc from array of delta calcs
         return cls(trained_calcs)
