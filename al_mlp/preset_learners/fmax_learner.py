@@ -30,7 +30,6 @@ class FmaxLearner(OfflineActiveLearner):
         Default random query strategy.
         """
         queries_db = ase.db.connect("queried_images.db")
-        random.seed()
         query_idx = random.sample(
             range(1, len(self.sample_candidates) - 1),
             self.samples_to_retrain - 1,
@@ -57,5 +56,6 @@ class FmaxLearner(OfflineActiveLearner):
         self.training_data += compute_with_calc(final_point_image, self.delta_sub_calc)
         self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
 
+        random.seed(self.query_seeds[self.iterations])
         queried_images = self.query_func()
         self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
