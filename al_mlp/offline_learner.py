@@ -143,7 +143,7 @@ class OfflineActiveLearner:
             List of ase atoms objects to query from.
         """
 
-        random.seed(self.query_seeds[self.iterations])
+        random.seed(self.query_seeds[self.iterations - 1])
         queried_images = self.query_func()
         self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
 
