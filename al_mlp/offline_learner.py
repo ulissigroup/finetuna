@@ -136,11 +136,6 @@ class OfflineActiveLearner:
         """
         Queries data from a list of images. Calculates the properties
         and adds them to the training data.
-
-        Parameters
-        ----------
-        sample_candidates: list
-            List of ase atoms objects to query from.
         """
 
         random.seed(self.query_seeds[self.iterations - 1])

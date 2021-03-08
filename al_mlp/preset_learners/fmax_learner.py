@@ -44,17 +44,48 @@ class FmaxLearner(OfflineActiveLearner):
         """
         Queries data from a list of images. Calculates the properties
         and adds them to the training data.
-
-        Parameters
-        ----------
-        sample_candidates: list
-            List of ase atoms objects to query from.
         """
         final_point_image = [self.sample_candidates[-1]]
         final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
         self.parent_calls += 1
         self.training_data += compute_with_calc(final_point_image, self.delta_sub_calc)
         self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
+
+        random.seed(self.query_seeds[self.iterations - 1])
+        queried_images = self.query_func()
+        self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
+
+
+class ForceQueryLearner(FmaxLearner):
+    """
+    Terminates based on max force.
+    Guarantees the query of the image with the lowest ML fmax.
+    """
+
+    def query_func(self):
+        """
+        Queries the minimum fmax image + random
+        """
+        fmaxes = [
+            np.max(np.abs(image.get_forces())) for image in self.sample_candidates[1:]
+        ]
+        min_index = np.argmin(fmaxes) + 1
+        idxs = set(range(1, len(self.sample_candidates)))
+        idxs.remove(min_index)
+
+        queries_db = ase.db.connect("queried_images.db")
+        query_idx = random.sample(idxs, self.samples_to_retrain - 1)
+        query_idx.append(min_index)
+        queried_images = [self.sample_candidates[idx] for idx in query_idx]
+        write_to_db(queries_db, queried_images)
+        self.parent_calls += len(queried_images)
+        return queried_images
+
+    def query_data(self):
+        """
+        Queries data from a list of images. Calculates the properties
+        and adds them to the training data.
+        """
 
         random.seed(self.query_seeds[self.iterations - 1])
         queried_images = self.query_func()
