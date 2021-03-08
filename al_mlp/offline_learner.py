@@ -43,18 +43,19 @@ class OfflineActiveLearner:
         """
         global compute_with_calc
         global convert_to_singlepoint
-        if self.learner_params["use_dask"]:
+        if self.learner_params.get("use_dask", False):
             from al_mlp.dask_calculate import compute_with_calc
             from al_mlp.dask_calculate import convert_to_singlepoint
 
         self.iterations = 0
         self.parent_calls = 0
         self.terminate = False
-        self.atomistic_method = self.learner_params["atomistic_method"]
-        self.max_iterations = self.learner_params["max_iterations"]
-        self.samples_to_retrain = self.learner_params["samples_to_retrain"]
-        self.filename = self.learner_params["filename"]
-        self.file_dir = self.learner_params["file_dir"]
+        self.atomistic_method = self.learner_params.get("atomistic_method")
+        self.max_iterations = self.learner_params.get("max_iterations", 20)
+        self.samples_to_retrain = self.learner_params.get("samples_to_retrain", 1)
+        self.filename = self.learner_params("filename", "relax_example")
+        self.file_dir = self.learner_params("file_dir", "./")
+        self.seed = self.learner_params("seed", random.randint(0, 100000))
 
     def init_training_data(self):
         """
