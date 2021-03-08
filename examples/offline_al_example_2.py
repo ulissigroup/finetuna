@@ -84,6 +84,7 @@ learner_params = {
     "file_dir": "./",
     "query_method": "random",
     "use_dask": False,
+    "seed": 1,
     # "max_evA": 0.05,
 }
 
