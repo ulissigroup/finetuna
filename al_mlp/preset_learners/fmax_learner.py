@@ -47,9 +47,11 @@ class FmaxLearner(OfflineActiveLearner):
         """
         final_point_image = [self.sample_candidates[-1]]
         final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
-        self.parent_calls += 1
-        self.training_data += compute_with_calc(final_point_image, self.delta_sub_calc)
         self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
+        self.training_data += subtract_deltas(
+            final_point_evA, self.base_calc, self.refs
+        )
+        self.parent_calls += 1
 
         random.seed(self.query_seeds[self.iterations - 1])
         queried_images = self.query_func()
