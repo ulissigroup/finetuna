@@ -8,6 +8,7 @@ class OfflineActiveLearner:
     """Offline Active Learner.
     This class serves as a parent class to inherit more sophisticated
     learners with different query and termination strategies.
+
     Parameters
     ----------
     learner_params: dict
@@ -19,6 +20,7 @@ class OfflineActiveLearner:
     training_data: list
         A list of ase.Atoms objects that have attached calculators.
         Used as the first set of training data.
+
     parent_calc: ase Calculator object
         Calculator used for querying training data.
 
@@ -56,6 +58,9 @@ class OfflineActiveLearner:
         self.filename = self.learner_params("filename", "relax_example")
         self.file_dir = self.learner_params("file_dir", "./")
         self.seed = self.learner_params("seed", random.randint(0, 100000))
+
+        random.seed(self.seed)
+        self.query_seeds = random.sample(range(100000), self.max_iterations)
 
     def init_training_data(self):
         """
@@ -138,6 +143,7 @@ class OfflineActiveLearner:
             List of ase atoms objects to query from.
         """
 
+        random.seed(self.query_seeds[self.iterations])
         queried_images = self.query_func()
         self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
 
@@ -154,7 +160,6 @@ class OfflineActiveLearner:
         Default random query strategy.
         """
         queries_db = ase.db.connect("queried_images.db")
-        random.seed()
         query_idx = random.sample(
             range(1, len(self.sample_candidates)),
             self.samples_to_retrain,
