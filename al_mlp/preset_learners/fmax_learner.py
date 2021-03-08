@@ -1,5 +1,5 @@
 from al_mlp.offline_learner import OfflineActiveLearner
-from al_mlp.utils import compute_with_calc, write_to_db
+from al_mlp.utils import compute_with_calc, write_to_db, subtract_deltas
 import numpy as np
 import ase
 import random
@@ -75,11 +75,12 @@ class ForceQueryLearner(FmaxLearner):
 
         queries_db = ase.db.connect("queried_images.db")
         query_idx = random.sample(idxs, self.samples_to_retrain - 1)
-        query_idx.append(min_index)
         queried_images = [self.sample_candidates[idx] for idx in query_idx]
+        min_force_image = self.sample_candidates[min_index]
         write_to_db(queries_db, queried_images)
-        self.parent_calls += len(queried_images)
-        return queried_images
+        write_to_db(queries_db, [min_force_image])
+        self.parent_calls += len(queried_images) + 1
+        return queried_images, min_force_image
 
     def query_data(self):
         """
@@ -88,5 +89,12 @@ class ForceQueryLearner(FmaxLearner):
         """
 
         random.seed(self.query_seeds[self.iterations - 1])
-        queried_images = self.query_func()
-        self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
+        random_queried_images, min_force_image = self.query_func()
+        self.training_data += compute_with_calc(
+            random_queried_images, self.delta_sub_calc
+        )
+        min_image_parent = compute_with_calc([min_force_image], self.parent_calc)[0]
+        self.final_point_force = np.max(np.abs(min_image_parent.get_forces()))
+        self.training_data += subtract_deltas(
+            [min_image_parent], self.base_calc, self.refs
+        )
