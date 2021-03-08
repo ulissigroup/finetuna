@@ -55,9 +55,9 @@ class OfflineActiveLearner:
         self.atomistic_method = self.learner_params.get("atomistic_method")
         self.max_iterations = self.learner_params.get("max_iterations", 20)
         self.samples_to_retrain = self.learner_params.get("samples_to_retrain", 1)
-        self.filename = self.learner_params("filename", "relax_example")
-        self.file_dir = self.learner_params("file_dir", "./")
-        self.seed = self.learner_params("seed", random.randint(0, 100000))
+        self.filename = self.learner_params.get("filename", "relax_example")
+        self.file_dir = self.learner_params.get("file_dir", "./")
+        self.seed = self.learner_params.get("seed", random.randint(0, 100000))
 
         random.seed(self.seed)
         self.query_seeds = random.sample(range(100000), self.max_iterations)
