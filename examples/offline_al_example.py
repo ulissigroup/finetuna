@@ -4,6 +4,7 @@ from ase.build import fcc100, add_adsorbate, molecule
 from ase.constraints import FixAtoms
 from ase.optimize import BFGS
 from ase.calculators.emt import EMT
+import ase.io
 import numpy as np
 import copy
 
@@ -11,7 +12,7 @@ import torch
 import ase
 
 from ase.db import connect
-from al_mlp.offline_active_learner import OfflineActiveLearner
+from al_mlp.offline_learner import OfflineActiveLearner
 from al_mlp.base_calcs.morse import MultiMorse
 from al_mlp.atomistic_methods import Relaxation
 
@@ -50,18 +51,15 @@ add_adsorbate(slab, ads, 3, offset=(1, 1))
 cons = FixAtoms(indices=[atom.index for atom in slab if (atom.tag == 3)])
 slab.set_constraint(cons)
 slab.center(vacuum=13.0, axis=2)
+
+# slab = ase.io.read("slab2.traj")
 slab.set_pbc(True)
 slab.wrap(pbc=[True] * 3)
 slab.set_calculator(copy.copy(parent_calc))
 slab.set_initial_magnetic_moments()
 db = connect("relax_example.db")
 images = [slab]
-# for row in db.select():
-#   if row.id < 4:
-#       pass
-#   else:
-#       images.append(db.get_atoms(id=row.id))
-# print(images)
+
 Gs = {
     "default": {
         "G2": {
@@ -69,30 +67,51 @@ Gs = {
             "rs_s": [0] * 4,
         },
         "G4": {"etas": [0.005], "zetas": [1.0, 4.0], "gammas": [1.0, -1.0]},
-        "cutoff": 5.876798323827276,
+        "cutoff": 6,
     },
 }
 
-elements = ["Cu", "C"]
+elements = np.unique(images[0].get_chemical_symbols())
+
+learner_params = {
+    "atomistic_method": Relaxation(
+        initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=100
+    ),
+    "max_iterations": 10,
+    "force_tolerance": 0.01,
+    "samples_to_retrain": 3,
+    "filename": "relax_example",
+    "file_dir": "./",
+    "query_method": "random",
+    "use_dask": False,
+    "seed": 1,
+    # "max_evA": 0.05,
+}
+
 config = {
-    "model": {"get_forces": True, "num_layers": 3, "num_nodes": 20},
+    "model": {
+        "get_forces": True,
+        "num_layers": 3,
+        "num_nodes": 20,
+    },
     "optim": {
         "device": "cpu",
-        "force_coefficient": 0.04,
-        "lr": 1e-2,
-        "batch_size": 1000,
-        "epochs": 100,
+        "force_coefficient": 40,
+        "lr": 0.1,
+        "batch_size": 100,
+        "epochs": 100,  # was 100
         "loss": "mse",
-        "metric": "mse",
+        "metric": "mae",
         "optimizer": torch.optim.LBFGS,
+        "optimizer_args": {"optimizer__line_search_fn": "strong_wolfe"},
     },
     "dataset": {
         "raw_data": images,
         "val_split": 0,
         "elements": elements,
         "fp_params": Gs,
-        "save_fps": True,
-        "scaling": {"type": "standardize", "range": (0, 1)},
+        "save_fps": False,
+        "scaling": {"type": "normalize", "range": (-1, 1)},
     },
     "cmd": {
         "debug": False,
@@ -100,40 +119,30 @@ config = {
         "seed": 1,
         "identifier": "test",
         "verbose": True,
-        "logger": True,
+        # "logger": True,
+        "single-threaded": True,
     },
 }
 
 trainer = AtomsTrainer(config)
-
 # building base morse calculator as base calculator
 cutoff = Gs["default"]["cutoff"]
-
-
 base_calc = MultiMorse(images, cutoff, combo="mean")
 
+learner = OfflineActiveLearner(
+    learner_params,
+    trainer,
+    images,
+    parent_calc,
+    base_calc,
+)
 
-learner_params = {
-    "atomistic_method": Relaxation(
-        initial_geometry=slab.copy(), optimizer=BFGS, fmax=0.01, steps=100
-    ),
-    "max_iterations": 20,
-    "force_tolerance": 0.01,
-    "samples_to_retrain": 1,
-    "filename": "relax_example",
-    "file_dir": "./",
-    "query_method": "random",
-    "use_dask": False,
-    "seed": 1,
-}
-
-learner = OfflineActiveLearner(learner_params, trainer, images, parent_calc, base_calc)
 learner.learn()
 
 # Calculate true relaxation
 al_iterations = learner.iterations - 1
 file_path = learner_params["file_dir"] + learner_params["filename"]
-true_relax = Relaxation(slab, BFGS)
+true_relax = Relaxation(slab, BFGS, fmax=0.01)
 true_relax.run(EMT(), "true_relax")
 parent_calc_traj = true_relax.get_trajectory("true_relax")
 final_ml_traj = ase.io.read("{}_iter_{}.traj".format(file_path, al_iterations), ":")
