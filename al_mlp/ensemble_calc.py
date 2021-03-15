@@ -71,7 +71,8 @@ class EnsembleCalc(Calculator):
                 calc.get_forces(atoms_image),
             )
 
-        if self.executor is not None:
+        # Forward pass of the ensemble is so fast that passing it in and out of futures is slower
+        if False:  # self.executor is not None:
             futures = []
             for calc in self.trained_calcs:
                 big_future = self.executor.scatter((atoms, calc))

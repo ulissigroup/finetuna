@@ -168,9 +168,9 @@ class DynamicUncertaintyOffAL(UncertaintyOffAL):
 
         Overwritten to compute uncertainty dynamically
         """
-        base_uncertainty = self.training_data[0]
+        base_uncertainty = np.nanmax(np.abs(self.training_data[0][0].get_forces()))
         for image in self.training_data:
-            temp_uncertainty = np.nanmax(np.abs(image.get_forces()))
+            temp_uncertainty = np.nanmax(np.abs(image[0].get_forces()))
             if temp_uncertainty < base_uncertainty:
                 base_uncertainty = temp_uncertainty
         uncertainty_tol = base_uncertainty * self.uncertainty_tol
