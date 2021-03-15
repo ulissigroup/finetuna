@@ -56,33 +56,9 @@ class EnsembleCalc(Calculator):
         Calculator.calculate(self, atoms, properties, system_changes)
         energies = []
         forces = []
-
-        def evaluate_ef(args_list):
-            """
-            accepts a args_list of an atoms image and a calculator
-            evaluates the energies and forces of the atom using the calculator
-            and returns them as a args_list
-            """
-            atoms_image = args_list[0]
-            calc = args_list[1]
-            calc.trainer.config["dataset"]["save_fps"] = False
-            return (
-                calc.get_potential_energy(atoms_image),
-                calc.get_forces(atoms_image),
-            )
-
-        # Forward pass of the ensemble is so fast that passing it in and out of futures is slower
-        if False:  # self.executor is not None:
-            futures = []
-            for calc in self.trained_calcs:
-                big_future = self.executor.scatter((atoms, calc))
-                futures.append(self.executor.submit(evaluate_ef, big_future))
-            energies = [future.result()[0] for future in futures]
-            forces = [future.result()[1] for future in futures]
-        else:
-            for calc in self.trained_calcs:
-                energies.append(calc.get_potential_energy(atoms))
-                forces.append(calc.get_forces(atoms))
+        for calc in self.trained_calcs:
+            energies.append(calc.get_potential_energy(atoms))
+            forces.append(calc.get_forces(atoms))
 
         energies = np.array(energies)
         forces = np.array(forces)
