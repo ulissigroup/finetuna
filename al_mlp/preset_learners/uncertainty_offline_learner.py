@@ -43,11 +43,10 @@ class UncertaintyOffAL(EnsembleLearner):
         training_data,
         parent_calc,
         base_calc,
-        ensemble,
-        uncertainty_tol,
+        ensemble=5,
+        uncertainty_tol=0.05,
     ):
         super().__init__(
-            self,
             learner_params,
             trainer,
             training_data,
@@ -56,6 +55,9 @@ class UncertaintyOffAL(EnsembleLearner):
             ensemble,
         )
         self.uncertainty_tol = uncertainty_tol
+
+    def __str__(self):
+        return "Default (Static) Uncertainty-Based Offline Learner"
 
     def query_func(self):
         """
@@ -88,7 +90,7 @@ class UncertaintyOffAL(EnsembleLearner):
             if uncertainty < self.get_uncertainty_tol():
                 restricted_candidates.append(self.sample_candidates[i])
             else:
-                remaining_candidates.append()
+                remaining_candidates.append(self.sample_candidates[i])
         # if there aren't enough candidates based on criteria, get the lowest uncertainty remaining
         # candidates to return
         if len(restricted_candidates) < self.samples_to_retrain:
@@ -97,7 +99,9 @@ class UncertaintyOffAL(EnsembleLearner):
                 key=lambda candidate: candidate.info["uncertainty"][0]
             )
             restricted_candidates.extend(
-                remaining_candidates[: self.samples_to_retrain - restricted_candidates]
+                remaining_candidates[
+                    : self.samples_to_retrain - len(restricted_candidates)
+                ]
             )
         return restricted_candidates
 
@@ -118,7 +122,7 @@ class UncertaintyOffAL(EnsembleLearner):
         """
         random.seed()
         query_idx = random.sample(
-            range(1, len(candidates_list)),
+            range(len(candidates_list)),
             self.samples_to_retrain,
         )
         return query_idx
@@ -154,6 +158,9 @@ class DynamicUncertaintyOffAL(UncertaintyOffAL):
     unertainty_tol: float
         dynamic threshold for uncertainty tolerance
     """
+
+    def __str__(self):
+        return "Dynamic-Uncertainty-Based Offline Learner"
 
     def get_uncertainty_tol(self):
         """

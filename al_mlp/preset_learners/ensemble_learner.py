@@ -6,7 +6,7 @@ from al_mlp.calcs import DeltaCalc
 # from al_mlp.utils import write_to_db
 from al_mlp.bootstrap import bootstrap_ensemble
 from al_mlp.ensemble_calc import EnsembleCalc
-from al_mlp.offline_active_learner import OfflineActiveLearner
+from al_mlp.offline_learner import OfflineActiveLearner
 
 # from torch.multiprocessing import Pool
 
