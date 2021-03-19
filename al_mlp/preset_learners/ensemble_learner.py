@@ -56,8 +56,7 @@ class EnsembleLearner(OfflineActiveLearner):
             queried_images = self.query_func()
             self.parent_dataset, self.training_data = self.add_data(queried_images)
             self.parent_calls += len(queried_images)
-        self.fn_label = f"{self.file_dir}{self.filename}\
-            _iter_{self.iterations}"
+        self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
         self.ensemble_sets = self.training_data
 
     def do_train(self):
