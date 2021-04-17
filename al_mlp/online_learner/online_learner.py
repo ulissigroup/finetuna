@@ -2,8 +2,8 @@ import copy
 import numpy as np
 from ase.calculators.calculator import Calculator
 from al_mlp.utils import convert_to_singlepoint
-from al_mlp.bootstrap import non_bootstrap_ensemble
-from al_mlp.ensemble_calc import EnsembleCalc
+from al_mlp.ml_potentials.bootstrap import non_bootstrap_ensemble
+from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -32,7 +32,7 @@ class OnlineLearner(Calculator):
             self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
                 parent_dataset, n_ensembles=self.learner_params["n_ensembles"]
             )
-            self.ensemble_calc = EnsembleCalc.make_ensemble(
+            self.ensemble_calc = AmptorchEnsembleCalc.make_ensemble(
                 self.ensemble_sets, self.trainer
             )
 
@@ -74,7 +74,7 @@ class OnlineLearner(Calculator):
 
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force
-        uncertainty = atoms.info["uncertainty"][0] ** 0.5
+        uncertainty = self.results["force_stds"]
         base_uncertainty = np.nanmax(np.abs(atoms.get_forces()))
         uncertainty_tol = self.uncertain_tol * base_uncertainty
 
@@ -111,7 +111,7 @@ class OnlineLearner(Calculator):
 
         # Don't bother training if we have less than two datapoints
         if len(self.parent_dataset) >= 2:
-            self.ensemble_calc = EnsembleCalc.make_ensemble(
+            self.ensemble_calc = AmptorchEnsembleCalc.make_ensemble(
                 self.ensemble_sets, self.trainer
             )
 

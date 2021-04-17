@@ -1,4 +1,4 @@
-from al_mlp.offline_learner import OfflineActiveLearner
+from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
 from al_mlp.utils import compute_with_calc, write_to_db, subtract_deltas
 import numpy as np
 import ase

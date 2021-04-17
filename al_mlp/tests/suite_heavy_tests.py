@@ -8,14 +8,14 @@ from al_mlp.tests.case_offline_CuNP import offline_CuNP
 from al_mlp.tests.case_CuC_offline_neb import offline_NEB
 
 # import make_ensemble and dask for setting parallelization
-from al_mlp.ensemble_calc import EnsembleCalc
+from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
 from dask.distributed import Client, LocalCluster
 
 # Set dask client in ensemble calc
 if __name__ == "__main__":
     cluster = LocalCluster(processes=True, threads_per_worker=1)
     client = Client(cluster)
-    EnsembleCalc.set_executor(client)
+    AmptorchEnsembleCalc.set_executor(client)
 
 # initialize the test suite
 loader = unittest.TestLoader()

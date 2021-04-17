@@ -12,7 +12,7 @@ __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
 
 
-class EnsembleCalc(Calculator):
+class AmptorchEnsembleCalc(Calculator):
     """Atomistics Machine-Learning Potential (AMP) ASE calculator
     Parameters
     ----------
@@ -26,7 +26,7 @@ class EnsembleCalc(Calculator):
 
     """
 
-    implemented_properties = ["energy", "forces", "uncertainty"]
+    implemented_properties = ["energy", "forces", "max_force_stds", "energy_stds"]
     executor = None
 
     def __init__(self, trained_calcs):
@@ -45,11 +45,12 @@ class EnsembleCalc(Calculator):
         energy_median = energies[median_idx]
         forces_median = forces[median_idx]
         max_forces_var = np.nanmax(np.nanvar(forces, axis=0))
-        # max_energy_var = np.nanvar(energies)
+        energy_var = np.nanvar(energies)
         return (
             energy_median,
             forces_median,
             max_forces_var,
+            energy_var,
         )  # change back to max forces var
 
     def calculate(self, atoms, properties, system_changes):
@@ -62,11 +63,14 @@ class EnsembleCalc(Calculator):
 
         energies = np.array(energies)
         forces = np.array(forces)
-        energy_pred, force_pred, uncertainty = self.calculate_stats(energies, forces)
+        energy_pred, force_pred, max_forces_var, energy_var = self.calculate_stats(
+            energies, forces
+        )
 
         self.results["energy"] = energy_pred
         self.results["forces"] = force_pred
-        atoms.info["uncertainty"] = np.array([uncertainty])
+        self.results["force_stds"] = np.array(max_forces_var) ** 0.5
+        self.results["energy_stds"] = energy_var ** 0.2
 
     @classmethod
     def make_ensemble(cls, ensemble_sets, trainer):

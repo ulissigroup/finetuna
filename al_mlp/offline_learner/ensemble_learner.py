@@ -82,7 +82,7 @@ class EnsembleLearner(OfflineActiveLearner):
     def query_func(self):
         # queries_db = ase.db.connect("queried_images.db")
         uncertainty = np.array(
-            [atoms.info["uncertainty"][0] for atoms in self.sample_candidates]
+            [atoms.calc.results["uncertainty"][0] for atoms in self.sample_candidates]
         )
         n_retrain = self.samples_to_retrain
         query_idx = np.argpartition(uncertainty, -1 * n_retrain)[-n_retrain:]
