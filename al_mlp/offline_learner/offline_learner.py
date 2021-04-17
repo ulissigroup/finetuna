@@ -76,7 +76,6 @@ class OfflineActiveLearner:
         self.training_data = []
         for image in sp_raw_data:
             sp_calc = image.get_calculator()
-            sp_calc.implemented_properties = ["energy", "forces"]
             sp_delta_calc = DeltaCalc([sp_calc, self.base_calc], "sub", self.refs)
             self.training_data += compute_with_calc([image], sp_delta_calc)
 

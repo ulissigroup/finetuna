@@ -34,8 +34,8 @@ class FmaxLearner(OfflineActiveLearner):
             range(1, len(self.sample_candidates) - 1),
             self.samples_to_retrain - 1,
         )
-        queried_images = [self.sample_candidates[idx] for idx in query_idx]
         query_idx = np.append(query_idx, [len(self.sample_candidates) - 1])
+        queried_images = [self.sample_candidates[idx] for idx in query_idx]
         write_to_db(queries_db, queried_images)
         self.parent_calls += len(queried_images)
         return queried_images
