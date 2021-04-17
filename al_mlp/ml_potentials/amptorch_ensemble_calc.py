@@ -93,7 +93,7 @@ class AmptorchEnsembleCalc(Calculator):
             trainer = args_list[1]
 
             trainer.train(raw_data=ensemble_set)
-            check_path = self.trainer.cp_dir
+            check_path = trainer.cp_dir
             trainer = AtomsTrainer()
             trainer.load_pretrained(checkpoint_path=check_path)
             trainer_calc = trainer.get_calc()
@@ -102,12 +102,12 @@ class AmptorchEnsembleCalc(Calculator):
         # split ensemble sets into separate args_lists, clone: trainer,
         # base calc and add to args_lists, add: refs to args_lists
         args_lists = []
-        random.seed(self.trainer.config["cmd"]["seed"])
+        random.seed(self.amptorch_trainer.config["cmd"]["seed"])
         randomlist = [random.randint(0, 4294967295) for set in ensemble_sets]
         for i in range(len(ensemble_sets)):
             set = ensemble_sets[i]
 
-            copy_config = copy.deepcopy(self.trainer.config)
+            copy_config = copy.deepcopy(self.amptorch_trainer.config)
             copy_config["cmd"]["seed"] = randomlist[i]
             copy_config["cmd"]["identifier"] = copy_config["cmd"]["identifier"] + str(
                 uuid.uuid4()
