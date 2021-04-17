@@ -54,6 +54,7 @@ class OnlineLearner(Calculator):
         # Make a copy of the atoms with ensemble energies as a SP
         atoms_copy = atoms.copy()
         atoms_copy.set_calculator(self.ml_potential)
+        atoms_copy.get_potential_energy()
         (atoms_ML,) = convert_to_singlepoint([atoms_copy])
 
         # Check if we are extrapolating too far, and if so add/retrain
