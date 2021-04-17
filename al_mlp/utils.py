@@ -24,9 +24,17 @@ def convert_to_singlepoint(images):
             continue
         os.makedirs("./temp", exist_ok=True)
         os.chdir("./temp")
-        # Force a call to the underlying calculation
+
+        # Force a call to the underlying calculation for energy/forces
+        # also convert energy to float to stop complaint from amptorch
         image.get_potential_energy()
+        image.get_forces()
+
+        image.calc.results["energy"] = float(image.calc.results["energy"])
+
         sp_calc = sp(atoms=image, **image.calc.results)
+        sp_calc.implemented_properties = list(image.calc.results.keys())
+
         image.set_calculator(sp_calc)
         singlepoint_images.append(image)
         os.chdir(cwd)

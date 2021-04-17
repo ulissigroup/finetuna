@@ -71,7 +71,7 @@ class AmptorchEnsembleCalc(Calculator):
 
         self.results["energy"] = energy_pred
         self.results["forces"] = force_pred
-        self.results["force_stds"] = np.array(max_forces_var) ** 0.5
+        self.results["max_force_stds"] = np.array(max_forces_var) ** 0.5
         self.results["energy_stds"] = energy_var ** 0.2
 
     def train(self, parent_dataset):

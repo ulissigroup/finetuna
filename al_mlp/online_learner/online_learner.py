@@ -52,10 +52,11 @@ class OnlineLearner(Calculator):
             return
 
         # Make a copy of the atoms with ensemble energies as a SP
-        atoms_copy = atoms.copy()
-        atoms_copy.set_calculator(self.ml_potential)
-        atoms_copy.get_potential_energy()
-        (atoms_ML,) = convert_to_singlepoint([atoms_copy])
+        atoms_ML = atoms.copy()
+        atoms_ML.set_calculator(self.ml_potential)
+        atoms_ML.get_forces()
+
+        #         (atoms_ML,) = convert_to_singlepoint([atoms_copy])
 
         # Check if we are extrapolating too far, and if so add/retrain
         if self.unsafe_prediction(atoms_ML) or self.parent_verify(atoms_ML):
@@ -71,7 +72,7 @@ class OnlineLearner(Calculator):
 
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force
-        uncertainty = atoms.calc.results["force_stds"]
+        uncertainty = atoms.calc.results["max_force_stds"]
         base_uncertainty = np.nanmax(np.abs(atoms.get_forces()))
         uncertainty_tol = self.uncertain_tol * base_uncertainty
 
@@ -95,6 +96,7 @@ class OnlineLearner(Calculator):
 
         atoms_copy = atoms.copy()
         atoms_copy.set_calculator(copy.copy(self.parent_calc))
+        print(atoms_copy)
         (new_data,) = convert_to_singlepoint([atoms_copy])
 
         energy_actual = new_data.get_potential_energy(apply_constraint=False)
