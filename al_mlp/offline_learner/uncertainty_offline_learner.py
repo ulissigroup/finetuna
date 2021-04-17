@@ -1,4 +1,4 @@
-from al_mlp.preset_learners.ensemble_learner import EnsembleLearner
+from al_mlp.offline_learner.ensemble_learner import EnsembleLearner
 import ase
 import random
 from al_mlp.utils import write_to_db

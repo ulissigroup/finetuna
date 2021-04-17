@@ -1,5 +1,5 @@
 import numpy as np
-from al_mlp.online_learner import OnlineLearner
+from al_mlp.online_learner.online_learner import OnlineLearner
 from amptorch.trainer import AtomsTrainer
 import os
 import torch
