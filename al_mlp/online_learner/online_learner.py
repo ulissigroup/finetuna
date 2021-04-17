@@ -74,7 +74,7 @@ class OnlineLearner(Calculator):
 
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force
-        uncertainty = self.results["force_stds"]
+        uncertainty = atoms.calc.results["force_stds"]
         base_uncertainty = np.nanmax(np.abs(atoms.get_forces()))
         uncertainty_tol = self.uncertain_tol * base_uncertainty
 
