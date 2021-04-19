@@ -1,6 +1,6 @@
 import unittest
 
-from .test_setup.online_relaxation_test import run_oal
+from al_mlp.tests.setup.online_relaxation_test import run_online_al
 from al_mlp.atomistic_methods import Relaxation
 from al_mlp.calcs import CounterCalc
 from ase.calculators.emt import EMT
@@ -12,7 +12,7 @@ FORCE_THRESHOLD = 0.05
 ENERGY_THRESHOLD = 0.01
 
 
-class oal_CuNP(unittest.TestCase):
+class online_CuNP(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         # Set up parent calculator and image environment
@@ -36,7 +36,7 @@ class oal_CuNP(unittest.TestCase):
         OAL_relaxation = Relaxation(
             OAL_initial_structure, BFGS, fmax=0.05, steps=60, maxstep=0.04
         )
-        cls.OAL_learner, cls.OAL_structure_optim = run_oal(
+        cls.OAL_learner, cls.OAL_structure_optim = run_online_al(
             OAL_relaxation,
             [],
             ["Cu"],

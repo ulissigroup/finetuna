@@ -1,5 +1,5 @@
-from .test_setup.offline_neb_Cu_C_utils import construct_geometries
-from .test_setup.offline_neb_test import offline_neb
+from al_mlp.tests.setup.offline_neb_Cu_C_utils import construct_geometries
+from al_mlp.tests.setup.offline_neb_test import offline_neb
 from al_mlp.calcs import CounterCalc
 from ase.io import read
 from al_mlp.atomistic_methods import NEBcalc
@@ -41,7 +41,7 @@ class offline_NEB(unittest.TestCase):
         trajectory = ase.io.Trajectory(filename + ".traj")
         for atom in trajectory:
             atom_list.append(atom)
-        atom_list = atom_list[-self.total_neb_images :]
+        atom_list = atom_list[-self.total_neb_images:]
         return atom_list
 
     def test_neb_CuC_energy(self):

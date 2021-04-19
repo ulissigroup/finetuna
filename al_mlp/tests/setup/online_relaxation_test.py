@@ -7,7 +7,7 @@ import os
 import torch
 
 
-def run_oal(atomistic_method, images, elements, dbname, parent_calc):
+def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
 
     Gs = {
         "default": {

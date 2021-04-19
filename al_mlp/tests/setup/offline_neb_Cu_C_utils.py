@@ -31,7 +31,8 @@ def construct_geometries(parent_calc, ml2relax):
         qn.run(fmax=0.01, steps=100)
         initial_slab = read("initial.traj", "-1")
         final_slab = read("final.traj", "-1")
-        # If there is already a pre-existing initial and final relaxed parent state we can read that to use as a starting point
+        # If there is already a pre-existing initial and final relaxed parent state we can read
+        # that to use as a starting point
         # initial_slab = read("/content/parent_initial.traj")
         # final_slab = read("/content/parent_final.traj")
     else:

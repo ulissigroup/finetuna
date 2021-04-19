@@ -1,11 +1,11 @@
-# tests/suite_heavy_tests.py
+# tests/suite_verbose_tests.py
 import unittest
 
 # import test modules
-# from al_mlp.tests.oal_PtNP_case import oal_PtNP
-from al_mlp.tests.case_oal_CuNP import oal_CuNP
-from al_mlp.tests.case_offline_CuNP import offline_CuNP
-from al_mlp.tests.case_CuC_offline_neb import offline_NEB
+# from al_mlp.tests.cases.online_PtNP_case import online_PtNP
+from al_mlp.tests.cases.case_online_CuNP import online_CuNP
+from al_mlp.tests.cases.case_offline_CuNP import offline_CuNP
+
 
 # import make_ensemble and dask for setting parallelization
 from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
@@ -23,13 +23,12 @@ suite = unittest.TestSuite()
 
 # add tests to the test suite
 suite.addTests(loader.loadTestsFromTestCase(offline_CuNP))
-suite.addTests(loader.loadTestsFromTestCase(oal_CuNP))
-suite.addTests(loader.loadTestsFromTestCase(offline_NEB))
-# suite.addTests(loader.loadTestsFromTestCase(oal_PtNP))
+suite.addTests(loader.loadTestsFromTestCase(online_CuNP))
+# suite.addTests(loader.loadTestsFromTestCase(online_PtNP))
 # add more tests here
 
-# Deprecated below, call using pytest instead
+# run this with python
 # initialize a runner, pass it your suite and run it
-# runner = unittest.TextTestRunner(verbosity=3)
-# if __name__ == "__main__":
-#     result = runner.run(suite)
+runner = unittest.TextTestRunner(verbosity=3)
+if __name__ == "__main__":
+    result = runner.run(suite)
