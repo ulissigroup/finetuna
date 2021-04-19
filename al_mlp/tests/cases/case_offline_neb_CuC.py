@@ -41,7 +41,7 @@ class offline_NEB(unittest.TestCase):
         trajectory = ase.io.Trajectory(filename + ".traj")
         for atom in trajectory:
             atom_list.append(atom)
-        atom_list = atom_list[-self.total_neb_images:]
+        atom_list = atom_list[-self.total_neb_images :]
         return atom_list
 
     def test_neb_CuC_energy(self):
