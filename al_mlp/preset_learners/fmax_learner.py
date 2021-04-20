@@ -3,6 +3,8 @@ from al_mlp.utils import compute_with_calc, write_to_db, subtract_deltas
 import numpy as np
 import ase
 import random
+from al_mlp.calcs import DeltaCalc
+
 
 
 class FmaxLearner(OfflineActiveLearner):
@@ -13,6 +15,7 @@ class FmaxLearner(OfflineActiveLearner):
     def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc):
         super().__init__(learner_params, trainer, training_data, parent_calc, base_calc)
         self.max_evA = learner_params["max_evA"]
+
 
     def check_terminate(self):
         """
@@ -34,8 +37,8 @@ class FmaxLearner(OfflineActiveLearner):
             range(1, len(self.sample_candidates) - 1),
             self.samples_to_retrain - 1,
         )
-        queried_images = [self.sample_candidates[idx] for idx in query_idx]
         # query_idx = np.append(query_idx, [len(self.sample_candidates) - 1])
+        queried_images = [self.sample_candidates[idx] for idx in query_idx]
         write_to_db(queries_db, queried_images)
         self.parent_calls += len(queried_images)
         return queried_images
@@ -45,14 +48,6 @@ class FmaxLearner(OfflineActiveLearner):
         Queries data from a list of images. Calculates the properties
         and adds them to the training data.
         """
-        final_point_image = [self.sample_candidates[-1]]
-        final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
-        self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
-        self.training_data += subtract_deltas(
-            final_point_evA, self.base_calc, self.refs
-        )
-        self.parent_calls += 1
-
         random.seed(self.query_seeds[self.iterations - 1])
         queried_images = self.query_func()
         self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
@@ -69,6 +64,18 @@ class FmaxLearner(OfflineActiveLearner):
         self.sample_candidates = list(
             self.atomistic_method.get_trajectory(filename=self.fn_label)
         )
+
+        final_point_image = [self.sample_candidates[-1]]
+        print(final_point_image[0].get_positions())
+        final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
+        self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
+        self.training_data += subtract_deltas(
+            final_point_evA, self.base_calc, self.refs
+        )
+        self.parent_calls += 1
+        queries_db = ase.db.connect("queried_images.db")
+        random.seed(self.query_seeds[self.iterations - 1] + 1)
+        write_to_db(queries_db, final_point_image)
 
         self.terminate = self.check_terminate()
         self.iterations += 1
