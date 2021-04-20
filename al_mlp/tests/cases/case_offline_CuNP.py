@@ -1,4 +1,4 @@
-from .test_setup.offline_relaxation_test import run_offline_al
+from al_mlp.tests.setup.offline_relaxation_test import run_offline_al
 from al_mlp.atomistic_methods import Relaxation
 from al_mlp.calcs import CounterCalc
 from ase.calculators.emt import EMT
@@ -43,7 +43,7 @@ class offline_CuNP(unittest.TestCase):
         cls.EMT_image = cls.EMT_structure_optim.get_trajectory("CuNP_emt")[-1]
         cls.EMT_image.set_calculator(parent_calc)
         cls.offline_final_structure = cls.Offline_traj[-1]
-        cls.offline_final_structure.set_calculator(cls.trained_calc)
+        cls.offline_final_structure.set_calculator(parent_calc)
         cls.description = "CuNP"
         return super().setUpClass()
 

@@ -1,4 +1,4 @@
-from al_mlp.preset_learners.ensemble_learner import EnsembleLearner
+from al_mlp.offline_learner.ensemble_learner import EnsembleLearner
 import ase
 import random
 from al_mlp.utils import write_to_db
@@ -86,7 +86,9 @@ class UncertaintyOffAL(EnsembleLearner):
         restricted_candidates = []
         remaining_candidates = []
         for i in range(len(self.sample_candidates)):
-            uncertainty = self.sample_candidates[i].info["uncertainty"][0] ** 0.5
+            uncertainty = (
+                self.sample_candidates[i].calc.results["uncertainty"][0] ** 0.5
+            )
             if uncertainty < self.get_uncertainty_tol():
                 restricted_candidates.append(self.sample_candidates[i])
             else:
@@ -96,7 +98,7 @@ class UncertaintyOffAL(EnsembleLearner):
         if len(restricted_candidates) < self.samples_to_retrain:
             print("Warning: not enough sample candidates which meet criteria")
             remaining_candidates.sort(
-                key=lambda candidate: candidate.info["uncertainty"][0]
+                key=lambda candidate: candidate.calc.results["uncertainty"][0]
             )
             restricted_candidates.extend(
                 remaining_candidates[

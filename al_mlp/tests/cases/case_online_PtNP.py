@@ -1,7 +1,7 @@
 import unittest
 
 import ase.io
-from al_mlp.tests.test_setup.online_relaxation_test import run_oal
+from al_mlp.tests.setup.online_relaxation_test import run_online_al
 from al_mlp.atomistic_methods import Relaxation
 from al_mlp.calcs import CounterCalc
 from ase.calculators.emt import EMT
@@ -9,7 +9,7 @@ from ase.optimize import BFGS
 import numpy as np
 
 
-class oal_PtNP(unittest.TestCase):
+class online_PtNP(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         # Set up parent calculator and image environment
@@ -31,7 +31,7 @@ class oal_PtNP(unittest.TestCase):
         OAL_relaxation = Relaxation(
             OAL_initial_structure, BFGS, fmax=0.05, steps=30, maxstep=0.04
         )
-        cls.OAL_learner, cls.OAL_structure_optim = run_oal(
+        cls.OAL_learner, cls.OAL_structure_optim = run_online_al(
             OAL_relaxation, [OAL_initial_structure], "PtNP_oal", EMT()
         )
 

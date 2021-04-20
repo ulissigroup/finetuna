@@ -2,8 +2,6 @@ import copy
 import numpy as np
 from ase.calculators.calculator import Calculator
 from al_mlp.utils import convert_to_singlepoint
-from al_mlp.bootstrap import non_bootstrap_ensemble
-from al_mlp.ensemble_calc import EnsembleCalc
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -17,6 +15,7 @@ class OnlineLearner(Calculator):
         learner_params,
         trainer,
         parent_dataset,
+        ml_potential,
         parent_calc,
     ):
         Calculator.__init__(self)
@@ -26,15 +25,12 @@ class OnlineLearner(Calculator):
         self.learner_params = learner_params
         self.parent_dataset = convert_to_singlepoint(parent_dataset)
 
-        # Don't bother making an ensemble with only one data point,
+        self.ml_potential = ml_potential
+
+        # Don't bother training with only one data point,
         # as the uncertainty is meaningless
         if len(self.parent_dataset) > 1:
-            self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
-                parent_dataset, n_ensembles=self.learner_params["n_ensembles"]
-            )
-            self.ensemble_calc = EnsembleCalc.make_ensemble(
-                self.ensemble_sets, self.trainer
-            )
+            ml_potential.train(self.parent_dataset)
 
         if "fmax_verify_threshold" in self.learner_params:
             self.fmax_verify_threshold = self.learner_params["fmax_verify_threshold"]
@@ -56,9 +52,11 @@ class OnlineLearner(Calculator):
             return
 
         # Make a copy of the atoms with ensemble energies as a SP
-        atoms_copy = atoms.copy()
-        atoms_copy.set_calculator(self.ensemble_calc)
-        (atoms_ML,) = convert_to_singlepoint([atoms_copy])
+        atoms_ML = atoms.copy()
+        atoms_ML.set_calculator(self.ml_potential)
+        atoms_ML.get_forces()
+
+        #         (atoms_ML,) = convert_to_singlepoint([atoms_copy])
 
         # Check if we are extrapolating too far, and if so add/retrain
         if self.unsafe_prediction(atoms_ML) or self.parent_verify(atoms_ML):
@@ -74,7 +72,7 @@ class OnlineLearner(Calculator):
 
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force
-        uncertainty = atoms.info["uncertainty"][0] ** 0.5
+        uncertainty = atoms.calc.results["max_force_stds"]
         base_uncertainty = np.nanmax(np.abs(atoms.get_forces()))
         uncertainty_tol = self.uncertain_tol * base_uncertainty
 
@@ -98,22 +96,17 @@ class OnlineLearner(Calculator):
 
         atoms_copy = atoms.copy()
         atoms_copy.set_calculator(copy.copy(self.parent_calc))
+        print(atoms_copy)
         (new_data,) = convert_to_singlepoint([atoms_copy])
 
         energy_actual = new_data.get_potential_energy(apply_constraint=False)
         force_actual = new_data.get_forces(apply_constraint=False)
 
-        self.ensemble_sets, self.parent_dataset = non_bootstrap_ensemble(
-            self.parent_dataset,
-            new_data,
-            n_ensembles=self.learner_params["n_ensembles"],
-        )
+        self.parent_dataset += [new_data]
 
         # Don't bother training if we have less than two datapoints
         if len(self.parent_dataset) >= 2:
-            self.ensemble_calc = EnsembleCalc.make_ensemble(
-                self.ensemble_sets, self.trainer
-            )
+            self.ml_potential.train(self.parent_dataset)
 
         self.parent_calls += 1
 

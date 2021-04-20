@@ -5,7 +5,7 @@ from al_mlp.calcs import DeltaCalc
 
 # from al_mlp.utils import write_to_db
 from al_mlp.bootstrap import bootstrap_ensemble
-from al_mlp.ensemble_calc import EnsembleCalc
+from al_mlp.ml_potential.amptorch_ensemble_calc import AmptorchEnsembleCalc
 from al_mlp.offline_learner import OfflineActiveLearner
 
 # from torch.multiprocessing import Pool
@@ -60,7 +60,7 @@ class EnsembleLearner(OfflineActiveLearner):
         self.ensemble_sets = self.training_data
 
     def do_train(self):
-        self.ensemble_calc = EnsembleCalc.make_ensemble(
+        self.ensemble_calc = AmptorchEnsembleCalc.make_ensemble(
             self.ensemble_sets, self.trainer
         )
         self.trained_calc = DeltaCalc(
@@ -82,7 +82,7 @@ class EnsembleLearner(OfflineActiveLearner):
     def query_func(self):
         # queries_db = ase.db.connect("queried_images.db")
         uncertainty = np.array(
-            [atoms.info["uncertainty"][0] for atoms in self.sample_candidates]
+            [atoms.calc.results["uncertainty"][0] for atoms in self.sample_candidates]
         )
         n_retrain = self.samples_to_retrain
         query_idx = np.argpartition(uncertainty, -1 * n_retrain)[-n_retrain:]

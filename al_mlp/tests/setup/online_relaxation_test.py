@@ -1,11 +1,13 @@
 import numpy as np
-from al_mlp.online_learner import OnlineLearner
+from al_mlp.online_learner.online_learner import OnlineLearner
+from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
+
 from amptorch.trainer import AtomsTrainer
 import os
 import torch
 
 
-def run_oal(atomistic_method, images, elements, dbname, parent_calc):
+def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
 
     Gs = {
         "default": {
@@ -62,10 +64,12 @@ def run_oal(atomistic_method, images, elements, dbname, parent_calc):
 
     trainer = AtomsTrainer(config)
 
+    ml_potential = AmptorchEnsembleCalc(trainer, learner_params["n_ensembles"])
     onlinecalc = OnlineLearner(
         learner_params,
         trainer,
         images,
+        ml_potential,
         parent_calc,
     )
 
