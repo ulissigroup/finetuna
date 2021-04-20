@@ -40,7 +40,7 @@ def run_offline_al(atomistic_method, images, dbname, parent_calc):
         "force_tolerance": 0.01,
         "samples_to_retrain": 2,
         "filename": "relax_example",
-        "file_dir": "./", 
+        "file_dir": "./",
         "query_method": "random",
         "use_dask": False,
         "max_evA": 0.05,

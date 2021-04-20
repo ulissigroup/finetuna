@@ -6,7 +6,6 @@ import random
 from al_mlp.calcs import DeltaCalc
 
 
-
 class FmaxLearner(OfflineActiveLearner):
     """
     Replaces termination criteria with a max force in the constructor and the check_terminate method
@@ -15,7 +14,6 @@ class FmaxLearner(OfflineActiveLearner):
     def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc):
         super().__init__(learner_params, trainer, training_data, parent_calc, base_calc)
         self.max_evA = learner_params["max_evA"]
-
 
     def check_terminate(self):
         """
@@ -51,7 +49,7 @@ class FmaxLearner(OfflineActiveLearner):
         random.seed(self.query_seeds[self.iterations - 1])
         queried_images = self.query_func()
         self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
-    
+
     def do_after_train(self):
         """
         Executes after training the trainer in every active learning loop.
@@ -80,7 +78,7 @@ class FmaxLearner(OfflineActiveLearner):
         self.terminate = self.check_terminate()
         self.iterations += 1
 
-        
+
 class ForceQueryLearner(FmaxLearner):
     """
     Terminates based on max force.
