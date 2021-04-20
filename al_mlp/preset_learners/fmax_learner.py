@@ -35,7 +35,7 @@ class FmaxLearner(OfflineActiveLearner):
             self.samples_to_retrain - 1,
         )
         queried_images = [self.sample_candidates[idx] for idx in query_idx]
-        query_idx = np.append(query_idx, [len(self.sample_candidates) - 1])
+        # query_idx = np.append(query_idx, [len(self.sample_candidates) - 1])
         write_to_db(queries_db, queried_images)
         self.parent_calls += len(queried_images)
         return queried_images
@@ -56,8 +56,24 @@ class FmaxLearner(OfflineActiveLearner):
         random.seed(self.query_seeds[self.iterations - 1])
         queried_images = self.query_func()
         self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
+    
+    def do_after_train(self):
+        """
+        Executes after training the trainer in every active learning loop.
+        """
 
+        trainer_calc = self.make_trainer_calc()
+        self.trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
 
+        self.atomistic_method.run(calc=self.trained_calc, filename=self.fn_label)
+        self.sample_candidates = list(
+            self.atomistic_method.get_trajectory(filename=self.fn_label)
+        )
+
+        self.terminate = self.check_terminate()
+        self.iterations += 1
+
+        
 class ForceQueryLearner(FmaxLearner):
     """
     Terminates based on max force.
