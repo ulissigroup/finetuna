@@ -53,7 +53,7 @@ class AmptorchEnsembleCalc(Calculator):
             forces_median,
             max_forces_var,
             energy_var,
-        )  # change back to max forces var
+        )
 
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
@@ -89,10 +89,10 @@ class AmptorchEnsembleCalc(Calculator):
             method for training trainer on ensemble sets, then create neural net calc,
             returns trained calc
             """
-            ensemble_set = args_list[0]
+            training_dataset = args_list[0]
             trainer = args_list[1]
 
-            trainer.train(raw_data=ensemble_set)
+            trainer.train(raw_data=training_dataset)
             check_path = trainer.cp_dir
             trainer = AtomsTrainer()
             trainer.load_pretrained(checkpoint_path=check_path)
@@ -105,7 +105,7 @@ class AmptorchEnsembleCalc(Calculator):
         random.seed(self.amptorch_trainer.config["cmd"]["seed"])
         randomlist = [random.randint(0, 4294967295) for set in ensemble_sets]
         for i in range(len(ensemble_sets)):
-            set = ensemble_sets[i]
+            ensemble_set = ensemble_sets[i]
 
             copy_config = copy.deepcopy(self.amptorch_trainer.config)
             copy_config["cmd"]["seed"] = randomlist[i]
@@ -114,7 +114,7 @@ class AmptorchEnsembleCalc(Calculator):
             )
 
             trainer_copy = AtomsTrainer(copy_config)
-            args_lists.append((set, trainer_copy))
+            args_lists.append((ensemble_set, trainer_copy))
 
         # map training method, returns array of delta calcs
         trained_calcs = []
