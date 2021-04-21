@@ -1,6 +1,6 @@
 from fireworks.core.firework import FWAction, FiretaskBase
 from fireworks.utilities.fw_utilities import explicit_serialize
-from al_mlp.online_learner import OnlineLearner
+from al_mlp.online_learner.online_learner import OnlineLearner
 from al_mlp.atomistic_methods import Relaxation
 from amptorch.trainer import AtomsTrainer
 from ase.io import Trajectory
@@ -42,7 +42,10 @@ class OnlineLearnerTask(FiretaskBase):
 
         # Set up the online calc
         online_calc = OnlineLearner(
-            learner_params, trainer, images, learner_params["parent_calc"]
+            learner_params, trainer, images,
+            learner_params['ml_potential'](trainer,
+                                         learner_params['n_ensembles']),
+            learner_params["parent_calc"]
         )
 
         # Set up the Relaxer
