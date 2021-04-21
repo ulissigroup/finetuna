@@ -18,14 +18,19 @@ import jsonpickle
 
 if __name__ == "__main__":
 
+    # Set the environment variables for VASP
+    os.environ[
+        "VASP_COMMAND"
+    ] = "mpirun -np 15 /opt/vasp.6.1.2_pgi_mkl_beef/bin/vasp_std"
+
     launchpad = LaunchPad()
     # launchpad.reset('', require_password=False)
     # import make_ensemble and dask for setting parallelization
-    # from dask.distributed import Client, LocalCluster
+    from dask.distributed import Client, LocalCluster
 
-    # cluster = LocalCluster(processes=True, n_workers=10, threads_per_worker=1)
-    # client = Client(cluster)
-    # AmptorchEnsembleCalc.set_executor(client)
+    cluster = LocalCluster(processes=True, n_workers=10, threads_per_worker=1)
+    client = Client(cluster)
+    AmptorchEnsembleCalc.set_executor(client)
     elements = ["Mg", "O"]
 
     Gs = {
