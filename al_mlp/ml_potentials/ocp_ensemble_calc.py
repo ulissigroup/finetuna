@@ -1,8 +1,6 @@
 import numpy as np
 from ase.calculators.calculator import Calculator
 import random
-import copy
-from amptorch.trainer import AtomsTrainer
 from al_mlp.ml_potentials.bootstrap import non_bootstrap_ensemble
 import torch
 import uuid
