@@ -4,6 +4,7 @@ import numpy as np
 import ase
 import random
 from al_mlp.calcs import DeltaCalc
+from ase.io.trajectory import TrajectoryWriter
 
 
 class FmaxLearner(OfflineActiveLearner):
@@ -30,7 +31,7 @@ class FmaxLearner(OfflineActiveLearner):
         """
         Default random query strategy.
         """
-        queries_db = ase.db.connect("queried_images.db")
+        # queries_db = ase.db.connect("queried_images.db")
         if len(self.sample_candidates) <= self.samples_to_retrain:
             print(
                 "Number of sample candidates is less than or equal to the requested samples to retrain, defaulting to all samples but the initial and final"
@@ -48,7 +49,16 @@ class FmaxLearner(OfflineActiveLearner):
             )
         # query_idx = np.append(query_idx, [len(self.sample_candidates) - 1])
         queried_images = [self.sample_candidates[idx] for idx in query_idx]
-        write_to_db(queries_db, queried_images)
+        # write_to_db(queries_db, queried_images)
+        if self.iterations == 1:
+            writer = TrajectoryWriter("queried_images.traj", mode="w")
+            for i in queried_images:
+                writer.write(i)
+        else:
+            writer = TrajectoryWriter("queried_images.traj", mode="a")
+            for i in queried_images:
+                writer.write(i)
+
         self.parent_calls += len(queried_images)
         return queried_images
 
@@ -82,9 +92,16 @@ class FmaxLearner(OfflineActiveLearner):
             final_point_evA, self.base_calc, self.refs
         )
         self.parent_calls += 1
-        queries_db = ase.db.connect("queried_images.db")
+        # final_queries_db = ase.db.connect("final_queried_images.db")
         random.seed(self.query_seeds[self.iterations - 1] + 1)
-        write_to_db(queries_db, final_point_image)
+        # write_to_db(final_queries_db, final_point_image)
+
+        if self.iterations == 0:
+            writer = TrajectoryWriter("final_images.traj", mode="w")
+            writer.write(final_point_image[0])
+        else:
+            writer = TrajectoryWriter("final_images.traj", mode="a")
+            writer.write(final_point_image[0])
 
         self.terminate = self.check_terminate()
         self.iterations += 1
