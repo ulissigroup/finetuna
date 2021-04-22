@@ -31,10 +31,21 @@ class FmaxLearner(OfflineActiveLearner):
         Default random query strategy.
         """
         queries_db = ase.db.connect("queried_images.db")
-        query_idx = random.sample(
-            range(1, len(self.sample_candidates) - 1),
-            self.samples_to_retrain - 1,
-        )
+        if len(self.sample_candidates) <= self.sample_to_retrain:
+            print(
+                "Number of sample candidates is less than or equal to the requested samples to retrain, defaulting to all samples but the initial and final"
+            )
+            query_idx = [*range(1, len(self.sample_candidates) - 1)]
+            if query_idx == []:
+                query_idx = [
+                    1
+                ]  # EDGE CASE WHEN samples = 2 (need a better way to do it)
+
+        else:
+            query_idx = random.sample(
+                range(1, len(self.sample_candidates) - 1),
+                self.samples_to_retrain - 1,
+            )
         # query_idx = np.append(query_idx, [len(self.sample_candidates) - 1])
         queried_images = [self.sample_candidates[idx] for idx in query_idx]
         write_to_db(queries_db, queried_images)
@@ -64,7 +75,7 @@ class FmaxLearner(OfflineActiveLearner):
         )
 
         final_point_image = [self.sample_candidates[-1]]
-        print(final_point_image[0].get_positions())
+        # print(final_point_image[0].get_positions())
         final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
         self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
         self.training_data += subtract_deltas(
