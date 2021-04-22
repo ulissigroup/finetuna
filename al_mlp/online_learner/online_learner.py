@@ -49,22 +49,21 @@ class OnlineLearner(Calculator):
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
 
-        #breakpoint()
+        # breakpoint()
         # If can make a connection to MongoDB then create a database to house the OAL outputs
         conn = self.mongodb_conn()
 
         if conn is not None:
             # Look to see if the oal_metadata collection exists and if not create it
-            db = conn.get_database('db')
+            db = conn.get_database("db")
 
-            if 'oal_metadata' not in db.collection_names():
-                db.create_collection('oal_metadata')
+            if "oal_metadata" not in db.collection_names():
+                db.create_collection("oal_metadata")
 
-            collection = db.get_collection('oal_metadata')
+            collection = db.get_collection("oal_metadata")
 
         # If we have less than two data points, uncertainty is not
         # well calibrated so just use DFT
-
 
         if len(self.parent_dataset) < 2:
             energy, force = self.add_data_and_retrain(atoms)
@@ -72,20 +71,20 @@ class OnlineLearner(Calculator):
             self.results["forces"] = force
 
             if collection is not None:
-                self.insert_row(collection, iteration=self.iteration,
-                                            parent_call=True,
-                                            energy=energy,
-                                            force=force.tolist(),
-                                            max_force_stds='NA',
-                                            base_uncertainty='NA',
-                                            uncertainty_tol='NA',
-                                            task_name=self.task_name,
-                                            time_stamp=datetime.datetime.utcnow()
-                                            )
-
+                self.insert_row(
+                    collection,
+                    iteration=self.iteration,
+                    parent_call=True,
+                    energy=energy,
+                    force=force.tolist(),
+                    max_force_stds="NA",
+                    base_uncertainty="NA",
+                    uncertainty_tol="NA",
+                    task_name=self.task_name,
+                    time_stamp=datetime.datetime.utcnow(),
+                )
 
             self.iteration += 1
-
 
             return
 
@@ -98,43 +97,40 @@ class OnlineLearner(Calculator):
 
         # Check if we are extrapolating too far, and if so add/retrain
 
-
         if self.unsafe_prediction(atoms_ML) or self.parent_verify(atoms_ML):
             # We ran DFT, so just use that energy/force
             energy, force = self.add_data_and_retrain(atoms)
 
             if collection is not None:
-                self.insert_row(collection, iteration=self.iteration,
-                                            parent_call=True,
-                                            energy=energy,
-                                            force=force.tolist(),
-                                            max_force_stds=float(self.uncertainty),
-                                            base_uncertainty=float(self.base_uncertainty),
-                                            uncertainty_tol=float(self.uncertainty_tol),
-                                            task_name=self.task_name,
-                                            time_stamp=datetime.datetime.utcnow()
-                                            )
-
+                self.insert_row(
+                    collection,
+                    iteration=self.iteration,
+                    parent_call=True,
+                    energy=energy,
+                    force=force.tolist(),
+                    max_force_stds=float(self.uncertainty),
+                    base_uncertainty=float(self.base_uncertainty),
+                    uncertainty_tol=float(self.uncertainty_tol),
+                    task_name=self.task_name,
+                    time_stamp=datetime.datetime.utcnow(),
+                )
 
         else:
             if collection is not None:
-                self.insert_row(collection, iteration=self.iteration,
-                                            parent_call=False,
-                                            energy=energy,
-                                            force=force.tolist(),
-                                            max_force_stds=float(self.uncertainty),
-                                            base_uncertainty=float(self.base_uncertainty),
-                                            uncertainty_tol=float(self.uncertainty_tol),
-                                            task_name=self.task_name,
-                                            time_stamp=datetime.datetime.utcnow()
-                                            )
-
                 energy = atoms_ML.get_potential_energy(apply_constraint=False)
                 force = atoms_ML.get_forces(apply_constraint=False)
-
-
-
-
+                self.insert_row(
+                    collection,
+                    iteration=self.iteration,
+                    parent_call=False,
+                    energy=energy,
+                    force=force.tolist(),
+                    max_force_stds=float(self.uncertainty),
+                    base_uncertainty=float(self.base_uncertainty),
+                    uncertainty_tol=float(self.uncertainty_tol),
+                    task_name=self.task_name,
+                    time_stamp=datetime.datetime.utcnow(),
+                )
 
 
         self.iteration += 1
@@ -192,7 +188,7 @@ class OnlineLearner(Calculator):
         try:
             return pymongo.MongoClient()
         except pymongo.errors.ConnectionFailure as e:
-            print(f'Could not connect to server: {e}')
+            print(f"Could not connect to server: {e}")
 
-    def insert_row(self, collection,  **kw_args):
+    def insert_row(self, collection, **kw_args):
         collection.insert_one(kw_args)
