@@ -31,7 +31,7 @@ class FmaxLearner(OfflineActiveLearner):
         Default random query strategy.
         """
         queries_db = ase.db.connect("queried_images.db")
-        if len(self.sample_candidates) <= self.sample_to_retrain:
+        if len(self.sample_candidates) <= self.samples_to_retrain:
             print(
                 "Number of sample candidates is less than or equal to the requested samples to retrain, defaulting to all samples but the initial and final"
             )
