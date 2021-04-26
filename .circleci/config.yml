@@ -47,7 +47,7 @@ jobs:
             source /home/circleci/miniconda/etc/profile.d/conda.sh
             conda activate al_mlp
             pip install -e .
-            OMP_NUM_THREADS=1 pytest al_mlp/tests/suites/suite_light_tests.py
+            OMP_NUM_THREADS=1 pytest al_mlp/tests/suites/light_suite.py
           no_output_timeout: 1.5h
 
       - run:
