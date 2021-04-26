@@ -87,9 +87,7 @@ class UncertaintyOffAL(EnsembleLearner):
         restricted_candidates = []
         remaining_candidates = []
         for i in range(len(self.sample_candidates)):
-            uncertainty = (
-                self.sample_candidates[i].info["max_force_stds"]
-            )
+            uncertainty = self.sample_candidates[i].info["max_force_stds"]
             if uncertainty < self.get_uncertainty_tol():
                 restricted_candidates.append(self.sample_candidates[i])
             else:
@@ -129,6 +127,23 @@ class UncertaintyOffAL(EnsembleLearner):
             self.samples_to_retrain,
         )
         return query_idx
+
+    def check_final_force(self):
+        final_point_image = [self.sample_candidates[-1]]
+        final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
+        self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
+        self.energy_list.append(final_point_evA[0].get_potential_energy())
+        final_point = subtract_deltas(final_point_evA, self.base_calc, self.refs)
+        self.parent_dataset, self.training_data = self.add_data(final_point)
+        self.parent_calls += 1
+
+    def check_terminate(self):
+        if self.iterations >= self.max_iterations:
+            return True
+        else:
+            if self.iterations > 0 and self.final_point_force <= self.max_evA:
+                return True
+        return False
 
 
 class DynamicUncertaintyOffAL(UncertaintyOffAL):

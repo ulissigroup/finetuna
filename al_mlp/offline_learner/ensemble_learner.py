@@ -44,7 +44,13 @@ class EnsembleLearner(OfflineActiveLearner):
     """
 
     def __init__(
-        self, learner_params, trainer, training_data, parent_calc, base_calc, ml_potential
+        self,
+        learner_params,
+        trainer,
+        training_data,
+        parent_calc,
+        base_calc,
+        ml_potential,
     ):
         super().__init__(learner_params, trainer, training_data, parent_calc, base_calc)
 
@@ -53,7 +59,7 @@ class EnsembleLearner(OfflineActiveLearner):
         self.ml_potential = ml_potential
         self.ensemble = self.ml_potential.n_ensembles
         self.training_data, self.parent_dataset = bootstrap_ensemble(
-            self.training_data, n_ensembles = self.ensemble
+            self.training_data, n_ensembles=self.ensemble
         )
         self.parent_calls = 0
 
@@ -95,8 +101,8 @@ class EnsembleLearner(OfflineActiveLearner):
             queried_images = [self.sample_candidates[idx] for idx in query_idx]
         else:
             query_idx = random.sample(
-            range(1, len(self.sample_candidates)),
-            self.samples_to_retrain,
+                range(1, len(self.sample_candidates)),
+                self.samples_to_retrain,
             )
             queried_images = [self.sample_candidates[idx] for idx in query_idx]
 
