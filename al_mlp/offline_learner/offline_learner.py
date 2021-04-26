@@ -61,6 +61,7 @@ class OfflineActiveLearner:
 
         random.seed(self.seed)
         self.query_seeds = random.sample(range(100000), self.max_iterations)
+        ase.db.connect("queried_images.db", append = False)
 
     def init_training_data(self):
         """

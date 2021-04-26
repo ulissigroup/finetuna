@@ -1,12 +1,17 @@
 import numpy as np
 import copy
 import torch
+from al_mlp.utils import compute_with_calc, write_to_db, subtract_deltas
+
 from al_mlp.calcs import DeltaCalc
+import random
+import ase
+
 
 # from al_mlp.utils import write_to_db
-from al_mlp.bootstrap import bootstrap_ensemble
-from al_mlp.ml_potential.amptorch_ensemble_calc import AmptorchEnsembleCalc
-from al_mlp.offline_learner import OfflineActiveLearner
+from al_mlp.ml_potentials.bootstrap import bootstrap_ensemble
+from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
+from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
 
 # from torch.multiprocessing import Pool
 
@@ -39,15 +44,16 @@ class EnsembleLearner(OfflineActiveLearner):
     """
 
     def __init__(
-        self, learner_params, trainer, training_data, parent_calc, base_calc, ensemble
+        self, learner_params, trainer, training_data, parent_calc, base_calc, ml_potential
     ):
         super().__init__(learner_params, trainer, training_data, parent_calc, base_calc)
 
-        self.ensemble = ensemble
-        assert isinstance(ensemble, int) and ensemble > 1, "Invalid ensemble!"
-        self.ncores = self.learner_params.get("ncores", ensemble)
+        # assert isinstance(ensemble, int) and ensemble > 1, "Invalid ensemble!"
+        # self.ncores = self.learner_params.get("ncores", ensemble)
+        self.ml_potential = ml_potential
+        self.ensemble = self.ml_potential.n_ensembles
         self.training_data, self.parent_dataset = bootstrap_ensemble(
-            self.training_data, n_ensembles=ensemble
+            self.training_data, n_ensembles = self.ensemble
         )
         self.parent_calls = 0
 
@@ -60,11 +66,9 @@ class EnsembleLearner(OfflineActiveLearner):
         self.ensemble_sets = self.training_data
 
     def do_train(self):
-        self.ensemble_calc = AmptorchEnsembleCalc.make_ensemble(
-            self.ensemble_sets, self.trainer
-        )
+        self.ml_potential.train(self.parent_dataset)
         self.trained_calc = DeltaCalc(
-            [self.ensemble_calc, self.base_calc], "add", self.refs
+            [self.ml_potential, self.base_calc], "add", self.refs
         )
 
     def do_after_train(self):
@@ -81,13 +85,22 @@ class EnsembleLearner(OfflineActiveLearner):
 
     def query_func(self):
         # queries_db = ase.db.connect("queried_images.db")
-        uncertainty = np.array(
-            [atoms.calc.results["uncertainty"][0] for atoms in self.sample_candidates]
-        )
-        n_retrain = self.samples_to_retrain
-        query_idx = np.argpartition(uncertainty, -1 * n_retrain)[-n_retrain:]
-        queried_images = [self.sample_candidates[idx] for idx in query_idx]
-        # write_to_db(queries_db, queried_images) bugged unique ID
+        if self.iterations > 1:
+
+            uncertainty = np.array(
+                [atoms.info["max_force_stds"] for atoms in self.sample_candidates]
+            )
+            n_retrain = self.samples_to_retrain
+            query_idx = np.argpartition(uncertainty, -1 * n_retrain)[-n_retrain:]
+            queried_images = [self.sample_candidates[idx] for idx in query_idx]
+        else:
+            query_idx = random.sample(
+            range(1, len(self.sample_candidates)),
+            self.samples_to_retrain,
+            )
+            queried_images = [self.sample_candidates[idx] for idx in query_idx]
+
+        # write_to_db(queries_db, queried_images)
         return queried_images
 
     def add_data(self, queried_images):
@@ -100,12 +113,12 @@ class EnsembleLearner(OfflineActiveLearner):
             )
         return self.parent_dataset, self.training_data
 
-    def ensemble_train_trainer(self, dataset):
-        trainer = copy.deepcopy(self.trainer)
-        trainer.train(dataset)
-        trainer_calc = self.make_trainer_calc(trainer)
-        trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
-        return trained_calc
+    # def ensemble_train_trainer(self, dataset):
+    #     trainer = copy.deepcopy(self.trainer)
+    #     trainer.train(dataset)
+    #     trainer_calc = self.make_trainer_calc(trainer)
+    #     trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
+    #     return trained_calc
 
     # def make_ensemble(self):
     #     pool = Pool(self.ncores)

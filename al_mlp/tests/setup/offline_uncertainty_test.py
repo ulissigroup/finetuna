@@ -1,8 +1,11 @@
 import numpy as np
+from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
 
 # from al_mlp.ensemble_calc import EnsembleCalc
 
-from al_mlp.offline_learner.fmax_learner import FmaxLearner
+from al_mlp.offline_learner.uncertainty_learner import UncertaintyOffAL
+from al_mlp.offline_learner.ensemble_learner import EnsembleLearner
+
 from amptorch.trainer import AtomsTrainer
 import os
 
@@ -44,6 +47,7 @@ def run_offline_al(atomistic_method, images, dbname, parent_calc):
         "query_method": "random",
         "use_dask": False,
         "max_evA": 0.07,
+        "n_ensembles": 3,
     }
 
     config = {
@@ -86,14 +90,14 @@ def run_offline_al(atomistic_method, images, dbname, parent_calc):
     cutoff = Gs["default"]["cutoff"]
     base_calc = MultiMorse(images, cutoff, combo="mean")
 
-    learner = FmaxLearner(
+    ml_potential = AmptorchEnsembleCalc(trainer, learner_params["n_ensembles"])
+    learner = UncertaintyOffAL(
         learner_params,
         trainer,
         images,
         parent_calc,
         base_calc,
-        # ncores="max",
-        # ensemble=5,
+        ml_potential,
     )
 
     learner.learn()
