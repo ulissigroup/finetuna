@@ -39,7 +39,7 @@ class FmaxLearner(OfflineActiveLearner):
             query_idx = [*range(1, len(self.sample_candidates) - 1)]
             if query_idx == []:
                 query_idx = [
-                    1
+                    0
                 ]  # EDGE CASE WHEN samples = 2 (need a better way to do it)
 
         else:
