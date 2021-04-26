@@ -1,4 +1,4 @@
-# tests/suite_light_tests.py
+# tests/suites/flare_suite.py
 import unittest
 
 # import test modules

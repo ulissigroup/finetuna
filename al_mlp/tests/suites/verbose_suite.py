@@ -1,4 +1,4 @@
-# tests/suite_verbose_tests.py
+# tests/suites/verbose_suite.py
 import unittest
 
 # import test modules

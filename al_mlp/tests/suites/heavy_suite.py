@@ -1,4 +1,4 @@
-# tests/suite_heavy_tests.py
+# tests/suites/heavy_suite.py
 import unittest
 
 # import test modules

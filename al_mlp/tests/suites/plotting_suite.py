@@ -1,4 +1,4 @@
-# tests/suite_plotting_tests.py
+# tests/suites/plotting_suite.py
 import unittest
 
 # import test modules

@@ -1,9 +1,10 @@
-# tests/suite_light_tests.py
+# tests/suites/light_suite.py
 import unittest
 
 # import test modules
 from al_mlp.tests.cases.case_online_CuNP import online_CuNP
 from al_mlp.tests.cases.case_offline_CuNP import offline_CuNP
+
 # from al_mlp.tests.cases.case_online_flare_CuNP import online_flare_CuNP
 
 # import and set executor client
