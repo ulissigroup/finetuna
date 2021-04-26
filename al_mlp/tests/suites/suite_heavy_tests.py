@@ -6,6 +6,7 @@ import unittest
 from al_mlp.tests.cases.case_online_CuNP import online_CuNP
 from al_mlp.tests.cases.case_offline_CuNP import offline_CuNP
 from al_mlp.tests.cases.case_offline_neb_CuC import offline_NEB
+from al_mlp.tests.cases.case_online_flare_CuNP import online_flare_CuNP
 
 # import make_ensemble and dask for setting parallelization
 from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
@@ -25,6 +26,7 @@ suite = unittest.TestSuite()
 suite.addTests(loader.loadTestsFromTestCase(offline_CuNP))
 suite.addTests(loader.loadTestsFromTestCase(online_CuNP))
 suite.addTests(loader.loadTestsFromTestCase(offline_NEB))
+suite.addTests(loader.loadTestsFromModule(online_flare_CuNP))
 # suite.addTests(loader.loadTestsFromTestCase(online_PtNP))
 # add more tests here
 
