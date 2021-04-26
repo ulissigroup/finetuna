@@ -67,7 +67,6 @@ def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
     ml_potential = AmptorchEnsembleCalc(trainer, learner_params["n_ensembles"])
     onlinecalc = OnlineLearner(
         learner_params,
-        trainer,
         images,
         ml_potential,
         parent_calc,

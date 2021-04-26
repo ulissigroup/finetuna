@@ -1,5 +1,6 @@
 from al_mlp.atomistic_methods import Relaxation
 from al_mlp.online_learner import OnlineLearner
+from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
 from amptorch.trainer import AtomsTrainer
 from ase.calculators.emt import EMT
 import numpy as np
@@ -91,9 +92,9 @@ if __name__ == "__main__":
     dbname = "CuNP_oal"
     trainer = AtomsTrainer(config)
 
+    ml_potential = AmptorchEnsembleCalc(trainer, learner_params["n_ensembles"])
     onlinecalc = OnlineLearner(
         learner_params,
-        trainer,
         images,
         copy.deepcopy(parent_calc),
     )

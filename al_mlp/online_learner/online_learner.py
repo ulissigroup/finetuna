@@ -13,7 +13,6 @@ class OnlineLearner(Calculator):
     def __init__(
         self,
         learner_params,
-        trainer,
         parent_dataset,
         ml_potential,
         parent_calc,
@@ -21,7 +20,6 @@ class OnlineLearner(Calculator):
         Calculator.__init__(self)
 
         self.parent_calc = parent_calc
-        self.trainer = trainer
         self.learner_params = learner_params
         self.parent_dataset = convert_to_singlepoint(parent_dataset)
 

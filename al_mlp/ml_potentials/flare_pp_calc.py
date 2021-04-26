@@ -111,6 +111,7 @@ class FlarePPCalc(Calculator):
 
     def train(self, parent_dataset):
 
+        # TODO: make this species not hard coded to the flare pp class
         self.species_map = {29: 0}
 
         # Create sparse GP model.

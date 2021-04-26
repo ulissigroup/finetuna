@@ -1,7 +1,6 @@
 import numpy as np
 from al_mlp.online_learner.online_learner import OnlineLearner
 from al_mlp.ml_potentials.flare_pp_calc import FlarePPCalc
-from amptorch.trainer import AtomsTrainer
 import os
 import torch
 
@@ -61,13 +60,10 @@ def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
         },
     }
 
-    trainer = AtomsTrainer(config)
-
     ml_potential = FlarePPCalc()
 
     onlinecalc = OnlineLearner(
         learner_params,
-        trainer,
         images,
         ml_potential,
         parent_calc,
