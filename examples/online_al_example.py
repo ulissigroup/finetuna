@@ -1,5 +1,5 @@
 from al_mlp.atomistic_methods import Relaxation
-from al_mlp.online_learner import OnlineLearner
+from al_mlp.online_learner.online_learner import OnlineLearner
 from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
 from amptorch.trainer import AtomsTrainer
 from ase.calculators.emt import EMT
@@ -13,12 +13,12 @@ import copy
 # Set up ensemble parallelization
 if __name__ == "__main__":
     # import make_ensemble and dask for setting parallelization
-    from al_mlp.ensemble_calc import EnsembleCalc
+    from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
     from dask.distributed import Client, LocalCluster
 
     cluster = LocalCluster(processes=True, threads_per_worker=1)
     client = Client(cluster)
-    EnsembleCalc.set_executor(client)
+    AmptorchEnsembleCalc.set_executor(client)
 
     # Set up parent calculator and image environment
     initial_structure = Icosahedron("Cu", 2)
@@ -96,7 +96,8 @@ if __name__ == "__main__":
     onlinecalc = OnlineLearner(
         learner_params,
         images,
-        copy.deepcopy(parent_calc),
+        ml_potential,
+        parent_calc,
     )
 
     if os.path.exists("dft_calls.db"):
