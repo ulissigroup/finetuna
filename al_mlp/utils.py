@@ -27,15 +27,20 @@ def convert_to_singlepoint(images):
 
         # Force a call to the underlying calculation for energy/forces
         # also convert energy to float to stop complaint from amptorch
-        image.get_potential_energy()
-        image.get_forces()
-
-        image.calc.results["energy"] = float(image.calc.results["energy"])
-
-        sp_calc = sp(atoms=image, **image.calc.results)
-        sp_calc.implemented_properties = list(image.calc.results.keys())
-
+        sample_energy = image.get_potential_energy(apply_constraint=False)
+        sample_forces = image.get_forces(apply_constraint=False)
+        sp_calc = sp(atoms=image, energy=float(sample_energy), forces=sample_forces)
+        sp_calc.implemented_properties = ["energy", "forces"]
         image.set_calculator(sp_calc)
+        # image.get_potential_energy()
+        # image.get_forces()
+
+        # image.calc.results["energy"] = float(image.calc.results["energy"])
+
+        # sp_calc = sp(atoms=image, **image.calc.results)
+        # sp_calc.implemented_properties = list(image.calc.results.keys())
+
+        # image.set_calculator(sp_calc)
         singlepoint_images.append(image)
         os.chdir(cwd)
         os.system("rm -rf ./temp")

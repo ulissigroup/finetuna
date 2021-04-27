@@ -77,12 +77,15 @@ class EnsembleLearner(OfflineActiveLearner):
             [self.ml_potential, self.base_calc], "add", self.refs
         )
 
+    def check_final_force(self):
+        pass
+
     def do_after_train(self):
         self.atomistic_method.run(calc=self.trained_calc, filename=self.fn_label)
         self.sample_candidates = list(
             self.atomistic_method.get_trajectory(filename=self.fn_label)
         )
-
+        self.check_final_force()
         self.terminate = self.check_terminate()
         self.iterations += 1
 

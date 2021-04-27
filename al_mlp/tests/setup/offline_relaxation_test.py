@@ -43,7 +43,7 @@ def run_offline_al(atomistic_method, images, dbname, parent_calc):
         "file_dir": "./",
         "query_method": "random",
         "use_dask": False,
-        "max_evA": 0.07,
+        "max_evA": 0.05,
     }
 
     config = {

@@ -1,7 +1,7 @@
 from al_mlp.offline_learner.ensemble_learner import EnsembleLearner
 import ase
 import random
-from al_mlp.utils import write_to_db
+from al_mlp.utils import write_to_db, compute_with_calc, subtract_deltas
 import numpy as np
 
 
@@ -55,6 +55,8 @@ class UncertaintyOffAL(EnsembleLearner):
             ml_potential,
         )
         self.uncertainty_tol = uncertainty_tol
+        self.max_evA = learner_params.get("max_evA", 0.05)
+        self.final_point_force = 0
 
     def __str__(self):
         return "Default (Static) Uncertainty-Based Offline Learner"
@@ -132,7 +134,6 @@ class UncertaintyOffAL(EnsembleLearner):
         final_point_image = [self.sample_candidates[-1]]
         final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
         self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
-        self.energy_list.append(final_point_evA[0].get_potential_energy())
         final_point = subtract_deltas(final_point_evA, self.base_calc, self.refs)
         self.parent_dataset, self.training_data = self.add_data(final_point)
         self.parent_calls += 1
