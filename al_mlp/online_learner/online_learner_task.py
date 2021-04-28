@@ -16,6 +16,7 @@ class OnlineLearnerTask(FiretaskBase):
         trainer_config_str = fw_spec.get("trainer_config")
         images_str = fw_spec.get("parent_dataset")  # This has to be a full path
         filename = fw_spec.get("filename")
+        task_name = fw_spec.get("task_name")
         init_struct_filename = fw_spec.get(
             "init_structure_path"
         )  # This has to be a full path
@@ -45,7 +46,8 @@ class OnlineLearnerTask(FiretaskBase):
             learner_params, trainer, images,
             learner_params['ml_potential'](trainer,
                                          learner_params['n_ensembles']),
-            learner_params["parent_calc"]
+            learner_params["parent_calc"],
+            task_name
         )
 
         # Set up the Relaxer

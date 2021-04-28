@@ -129,9 +129,9 @@ if __name__ == "__main__":
             "init_structure_path": os.path.join(
                 os.getcwd(), "MgO_init_structure.traj"
             ),  # absolute path of the .traj file containing the initial structure
-            "db_path": "/home/jovyan/atomate/config/db.json",
-        },
-        name="OAL_FW",
+            #"db_path": "/home/jovyan/atomate/config/db.json",
+            "task_name":"OAL_0.2_thresh"},
+        name="OAL_0.2_thresh",
     )
 
     # Let's try and screen through a hyperparameter like n_ensembles through Fireworks. We will start might just add a set of FWs to the WF and run them
@@ -150,4 +150,4 @@ if __name__ == "__main__":
     wf = Workflow([firework])
     launchpad.add_wf(wf)
     #    launch_multiprocess(launchpad, FWorker(), 'DEBUG', 0, 2, sleep_time=0.5)
-    rapidfire(launchpad, FWorker(name="OAL"))
+    rapidfire(launchpad, FWorker(name="OAL_0.2_thresh"))
