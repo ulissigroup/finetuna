@@ -5,6 +5,7 @@ import unittest
 from al_mlp.tests.cases.case_online_CuNP import online_CuNP
 from al_mlp.tests.cases.case_offline_CuNP import offline_CuNP
 from al_mlp.tests.cases.case_offline_uncertainty_test import offline_uncertainty_CuNP
+
 # from al_mlp.tests.cases.case_online_flare_CuNP import online_flare_CuNP
 
 # import and set executor client
