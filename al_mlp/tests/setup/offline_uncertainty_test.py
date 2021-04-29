@@ -41,12 +41,12 @@ def run_offline_al(atomistic_method, images, dbname, parent_calc):
         "atomistic_method": atomistic_method,
         "max_iterations": 10,
         "force_tolerance": 0.01,
-        "samples_to_retrain": 2,
+        "samples_to_retrain": 1,
         "filename": "relax_example",
         "file_dir": "./",
         "query_method": "random",
         "use_dask": False,
-        "max_evA": 0.07,
+        "max_evA": 0.05,
         "n_ensembles": 3,
     }
 
@@ -58,7 +58,7 @@ def run_offline_al(atomistic_method, images, dbname, parent_calc):
         },
         "optim": {
             "device": "cpu",
-            "force_coefficient": 0.4,
+            "force_coefficient": 30,
             "lr": 1,
             "batch_size": 10,
             "epochs": 100,  # was 100

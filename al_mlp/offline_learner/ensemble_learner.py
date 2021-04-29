@@ -1,7 +1,12 @@
 import numpy as np
 import copy
 import torch
-from al_mlp.utils import compute_with_calc, write_to_db, subtract_deltas
+from al_mlp.utils import (
+    compute_with_calc,
+    write_to_db,
+    subtract_deltas,
+    convert_to_singlepoint,
+)
 
 from al_mlp.calcs import DeltaCalc
 import random
@@ -10,6 +15,8 @@ import ase
 
 # from al_mlp.utils import write_to_db
 from al_mlp.ml_potentials.bootstrap import bootstrap_ensemble
+from al_mlp.ml_potentials.bootstrap import non_bootstrap_ensemble
+
 from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
 from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
 
@@ -58,21 +65,24 @@ class EnsembleLearner(OfflineActiveLearner):
         # self.ncores = self.learner_params.get("ncores", ensemble)
         self.ml_potential = ml_potential
         self.ensemble = self.ml_potential.n_ensembles
-        self.training_data, self.parent_dataset = bootstrap_ensemble(
-            self.training_data, n_ensembles=self.ensemble
-        )
         self.parent_calls = 0
+        for image in self.training_data:
+            print("initial trainint data ", image.get_potential_energy())
 
     def do_before_train(self):
         if self.iterations > 0:
             queried_images = self.query_func()
-            self.parent_dataset, self.training_data = self.add_data(queried_images)
+            queried_images = compute_with_calc(queried_images, self.delta_sub_calc)
+            self.training_data += queried_images
+            for image in self.training_data:
+                print("trainint data energy ", image.get_potential_energy())
+            # self.parent_dataset, self.training_data = self.add_data(queried_images)
             self.parent_calls += len(queried_images)
         self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
-        self.ensemble_sets = self.training_data
+        # self.ensemble_sets = self.training_data
 
     def do_train(self):
-        self.ml_potential.train(self.parent_dataset)
+        self.ml_potential.train(self.training_data)
         self.trained_calc = DeltaCalc(
             [self.ml_potential, self.base_calc], "add", self.refs
         )
@@ -93,9 +103,7 @@ class EnsembleLearner(OfflineActiveLearner):
         pass
 
     def query_func(self):
-        # queries_db = ase.db.connect("queried_images.db")
         if self.iterations > 1:
-
             uncertainty = np.array(
                 [atoms.info["max_force_stds"] for atoms in self.sample_candidates]
             )
@@ -109,18 +117,16 @@ class EnsembleLearner(OfflineActiveLearner):
             )
             queried_images = [self.sample_candidates[idx] for idx in query_idx]
 
-        # write_to_db(queries_db, queried_images)
         return queried_images
 
-    def add_data(self, queried_images):
-        for query in queried_images:
-            self.training_data, self.parent_dataset = bootstrap_ensemble(
-                self.parent_dataset,
-                self.training_data,
-                query,
-                n_ensembles=self.ensemble,
-            )
-        return self.parent_dataset, self.training_data
+    # def add_data(self, queried_images):
+    #     for query in queried_images:
+    #         self.training_data, self.parent_dataset = non_bootstrap_ensemble(
+    #             self.parent_dataset,
+    #             query,
+    #             n_ensembles=self.ensemble,
+    #         )
+    #     return self.parent_dataset, self.training_data
 
     # def ensemble_train_trainer(self, dataset):
     #     trainer = copy.deepcopy(self.trainer)

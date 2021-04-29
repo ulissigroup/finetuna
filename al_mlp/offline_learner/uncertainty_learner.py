@@ -3,6 +3,7 @@ import ase
 import random
 from al_mlp.utils import write_to_db, compute_with_calc, subtract_deltas
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class UncertaintyOffAL(EnsembleLearner):
@@ -44,7 +45,7 @@ class UncertaintyOffAL(EnsembleLearner):
         parent_calc,
         base_calc,
         ml_potential,
-        uncertainty_tol=0.05,
+        uncertainty_tol=0.5,
     ):
         super().__init__(
             learner_params,
@@ -57,41 +58,27 @@ class UncertaintyOffAL(EnsembleLearner):
         self.uncertainty_tol = uncertainty_tol
         self.max_evA = learner_params.get("max_evA", 0.05)
         self.final_point_force = 0
+        self.rejected_list = {}
 
     def __str__(self):
         return "Default (Static) Uncertainty-Based Offline Learner"
 
-    def query_func(self):
-        """
-        Boiler-plate code for querying
-        Offloads two aspects of the undertainty based querying strategy to two sub-functions
-            restrict_candidates()
-                temporarily restrict acceptable querying candidates based on uncertainty_tol
-            sub_query_func()
-                generate list of idx of points to query from the acceptable querying list
-        """
-        restricted_candidates = self.restrict_candidates()
-        query_idx = self.sub_query_func(restricted_candidates)
-        queried_images = [restricted_candidates[idx] for idx in query_idx]
-        # queried_images.append(self.sample_candidates[-1])
-        queries_db = ase.db.connect("queried_images.db")
-        write_to_db(queries_db, queried_images)
-        self.parent_calls += len(queried_images)
-        return queried_images
-
     def restrict_candidates(self):
-        """
-        Boiler-plate code for getting a restricted candidate set
-        Restricts candidates based on their uncertainty being below the given tolerance
-            Offloads computation of this to tolerance to the function get_uncertainty_tol()
-        By default adds to the restricted set the lowest uncertainty candidates if set is not large enough
-        """
         restricted_candidates = []
         remaining_candidates = []
+        uncertainty_list = []
+        tol_list = []
         for i in range(len(self.sample_candidates)):
             uncertainty = self.sample_candidates[i].info["max_force_stds"]
-            if uncertainty < self.get_uncertainty_tol():
+            uncertainty_list.append(uncertainty)
+            uncertainty_tol = (
+                np.nanmax(np.abs(self.sample_candidates[i].get_forces()))
+                * self.get_uncertainty_tol()
+            )
+            tol_list.append(uncertainty_tol)
+            if uncertainty < uncertainty_tol:
                 restricted_candidates.append(self.sample_candidates[i])
+
             else:
                 remaining_candidates.append(self.sample_candidates[i])
         # if there aren't enough candidates based on criteria, get the lowest uncertainty remaining
@@ -106,15 +93,27 @@ class UncertaintyOffAL(EnsembleLearner):
                     : self.samples_to_retrain - len(restricted_candidates)
                 ]
             )
+
         return restricted_candidates
 
-    def get_uncertainty_tol(self):
-        """
-        Computes uncertainty tolerance to be used as the criteria for restriction
+    def check_final_force(self):
+        final_point_image = [self.sample_candidates[-1]]
+        final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
+        self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
+        # self.energy_list.append(final_point_evA[0].get_potential_energy())
+        final_point = subtract_deltas(final_point_evA, self.base_calc, self.refs)
+        self.training_data += final_point
+        # self.parent_dataset, self.training_data = self.add_data(final_point)
+        self.parent_calls += 1
 
-        Designed to be overwritable
-        """
-        return self.uncertainty_tol
+    def query_func(self):
+        restricted_candidates = self.restrict_candidates()
+        query_idx = self.sub_query_func(restricted_candidates)
+        queried_images = [restricted_candidates[idx] for idx in query_idx]
+        queries_db = ase.db.connect("queried_images.db")
+        write_to_db(queries_db, queried_images)
+        self.parent_calls += len(queried_images)
+        return queried_images
 
     def sub_query_func(self, candidates_list):
         """
@@ -130,14 +129,6 @@ class UncertaintyOffAL(EnsembleLearner):
         )
         return query_idx
 
-    def check_final_force(self):
-        final_point_image = [self.sample_candidates[-1]]
-        final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
-        self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
-        final_point = subtract_deltas(final_point_evA, self.base_calc, self.refs)
-        self.parent_dataset, self.training_data = self.add_data(final_point)
-        self.parent_calls += 1
-
     def check_terminate(self):
         if self.iterations >= self.max_iterations:
             return True
@@ -145,6 +136,14 @@ class UncertaintyOffAL(EnsembleLearner):
             if self.iterations > 0 and self.final_point_force <= self.max_evA:
                 return True
         return False
+
+    def get_uncertainty_tol(self):
+        """
+        Computes uncertainty tolerance to be used as the criteria for restriction
+
+        Designed to be overwritable
+        """
+        return self.uncertainty_tol
 
 
 class DynamicUncertaintyOffAL(UncertaintyOffAL):
