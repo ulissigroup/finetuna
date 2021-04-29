@@ -118,6 +118,6 @@ def copy_images(images):
     return new_images
 
 
-def write_to_db(database, queried_images):
+def write_to_db(database, queried_images, datatype="N/A"):
     for image in queried_images:
-        database.write(image)
+        database.write(image, key_value_pairs={"type": datatype})

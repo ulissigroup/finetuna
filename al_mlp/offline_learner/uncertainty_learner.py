@@ -103,6 +103,9 @@ class UncertaintyOffAL(EnsembleLearner):
         # self.energy_list.append(final_point_evA[0].get_potential_energy())
         final_point = subtract_deltas(final_point_evA, self.base_calc, self.refs)
         self.training_data += final_point
+        random.seed(self.query_seeds[self.iterations - 1] + 1)
+        queries_db = ase.db.connect("queried_images.db")
+        write_to_db(queries_db, final_point, "final image")
         # self.parent_dataset, self.training_data = self.add_data(final_point)
         self.parent_calls += 1
 
@@ -111,7 +114,7 @@ class UncertaintyOffAL(EnsembleLearner):
         query_idx = self.sub_query_func(restricted_candidates)
         queried_images = [restricted_candidates[idx] for idx in query_idx]
         queries_db = ase.db.connect("queried_images.db")
-        write_to_db(queries_db, queried_images)
+        write_to_db(queries_db, queried_images, "queried")
         self.parent_calls += len(queried_images)
         return queried_images
 

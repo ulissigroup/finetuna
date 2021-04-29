@@ -75,10 +75,12 @@ class OfflineActiveLearner:
         self.refs = [parent_ref_image, base_ref_image]
         self.delta_sub_calc = DeltaCalc(self.calcs, "sub", self.refs)
         self.training_data = []
+        queries_db = ase.db.connect("queried_images.db")
         for image in sp_raw_data:
             sp_calc = image.get_calculator()
             sp_delta_calc = DeltaCalc([sp_calc, self.base_calc], "sub", self.refs)
             self.training_data += compute_with_calc([image], sp_delta_calc)
+            write_to_db(queries_db, [image], "initial")
 
     def learn(self):
         """
