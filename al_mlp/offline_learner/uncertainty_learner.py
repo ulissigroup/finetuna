@@ -98,14 +98,17 @@ class UncertaintyOffAL(EnsembleLearner):
 
     def check_final_force(self):
         final_point_image = [self.sample_candidates[-1]]
-        final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
-        self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
+        final_point_evA = compute_with_calc(final_point_image, self.delta_sub_calc)
+
+        self.final_point_force = final_point_evA[0].info["parent fmax"]
         # self.energy_list.append(final_point_evA[0].get_potential_energy())
-        final_point = subtract_deltas(final_point_evA, self.base_calc, self.refs)
-        self.training_data += final_point
+        # final_point = subtract_deltas(final_point_evA, self.base_calc, self.refs)
+        self.training_data += final_point_evA
         random.seed(self.query_seeds[self.iterations - 1] + 1)
         queries_db = ase.db.connect("queried_images.db")
-        write_to_db(queries_db, final_point, "final image")
+        parent_E = final_point_evA[0].info["parent energy"]
+        base_E = final_point_evA[0].info["base energy"]
+        write_to_db(queries_db, final_point_evA, "final image", parent_E, base_E)
         # self.parent_dataset, self.training_data = self.add_data(final_point)
         self.parent_calls += 1
 
@@ -113,9 +116,6 @@ class UncertaintyOffAL(EnsembleLearner):
         restricted_candidates = self.restrict_candidates()
         query_idx = self.sub_query_func(restricted_candidates)
         queried_images = [restricted_candidates[idx] for idx in query_idx]
-        queries_db = ase.db.connect("queried_images.db")
-        write_to_db(queries_db, queried_images, "queried")
-        self.parent_calls += len(queried_images)
         return queried_images
 
     def sub_query_func(self, candidates_list):

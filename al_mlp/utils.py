@@ -2,6 +2,7 @@ import os
 import copy
 from ase.calculators.singlepoint import SinglePointCalculator as sp
 from al_mlp.calcs import DeltaCalc
+import numpy as np
 
 
 def convert_to_singlepoint(images):
@@ -27,8 +28,20 @@ def convert_to_singlepoint(images):
 
         # Force a call to the underlying calculation for energy/forces
         # also convert energy to float to stop complaint from amptorch
+
         sample_energy = image.get_potential_energy(apply_constraint=False)
         sample_forces = image.get_forces(apply_constraint=False)
+        if isinstance(image.get_calculator(), DeltaCalc):
+            print(image.get_calculator().parent_results["energy"])
+            print(image.get_calculator().base_results["energy"])
+            image.info["parent energy"] = image.get_calculator().parent_results[
+                "energy"
+            ]
+            image.info["base energy"] = image.get_calculator().base_results["energy"]
+            image.info["parent fmax"] = np.max(
+                np.abs(image.get_calculator().parent_results["forces"])
+            )
+
         sp_calc = sp(atoms=image, energy=float(sample_energy), forces=sample_forces)
         sp_calc.implemented_properties = ["energy", "forces"]
         image.set_calculator(sp_calc)
@@ -118,6 +131,9 @@ def copy_images(images):
     return new_images
 
 
-def write_to_db(database, queried_images, datatype="N/A"):
+def write_to_db(database, queried_images, datatype="N/A", parentE="N/A", baseE="N/A"):
     for image in queried_images:
-        database.write(image, key_value_pairs={"type": datatype})
+        database.write(
+            image,
+            key_value_pairs={"type": datatype, "parentE": parentE, "baseE": baseE},
+        )

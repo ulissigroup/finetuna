@@ -66,17 +66,17 @@ class EnsembleLearner(OfflineActiveLearner):
         self.ml_potential = ml_potential
         self.ensemble = self.ml_potential.n_ensembles
         self.parent_calls = 0
-        for image in self.training_data:
-            print("initial trainint data ", image.get_potential_energy())
 
     def do_before_train(self):
         if self.iterations > 0:
             queried_images = self.query_func()
             queried_images = compute_with_calc(queried_images, self.delta_sub_calc)
+            queries_db = ase.db.connect("queried_images.db")
+            for image in queried_images:
+                parent_E = image.info["parent energy"]
+                base_E = image.info["base energy"]
+                write_to_db(queries_db, [image], "queried", parent_E, base_E)
             self.training_data += queried_images
-            for image in self.training_data:
-                print("trainint data energy ", image.get_potential_energy())
-            # self.parent_dataset, self.training_data = self.add_data(queried_images)
             self.parent_calls += len(queried_images)
         self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
         # self.ensemble_sets = self.training_data

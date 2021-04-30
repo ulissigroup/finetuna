@@ -49,9 +49,10 @@ class DeltaCalc(LinearCombinationCalculator):
         "add" mode: calculates the predicted value given the predicted delta
         calculator and the base calc.
         """
+        super().calculate(atoms, properties, system_changes)
+
         self.calcs[0].results = self.parent_results
         self.calcs[1].results = self.base_results
-        super().calculate(atoms, properties, system_changes)
 
         if "energy" in self.results:
             if self.mode == "sub":
