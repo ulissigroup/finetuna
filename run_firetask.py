@@ -26,11 +26,11 @@ if __name__ == "__main__":
     launchpad = LaunchPad()
     # launchpad.reset('', require_password=False)
     # import make_ensemble and dask for setting parallelization
-    from dask.distributed import Client, LocalCluster
-
-    cluster = LocalCluster(processes=True, n_workers=10, threads_per_worker=1)
-    client = Client(cluster)
-    AmptorchEnsembleCalc.set_executor(client)
+#    from dask.distributed import Client, LocalCluster
+#
+#    cluster = LocalCluster(processes=True, n_workers=10, threads_per_worker=1)
+#    client = Client(cluster)
+#    AmptorchEnsembleCalc.set_executor(client)
     elements = ["Mg", "O"]
 
     Gs = {
@@ -130,7 +130,8 @@ if __name__ == "__main__":
                 os.getcwd(), "MgO_init_structure.traj"
             ),  # absolute path of the .traj file containing the initial structure
             #"db_path": "/home/jovyan/atomate/config/db.json",
-            "task_name":"OAL_0.2_thresh"},
+            "task_name":"OAL_0.2_thresh",
+            "scheduler_file": '/home/jovyan/al_mlp/my-scheduler.json' },
         name="OAL_0.2_thresh",
     )
 
