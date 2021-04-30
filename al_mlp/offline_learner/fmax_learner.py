@@ -65,16 +65,13 @@ class FmaxLearner(OfflineActiveLearner):
         )
 
         final_point_image = [self.sample_candidates[-1]]
-        print(final_point_image[0].get_positions())
-        final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
-        self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
-        self.training_data += subtract_deltas(
-            final_point_evA, self.base_calc, self.refs
-        )
+        final_point_evA = compute_with_calc(final_point_image, self.delta_sub_calc)
+        self.final_point_force = final_point_evA[0].info["parent fmax"]
+        parent_E = final_point_evA[0].info["parent energy"]
+        base_E = final_point_evA[0].info["base energy"]
+        # write_to_db(queries_db, final_point_evA, "final image", parent_E, base_E)
         self.parent_calls += 1
-        queries_db = ase.db.connect("queried_images.db")
         random.seed(self.query_seeds[self.iterations - 1] + 1)
-        write_to_db(queries_db, final_point_image)
 
         self.terminate = self.check_terminate()
         self.iterations += 1
