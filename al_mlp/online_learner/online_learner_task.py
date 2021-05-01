@@ -12,7 +12,7 @@ import jsonpickle
 class OnlineLearnerTask(FiretaskBase):
     def run_task(self, fw_spec):
 
-        # Tell the client how to connect to the LocalCluster
+        # Tell the client how to connect to the Dask LocalCluster
         from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
         from dask.distributed import Client
         client = Client(scheduler_file=fw_spec.get("scheduler_file"))
@@ -52,9 +52,9 @@ class OnlineLearnerTask(FiretaskBase):
         online_calc = OnlineLearner(
             learner_params, trainer, images,
             learner_params['ml_potential'](trainer,
-                                         learner_params['n_ensembles']),
-            learner_params["parent_calc"],
-            task_name
+                                           learner_params['n_ensembles']),
+                                           learner_params["parent_calc"],
+                                           task_name
         )
 
         # Set up the Relaxer
