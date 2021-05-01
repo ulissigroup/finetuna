@@ -69,7 +69,7 @@ class OnlineLearner(Calculator):
             self.results["energy"] = energy
             self.results["forces"] = force
 
-            if collection is not None:
+            if conn is not None:
                 self.insert_row(
                     collection,
                     iteration=self.iteration,
@@ -79,7 +79,7 @@ class OnlineLearner(Calculator):
                     max_force_stds="NA",
                     base_uncertainty="NA",
                     uncertainty_tol="NA",
-                    max_force=np.nanmax(np.abs(force)),
+                    max_force=float(np.nanmax(np.abs(force))),
                     task_name=self.task_name,
                     time_stamp=datetime.datetime.utcnow(),
                 )
@@ -105,13 +105,12 @@ class OnlineLearner(Calculator):
             # We ran DFT, so just use that energy/force
             energy, force = self.add_data_and_retrain(atoms)
         else:
-        #    if collection is not None:
             energy = atoms_ML.get_potential_energy(apply_constraint=False)
             force = atoms_ML.get_forces(apply_constraint=False)
 
         # Log to the database the metadata for the step
 
-        if collection is not None:
+        if conn is not None:
             self.insert_row(
                 collection,
                 iteration=self.iteration,
@@ -121,7 +120,7 @@ class OnlineLearner(Calculator):
                 max_force_stds=float(self.uncertainty),
                 base_uncertainty=float(self.base_uncertainty),
                 uncertainty_tol=float(self.uncertainty_tol),
-                max_force=np.nanmax(np.abs(force)),
+                max_force=float(np.nanmax(np.abs(force))),
                 task_name=self.task_name,
                 time_stamp=datetime.datetime.utcnow(),
             )
