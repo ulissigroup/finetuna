@@ -22,8 +22,8 @@ def convert_to_singlepoint(images):
         if isinstance(image.get_calculator(), sp):
             singlepoint_images.append(image)
             continue
-        os.makedirs("./temp", exist_ok=True)
-        os.chdir("./temp")
+        os.makedirs("./vasp_temp")#, exist_ok=True)
+        os.chdir("./vasp_temp")
         sample_energy = image.get_potential_energy(apply_constraint=False)
         sample_forces = image.get_forces(apply_constraint=False)
         sp_calc = sp(atoms=image, energy=float(sample_energy), forces=sample_forces)
@@ -31,7 +31,7 @@ def convert_to_singlepoint(images):
         image.set_calculator(sp_calc)
         singlepoint_images.append(image)
         os.chdir(cwd)
-        os.system("rm -rf ./temp")
+        os.system("rm -rf ./vasp_temp")
 
     return singlepoint_images
 
