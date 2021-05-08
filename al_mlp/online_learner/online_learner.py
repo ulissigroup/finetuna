@@ -3,6 +3,7 @@ import numpy as np
 from ase.calculators.calculator import Calculator
 from al_mlp.utils import convert_to_singlepoint
 import pymongo
+from atomate.vasp.database import VaspCalcDb
 import datetime
 
 __author__ = "Muhammed Shuaibi"
@@ -54,7 +55,7 @@ class OnlineLearner(Calculator):
 
         if conn is not None:
             # Look to see if the oal_metadata collection exists and if not create it
-            db = conn.get_database("db")
+            db = conn.db
 
             if "oal_metadata" not in db.collection_names():
                 db.create_collection("oal_metadata")
@@ -178,10 +179,8 @@ class OnlineLearner(Calculator):
     @classmethod
     def mongodb_conn(cls):
         """Checks if we can make a connection to a database and if yes returns the connection"""
-        try:
-            return pymongo.MongoClient()
-        except pymongo.errors.ConnectionFailure as e:
-            print(f"Could not connect to server: {e}")
+        db = VaspCalcDb.from_db_file('/home/jovyan/atomate/config/db.json') # hardcoded to the nersc DB for now
+        return db
 
     def insert_row(self, collection, **kw_args):
         collection.insert_one(kw_args)
