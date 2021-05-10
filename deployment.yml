@@ -23,8 +23,8 @@ spec:
          - name: JOB_ID
            value: "10"
          volumeMounts:
-           - mountPath: /home/jovyan/yuri
-             name: workspace
+           - mountPath: /home/jovyan/
+             name: github-workspace 
          resources:
            limits:
              cpu: "20"
@@ -32,8 +32,15 @@ spec:
            requests:
              cpu: "20"
              memory: 100G
+               #      volumes:
+               #      - name: workspace 
+               #        persistentVolumeClaim:
+               #          claimName: workspace-atomate
       volumes:
-      - name: workspace 
-        persistentVolumeClaim:
-          claimName: workspace-atomate
+        - name: github-workspace
+          gitRepo:
+            repository: https://github.com/ulissigroup/al_mlp.git
+            revision: MgO_run_firetask
+            directory: .
+
 
