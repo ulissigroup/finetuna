@@ -101,7 +101,7 @@ class FlarePPCalc(Calculator):
         #             stds_full[:, 0] = stds / self.gp_model.hyps[0]
         #             self.results["stds"] = stds_full
 
-        self.results["max_force_stds"] = np.nanmax(self.results["force_stds"])
+        atoms.info["max_force_stds"] = np.nanmax(self.results["force_stds"])
 
     def get_uncertainties(self, atoms):
         return self.get_property("stds", atoms)
