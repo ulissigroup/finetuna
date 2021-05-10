@@ -22,11 +22,17 @@ spec:
          env:
          - name: JOB_ID
            value: "10"
-         command: ["bash"]
-         args: ["-c", "python run_firetask.py"]
+             #         command: ["/bin/sh", "-c"]
+             #         args: ["./run_fireworks.sh"]
+           #           - python start_scheduler.py;
+           #             sleep 10;
+           #             python run_firetask.py;
          volumeMounts:
            - mountPath: /home/jovyan/
              name: github-workspace 
+           - mountPath: /home/jovyan/atomate
+             subPath: atomate
+             name: workspace-atomate
          resources:
            limits:
              cpu: "20"
@@ -44,5 +50,8 @@ spec:
             repository: https://github.com/ulissigroup/al_mlp.git
             revision: MgO_run_firetask
             directory: .
+        - name: workspace-atomate
+          persistentVolumeClaim:
+            claimName: workspace-atomate
 
 
