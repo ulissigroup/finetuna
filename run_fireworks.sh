@@ -1,3 +1,4 @@
+#Executable
 #! /usr/bin/bash
 
 # First deploy the dask cluster
