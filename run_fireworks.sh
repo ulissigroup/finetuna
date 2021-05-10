@@ -5,9 +5,7 @@
 
 python start_scheduler.py
 
-# Wait a bit
 
-sleep 10
 
 
 # Now run the firetasks
