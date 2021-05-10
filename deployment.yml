@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment 
+  namespace: yurisanspeur
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: test-deployment
+  template:
+    metadata:
+      name: test-deployment 
+      labels:
+        app: test-deployment 
+    spec:
+      restartPolicy: Always 
+      containers:
+       - name: test-deployment 
+         image: ulissigroup/kubeflow_vasp:atomate_stack_mlp_test_python
+         imagePullPolicy: Always
+         env:
+         - name: JOB_ID
+           value: "10"
+         volumeMounts:
+           - mountPath: /home/jovyan/yuri
+             name: workspace
+         resources:
+           limits:
+             cpu: "20"
+             memory: 100G
+           requests:
+             cpu: "20"
+             memory: 100G
+      volumes:
+      - name: workspace 
+        persistentVolumeClaim:
+          claimName: workspace-atomate
+
