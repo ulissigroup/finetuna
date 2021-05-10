@@ -140,7 +140,7 @@ if __name__ == "__main__":
             ),  # absolute path of the .traj file containing the initial structure
             #"db_path": "/home/jovyan/atomate/config/db.json",
             "task_name":f"OAL_{lps['uncertain_tol']}_thresh",
-            "scheduler_file": '/home/jovyan/al_mlp/my-scheduler.json' },
+            "scheduler_file": '/home/jovyan/my-scheduler.json' },
         name=f"OAL_{lps['uncertain_tol']}_thresh",
     ) for lps,lpse in zip(learner_params_set, learner_params_set_encoded)]
 
