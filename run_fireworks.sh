@@ -1,16 +1,26 @@
 #Executable
 #! /usr/bin/bash
 
-# First deploy the dask cluster
+# First deploy the dask cluster in the background
 
-python start_scheduler.py
+set -m
+
+./run_scheduler.sh & # start the primary process and put it in the background
+
+# Start the second process
+
+./run_fw.sh
+
+# Bring back the primary process into the foreground
+
+fg %1
 
 
 
 
-# Now run the firetasks
 
-python run_firetask.py
+
+
 
 
 
