@@ -22,6 +22,8 @@ spec:
          env:
          - name: JOB_ID
            value: "10"
+         command: ["bash"]
+         args: ["-c", "python run_firetask.py"]
          volumeMounts:
            - mountPath: /home/jovyan/
              name: github-workspace 
