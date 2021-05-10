@@ -21,10 +21,14 @@ if __name__ == "__main__":
     # Set the environment variables for VASP
     os.environ[
         "VASP_COMMAND"
-    ] = "mpirun -np 15 /opt/vasp.6.1.2_pgi_mkl_beef/bin/vasp_std"
-
-    launchpad = LaunchPad()
-    # launchpad.reset('', require_password=False)
+    ] = "mpirun -np 10 /opt/vasp.6.1.2_pgi_mkl_beef/bin/vasp_std"
+    breakpoint()
+    launchpad = LaunchPad(host='mongodb07.nersc.gov',
+                          name='fw_oal',
+                          password='gfde223223222rft3',
+                          port=27017,
+                          username='fw_oal_admin')
+#    launchpad.reset('', require_password=False)
     # import make_ensemble and dask for setting parallelization
 #    from dask.distributed import Client, LocalCluster
 #
@@ -114,15 +118,20 @@ if __name__ == "__main__":
     # define as part of our configs
 
     trainer_config_encoded = jsonpickle.encode(config)
-    learner_params_encoded = jsonpickle.encode(learner_params)
+#    learner_params_encoded = jsonpickle.encode(learner_params)
     filename = "MgO_slab_relaxation"
     #
     #    # Instantiate the Firework made up of one firetask
-    #
-    firework = Firework(
+    # Let's try and tune the uncertain_tol by launching parallel FireWorks
+
+    learner_params_set = [dict(learner_params, uncertain_tol=tol) for tol in [0.6, 0.67]]
+    learner_params_set_encoded = [jsonpickle.encode(lps) for lps in learner_params_set]
+
+
+    fireworks = [Firework(
         OnlineLearnerTask(),
         spec={
-            "learner_params": learner_params_encoded,
+            "learner_params": lpse,
             "trainer_config": trainer_config_encoded,
             "parent_dataset": os.path.join(os.getcwd(), "images.traj"),
             "filename": filename,
@@ -130,10 +139,10 @@ if __name__ == "__main__":
                 os.getcwd(), "MgO_init_structure.traj"
             ),  # absolute path of the .traj file containing the initial structure
             #"db_path": "/home/jovyan/atomate/config/db.json",
-            "task_name":"OAL_0.2_thresh",
+            "task_name":f"OAL_{lps['uncertain_tol']}_thresh",
             "scheduler_file": '/home/jovyan/al_mlp/my-scheduler.json' },
-        name="OAL_0.2_thresh",
-    )
+        name=f"OAL_{lps['uncertain_tol']}_thresh",
+    ) for lps,lpse in zip(learner_params_set, learner_params_set_encoded)]
 
     # Let's try and screen through a hyperparameter like n_ensembles through Fireworks. We will start might just add a set of FWs to the WF and run them
     # "all at once"
@@ -148,7 +157,14 @@ if __name__ == "__main__":
     #            'db_path':'/home/jovyan/atomate/config/db.json'}
     #            ,name=f"OAL_FW_{i+1}") for i,learner_params in enumerate(learner_params_set)]
     #
-    wf = Workflow([firework])
+    wf = Workflow(fireworks)
     launchpad.add_wf(wf)
-    #    launch_multiprocess(launchpad, FWorker(), 'DEBUG', 0, 2, sleep_time=0.5)
-    rapidfire(launchpad, FWorker(name="OAL_0.2_thresh"))
+    launch_multiprocess(launchpad,
+                         FWorker(),
+                         'DEBUG',
+                         nlaunches=0,
+                         num_jobs=2,
+                         sleep_time=0.5,
+                         ppn=10)
+
+#    rapidfire(launchpad, FWorker(name="OAL_0.2_thresh"))
