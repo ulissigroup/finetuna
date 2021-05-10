@@ -22,11 +22,17 @@ spec:
          env:
          - name: JOB_ID
            value: "10"
-             #         command: ["/bin/sh", "-c"]
-             #         args: ["./run_fireworks.sh"]
-           #           - python start_scheduler.py;
-           #             sleep 10;
-           #             python run_firetask.py;
+         command: ["/bin/bash", "-c"]
+         args:
+         - echo Launching all processes... &&
+           ./run_fireworks.sh
+           # - echo Launching Dask Local Cluster... &&
+           #   python start_scheduler.py &&
+           #   echo Sleeping... &&
+           #   sleep 10 &&
+           #   echo Done sleeping. &&
+           #   python run_firetask.py &&
+           #   echo Done running firetasks.
          volumeMounts:
            - mountPath: /home/jovyan/
              name: github-workspace 
