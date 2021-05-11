@@ -5,10 +5,12 @@ from al_mlp.ml_potentials.bootstrap import non_bootstrap_ensemble
 import torch
 import uuid
 
+from ocpmodels.trainers.amp_xfer_trainer import OCPXTrainer
+
 torch.multiprocessing.set_sharing_strategy("file_system")
 
-__author__ = "Muhammed Shuaibi"
-__email__ = "mshuaibi@andrew.cmu.edu"
+__author__ = "Joe Musielewicz"
+__email__ = "jmusiele@andrew.cmu.edu"
 
 
 class OCPEnsembleCalc(Calculator):
@@ -54,14 +56,12 @@ class OCPEnsembleCalc(Calculator):
 
         energies = np.array(energies)
         forces = np.array(forces)
-        energy_pred, force_pred, max_forces_var, energy_var = self.calculate_stats(
-            energies, forces
-        )
+        energy_pred, force_pred, max_forces_var, energy_var = self.calculate_stats(energies, forces)
 
         self.results["energy"] = energy_pred
         self.results["forces"] = force_pred
-        self.results["max_force_stds"] = np.array(max_forces_var) ** 0.5
-        self.results["energy_stds"] = energy_var ** 0.2
+        atoms.info["energy_stds"] = energy_var ** 0.2
+        atoms.info["max_force_stds"] = max_forces_var ** 0.5
 
     def train(self, parent_dataset):
         """
@@ -69,9 +69,7 @@ class OCPEnsembleCalc(Calculator):
         image to use, and pool of workers
         """
 
-        ensemble_sets, parent_dataset = non_bootstrap_ensemble(
-            parent_dataset, n_ensembles=self.n_ensembles
-        )
+        ensemble_sets, parent_dataset = non_bootstrap_ensemble(parent_dataset, n_ensembles=self.n_ensembles)
 
         def train_and_combine(args_list):
             """
@@ -80,6 +78,15 @@ class OCPEnsembleCalc(Calculator):
             """
             training_dataset = args_list[0]
             trainer = args_list[1]
+            seed = args_list[2]
+            uniqueid = args_list[3]
+
+            trainer.model = OCPXTrainer.get_pretrained(
+                training_dataset,
+                seed,
+                uniqueid,
+                trainer.a2g_train
+            )
 
             trainer.train(raw_data=training_dataset)
             # check_path = trainer.cp_dir
@@ -101,10 +108,16 @@ class OCPEnsembleCalc(Calculator):
 
             trainer_copy = self.amptorch_trainer.copy()
             trainer_copy.config["cmd"]["seed"] = randomlist[i]
-            trainer_copy.config["cmd"]["identifier"] = trainer_copy.config["cmd"][
-                "identifier"
-            ] + str(uuid.uuid4())
-            args_lists.append((ensemble_set, trainer_copy))
+            trainer_copy.config["cmd"]["identifier"] = trainer_copy.config["cmd"]["identifier"] + str(uuid.uuid4())
+
+            args_lists.append(
+                (
+                ensemble_set, 
+                trainer_copy, 
+                randomlist[i], 
+                trainer_copy.model.config["cmd"]["identifier"] + str(uuid.uuid4())
+                )
+            )
 
         # map training method, returns array of delta calcs
         trained_trainers = []
