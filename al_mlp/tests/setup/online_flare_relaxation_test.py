@@ -59,8 +59,19 @@ def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
             "single-threaded": True,
         },
     }
-
-    ml_potential = FlarePPCalc()
+    flare_params = {
+        "sigma": 1.0,
+        "power": 2,
+        "cutoff_function": "quadratic",
+        "cutoff": 3.0,
+        "radial_basis": "chebyshev",
+        "cutoff_hyps": [],
+        "sigma_e": 1.0,
+        "sigma_f": 0.1,
+        "sigma_s": 0.0,
+        "max_iterations": 50,
+    }
+    ml_potential = FlarePPCalc(flare_params)
 
     onlinecalc = OnlineLearner(
         learner_params,

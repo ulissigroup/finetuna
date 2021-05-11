@@ -12,12 +12,13 @@ class FlarePPCalc(Calculator):
 
     implemented_properties = ["energy", "forces", "stress", "stds"]
 
-    def __init__(self):
+    def __init__(self, flare_params):
         super().__init__()
         self.gp_model = None
         self.results = {}
         self.use_mapping = False
         self.mgp_model = None
+        self.flare_params = flare_params
 
     # TODO: Figure out why this is called twice per MD step.
     def calculate(self, atoms=None, properties=None, system_changes=all_changes):
@@ -50,7 +51,6 @@ class FlarePPCalc(Calculator):
         elif self.gp_model.variance_type == "local":
             self.gp_model.sparse_gp.predict_local_uncertainties(structure_descriptor)
 
-        # Set results.
         self.results["energy"] = structure_descriptor.mean_efs[0]
         self.results["forces"] = structure_descriptor.mean_efs[1:-6].reshape(-1, 3)
 
@@ -114,37 +114,55 @@ class FlarePPCalc(Calculator):
         a_numbers = np.unique(parent_dataset[0].numbers)
         for i in range(len(a_numbers)):
             self.species_map[a_numbers[i]] = i
+        # # Create sparse GP model.
+        # sigma = 1.0
+        # power = 2
+        # kernel = NormalizedDotProduct(sigma, power)
+        # cutoff_function = "quadratic"
+        # cutoff = 3.0
+        # radial_basis = "chebyshev"
+        # radial_hyps = [0.0, cutoff]
+        # cutoff_hyps = []
+        # settings = [len(self.species_map), 12, 3]
+        # calc = B2(radial_basis, cutoff_function, radial_hyps, cutoff_hyps, settings)
+        # sigma_e = 1.0
+        # sigma_f = 0.1
+        # sigma_s = 0.0
+        # max_iterations = 20
+        # bounds = [(None, None), (sigma_e, None), (None, None), (None, None)]
 
-        # Create sparse GP model.
-        sigma = 1.0
-        power = 2
-        kernel = NormalizedDotProduct(sigma, power)
-        cutoff_function = "quadratic"
-        cutoff = 3.0
-        radial_basis = "chebyshev"
-        radial_hyps = [0.0, cutoff]
-        cutoff_hyps = []
+        kernel = NormalizedDotProduct(
+            self.flare_params["sigma"], self.flare_params["power"]
+        )
+        radial_hyps = [0.0, self.flare_params["cutoff"]]
         settings = [len(self.species_map), 12, 3]
-        calc = B2(radial_basis, cutoff_function, radial_hyps, cutoff_hyps, settings)
-        sigma_e = 1.0
-        sigma_f = 0.1
-        sigma_s = 0.0
-        max_iterations = 20
+        calc = B2(
+            self.flare_params["radial_basis"],
+            self.flare_params["cutoff_function"],
+            radial_hyps,
+            self.flare_params["cutoff_hyps"],
+            settings,
+        )
 
-        bounds = [(None, None), (sigma_e, None), (None, None), (None, None)]
+        bounds = [
+            (None, None),
+            (self.flare_params["sigma_e"], None),
+            (None, None),
+            (None, None),
+        ]
 
         self.gp_model = SGP_Wrapper(
             [kernel],
             [calc],
-            cutoff,
-            sigma_e,
-            sigma_f,
-            sigma_s,
+            self.flare_params["cutoff"],
+            self.flare_params["sigma_e"],
+            self.flare_params["sigma_f"],
+            self.flare_params["sigma_s"],
             self.species_map,
             bounds=bounds,
             stress_training=False,
             variance_type="SOR",
-            max_iterations=max_iterations,
+            max_iterations=self.flare_params["max_iterations"],
         )
 
         for image in parent_dataset:
