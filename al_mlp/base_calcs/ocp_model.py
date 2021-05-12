@@ -73,6 +73,9 @@ class OCPModel(Calculator):
                 r_fixed=True,
             )
         self.a2g = a2g
+        self.a2g_predict = copy.deepcopy(self.a2g)
+        self.a2g_predict.r_forces = False
+        self.a2g_predict.r_energy = False
 
         self.trainer = ForcesTrainer(
             task=task,
@@ -94,7 +97,8 @@ class OCPModel(Calculator):
             atoms_list = [atoms]
         else:
             atoms_list = atoms
-        data_objects = self.ase_to_data(atoms_list, self.a2g)
+        
+        data_objects = self.ase_to_data(atoms_list, self.a2g_predict)
         batch = self.data_to_batch(data_objects)
 
         prediction = self.trainer._forward([batch])
