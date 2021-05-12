@@ -1,19 +1,33 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: test-deployment 
+  name: test-job-$ID 
   namespace: yurisanspeur
 spec:
   parallelism: 1
   template:
     metadata:
-      name: test-deployment 
+      name: test-job-$ID 
       labels:
-        app: test-deployment 
+        app: test-job-$ID 
     spec:
+      initContainers:
+        # This container's purpose is to securely clone a desire git repo to EmptyDir volume
+       - name: git-clone
+         image: alpine/git
+         args:
+           - clone
+           - --single-branch
+           - --branch
+           - MgO_run_firetask
+           - https://github.com/ulissigroup/al_mlp.git
+           - /home/jovyan
+         volumeMounts:
+          - name: git-repo
+            mountPath: /home/jovyan
       restartPolicy: OnFailure 
       containers:
-       - name: test-deployment 
+       - name: test-job-$ID 
          image: ulissigroup/kubeflow_vasp:atomate_stack_mlp_test_python
          imagePullPolicy: Always
          env:
@@ -25,7 +39,7 @@ spec:
            ./run_fireworks.sh
          volumeMounts:
            - mountPath: /home/jovyan/
-             name: github-workspace 
+             name: git-repo 
            - mountPath: /home/jovyan/atomate
              subPath: atomate
              name: workspace-atomate
@@ -36,16 +50,9 @@ spec:
            requests:
              cpu: "20"
              memory: 100G
-               #      volumes:
-               #      - name: workspace 
-               #        persistentVolumeClaim:
-               #          claimName: workspace-atomate
       volumes:
-        - name: github-workspace
-          gitRepo:
-            repository: https://github.com/ulissigroup/al_mlp.git
-            revision: MgO_run_firetask
-            directory: .
+        - name: git-repo
+          emptyDir: {}
         - name: workspace-atomate
           persistentVolumeClaim:
             claimName: workspace-atomate
