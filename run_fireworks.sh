@@ -1,4 +1,3 @@
-#Executable
 #! /usr/bin/bash
 
 # First deploy the dask cluster in the background
@@ -11,9 +10,6 @@ set -m
 
 ./run_fw.sh
 
-# Bring back the primary process into the foreground
-
-fg %1
 
 
 
