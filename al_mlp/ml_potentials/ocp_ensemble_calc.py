@@ -57,7 +57,9 @@ class OCPEnsembleCalc(Calculator):
 
         energies = np.array(energies)
         forces = np.array(forces)
-        energy_pred, force_pred, max_forces_var, energy_var = self.calculate_stats(energies, forces)
+        energy_pred, force_pred, max_forces_var, energy_var = self.calculate_stats(
+            energies, forces
+        )
 
         self.results["energy"] = energy_pred
         self.results["forces"] = force_pred

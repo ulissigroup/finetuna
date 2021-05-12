@@ -11,11 +11,21 @@ from torch_geometric.data import Batch
 
 from ocpmodels.trainers.forces_trainer import ForcesTrainer
 
+
 class OCPModel(Calculator):
     implemented_properties = ["energy", "forces"]
     nolabel = True
 
-    def __init__(self, model_path, checkpoint_path, dataset=None, a2g=None, task=None, identifier="active_learner_base_calc", **kwargs):
+    def __init__(
+        self,
+        model_path,
+        checkpoint_path,
+        dataset=None,
+        a2g=None,
+        task=None,
+        identifier="active_learner_base_calc",
+        **kwargs,
+    ):
         Calculator.__init__(self, **kwargs)
         model_dict = {}
         with open(model_path) as model_yaml:
@@ -54,17 +64,15 @@ class OCPModel(Calculator):
             dataset=dataset,
             optimizer=model_dict["optim"],
             identifier=identifier,
-            cpu=True
+            cpu=True,
         )
 
-        self.trainer.load_pretrained(
-            checkpoint_path=checkpoint_path
-        )
-
-
+        self.trainer.load_pretrained(checkpoint_path=checkpoint_path)
 
     def calculate(self, atoms=None, properties=["forces"], system_changes=all_changes):
-        super().calculate(atoms=atoms, properties=properties, system_changes=system_changes)
+        super().calculate(
+            atoms=atoms, properties=properties, system_changes=system_changes
+        )
 
         data_objects = self.ase_to_data(atoms, self.a2g)
         batch = self.data_to_batch(data_objects)
@@ -114,7 +122,5 @@ class OCPModel(Calculator):
                 n_neighbors.append(n_index.shape[0])
             batch.neighbors = torch.tensor(n_neighbors)
         except NotImplementedError:
-            print(
-                "LMDB does not contain edge index information, set otf_graph=True"
-            )
+            print("LMDB does not contain edge index information, set otf_graph=True")
         return batch
