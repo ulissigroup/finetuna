@@ -6,7 +6,6 @@ import pickle
 import torch
 
 from ocpmodels.preprocessing import AtomsToGraphs
-from ocpmodels.trainers import ForcesTrainer
 from ase.calculators.calculator import Calculator, all_changes
 from torch_geometric.data import Batch
 import copy
@@ -97,7 +96,7 @@ class OCPModel(Calculator):
             atoms_list = [atoms]
         else:
             atoms_list = atoms
-        
+
         data_objects = self.ase_to_data(atoms_list, self.a2g_predict)
         batch = self.data_to_batch(data_objects)
 
@@ -114,7 +113,7 @@ class OCPModel(Calculator):
         result = cls.__new__(cls)
         memo[id(self)] = result
         for k, v in self.__dict__.items():
-            if k is not "trainer":
+            if k != "trainer":
                 setattr(result, k, copy.deepcopy(v, memo))
             else:
                 setattr(result, k, v)
@@ -125,7 +124,7 @@ class OCPModel(Calculator):
         os.makedirs("s2ef", exist_ok=True)
         db = lmdb.open(
             "s2ef/sample.lmdb",
-            map_size=1099511627776/2, # * 2,
+            map_size=1099511627776/2,  # * 2,
             subdir=False,
             meminit=False,
             map_async=True,
