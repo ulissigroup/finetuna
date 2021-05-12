@@ -1,38 +1,28 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: test-deployment 
   namespace: yurisanspeur
 spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: test-deployment
+  parallelism: 1
   template:
     metadata:
       name: test-deployment 
       labels:
         app: test-deployment 
     spec:
-      restartPolicy: Always 
+      restartPolicy: OnFailure 
       containers:
        - name: test-deployment 
          image: ulissigroup/kubeflow_vasp:atomate_stack_mlp_test_python
          imagePullPolicy: Always
          env:
          - name: JOB_ID
-           value: "10"
+           value: "$ID"
          command: ["/bin/bash", "-c"]
          args:
          - echo Launching all processes... &&
            ./run_fireworks.sh
-           # - echo Launching Dask Local Cluster... &&
-           #   python start_scheduler.py &&
-           #   echo Sleeping... &&
-           #   sleep 10 &&
-           #   echo Done sleeping. &&
-           #   python run_firetask.py &&
-           #   echo Done running firetasks.
          volumeMounts:
            - mountPath: /home/jovyan/
              name: github-workspace 
