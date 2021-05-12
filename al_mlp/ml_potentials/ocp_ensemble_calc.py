@@ -51,8 +51,9 @@ class OCPEnsembleCalc(Calculator):
         energies = []
         forces = []
         for predictor in self.trained_trainers:
-            energies.append(predictor.predict(atoms)["energy"])
-            forces.append(predictor.predict(atoms)["forces"])
+            prediction = predictor.predict(atoms)
+            energies.append(prediction["energy"].data.numpy()[0])
+            forces.append(prediction["forces"].data.numpy())
 
         energies = np.array(energies)
         forces = np.array(forces)
