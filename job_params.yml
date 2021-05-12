@@ -1,0 +1,9 @@
+# File that holds the parameters to be applied per job within a pod through the $ID variable
+
+- param_set:
+  uncertain_tol: 0.1
+- param_set:
+  uncertain_tol: 0.5
+- param_set:
+  uncertain_tol: 0.7
+  
