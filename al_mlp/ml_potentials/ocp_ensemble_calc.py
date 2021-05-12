@@ -70,7 +70,9 @@ class OCPEnsembleCalc(Calculator):
         image to use, and pool of workers
         """
 
-        ensemble_sets, parent_dataset = non_bootstrap_ensemble(parent_dataset, n_ensembles=self.n_ensembles)
+        ensemble_sets, parent_dataset = non_bootstrap_ensemble(
+            parent_dataset, n_ensembles=self.n_ensembles
+        )
 
         def train_and_combine(args_list):
             """
@@ -83,10 +85,7 @@ class OCPEnsembleCalc(Calculator):
             uniqueid = args_list[3]
 
             trainer.model = OCPXTrainer.get_pretrained(
-                training_dataset,
-                seed,
-                uniqueid,
-                trainer.a2g_train
+                training_dataset, seed, uniqueid, trainer.a2g_train
             )
 
             trainer.train(raw_data=training_dataset)
@@ -109,14 +108,16 @@ class OCPEnsembleCalc(Calculator):
 
             trainer_copy = self.amptorch_trainer.copy()
             trainer_copy.config["cmd"]["seed"] = randomlist[i]
-            trainer_copy.config["cmd"]["identifier"] = trainer_copy.config["cmd"]["identifier"] + str(uuid.uuid4())
+            trainer_copy.config["cmd"]["identifier"] = trainer_copy.config["cmd"][
+                "identifier"
+            ] + str(uuid.uuid4())
 
             args_lists.append(
                 (
-                ensemble_set, 
-                trainer_copy, 
-                randomlist[i], 
-                trainer_copy.model.config["cmd"]["identifier"] + str(uuid.uuid4())
+                    ensemble_set,
+                    trainer_copy,
+                    randomlist[i],
+                    trainer_copy.model.config["cmd"]["identifier"] + str(uuid.uuid4()),
                 )
             )
 
