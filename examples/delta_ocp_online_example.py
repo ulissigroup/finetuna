@@ -36,7 +36,7 @@ if __name__ == "__main__":
     OAL_initial_structure = initial_structure.copy()
     OAL_initial_structure.set_calculator(copy.deepcopy(parent_calc))
     OAL_relaxation = Relaxation(
-        OAL_initial_structure, BFGS, fmax=0.05, steps=60, maxstep=0.04
+        OAL_initial_structure, BFGS, fmax=0.05, steps=200, maxstep=0.04
     )
 
     Gs = {
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         "uncertain_tol": 5.0,
         "fmax_verify_threshold": 0.05,  # eV/AA
         "relative_variance": True,
-        "n_ensembles": 3,
+        "n_ensembles": 10,
         "use_dask": True,
     }
 
@@ -69,7 +69,7 @@ if __name__ == "__main__":
             "force_coefficient": 4.0,
             "lr": 1,
             "batch_size": 10,
-            "epochs": 10,
+            "epochs": 100,
             "optimizer": torch.optim.LBFGS,
             "optimizer_args": {"optimizer__line_search_fn": "strong_wolfe"},
         },

@@ -52,7 +52,7 @@ class OnlineLearner(Calculator):
         # Make a copy of the atoms with ensemble energies as a SP
         atoms_ML = atoms.copy()
         atoms_ML.set_calculator(self.ml_potential)
-        atoms_ML.get_forces()
+        self.ml_potential.calculate(atoms_ML, properties, system_changes)
 
         #         (atoms_ML,) = convert_to_singlepoint([atoms_copy])
 
