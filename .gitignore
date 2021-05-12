@@ -26,6 +26,7 @@ al_mlp.egg-info
 
 */test_figs/*
 */dask-worker-space/*
+*/logs/*
 
 .ipynb_checkpoints
 */checkpoints/*
