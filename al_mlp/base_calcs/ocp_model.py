@@ -124,7 +124,7 @@ class OCPModel(Calculator):
         os.makedirs("s2ef", exist_ok=True)
         db = lmdb.open(
             "s2ef/sample.lmdb",
-            map_size=1099511627776/2,  # * 2,
+            map_size=1099511627776 / 2,  # * 2,
             subdir=False,
             meminit=False,
             map_async=True,
