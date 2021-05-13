@@ -15,7 +15,7 @@ import os
 import copy
 import jsonpickle
 import yaml
-
+import pprint
 
 def extract_job_parameters(job_id):
     """This function is used to extract the parameter set from the master job_params.yml
@@ -33,8 +33,8 @@ def extract_job_parameters(job_id):
 if __name__ == "__main__":
 
 
-    extract_job_parameters(2)
-    breakpoint()
+    #extract_job_parameters(2)
+    #breakpoint()
 
     # Set the environment variables for VASP
     os.environ[
