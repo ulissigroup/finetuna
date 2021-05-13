@@ -24,7 +24,7 @@ def extract_job_parameters(job_id):
         hyper_param_set = yaml.safe_load(stream)
     print("\nHypermeter set for job_id: ",job_id)
     print("------------------------------------")
-    pprint.pprint(hyper_param_set[job_id-1]["hyperparam_set"])
+    pprint.pprint(hyper_param_set[job_id-1]["param_set"])
     print("------------------------------------\n")
 
 
