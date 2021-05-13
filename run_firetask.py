@@ -33,7 +33,7 @@ def extract_job_parameters(job_id):
 if __name__ == "__main__":
 
 
-    #extract_job_parameters(2)
+    extract_job_parameters(2)
     #breakpoint()
 
     # Set the environment variables for VASP
@@ -142,7 +142,7 @@ if __name__ == "__main__":
     #    # Instantiate the Firework made up of one firetask
     # Let's try and tune the uncertain_tol by launching parallel FireWorks
 
-    learner_params_set = [dict(learner_params, uncertain_tol=tol) for tol in [0.6, 0.67]]
+    learner_params_set = [dict(learner_params, uncertain_tol=tol) for tol in [0.6]]
     learner_params_set_encoded = [jsonpickle.encode(lps) for lps in learner_params_set]
 
 
@@ -177,12 +177,12 @@ if __name__ == "__main__":
     #
     wf = Workflow(fireworks)
     launchpad.add_wf(wf)
-    launch_multiprocess(launchpad,
-                         FWorker(),
-                         'DEBUG',
-                         nlaunches=0,
-                         num_jobs=2,
-                         sleep_time=0.5,
-                         ppn=10)
-
-#    rapidfire(launchpad, FWorker(name="OAL_0.2_thresh"))
+#    launch_multiprocess(launchpad,
+#                         FWorker(),
+#                         'DEBUG',
+#                         nlaunches=0,
+#                         num_jobs=1,
+#                         sleep_time=0.5,
+#                         ppn=20)
+#
+    rapidfire(launchpad, FWorker(name="test_kubernetes"))
