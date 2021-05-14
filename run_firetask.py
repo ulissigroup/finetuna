@@ -26,20 +26,24 @@ def extract_job_parameters(job_id):
     print("------------------------------------")
     pprint.pprint(hyper_param_set[job_id-1]["param_set"])
     print("------------------------------------\n")
-
+    return hyper_param_set[job_id-1]["param_set"]
 
 
 
 if __name__ == "__main__":
 
+    job_id = os.environ['JOB_ID']
 
-    extract_job_parameters(2)
-    #breakpoint()
+    params = extract_job_parameters(job_id)
 
+    # Unpack the params to variables
+    uncertain_tol = params['uncertain_tol']
+    cores = params['cores']
+    breakpoint()
     # Set the environment variables for VASP
     os.environ[
         "VASP_COMMAND"
-    ] = "mpirun -np 20 /opt/vasp.6.1.2_pgi_mkl_beef/bin/vasp_std"
+    ] = f"mpirun -np {cores} /opt/vasp.6.1.2_pgi_mkl_beef/bin/vasp_std"
     #breakpoint()
     launchpad = LaunchPad(host='mongodb07.nersc.gov',
                           name='fw_oal',
@@ -88,7 +92,7 @@ if __name__ == "__main__":
         "samples_to_retrain": 1,
         "filename": "relax_example",
         "file_dir": "./",
-        "uncertain_tol": 0.2,  # Very strict - will do mostly parent calls at the start and gather training data points
+        "uncertain_tol": uncertain_tol,  # Very strict - will do mostly parent calls at the start and gather training data points
         "fmax_verify_threshold": 0.05,  # eV/AA
         "relative_variance": True,
         "n_ensembles": 10,
