@@ -140,20 +140,20 @@ if __name__ == "__main__":
     # define as part of our configs
 
     trainer_config_encoded = jsonpickle.encode(config)
-#    learner_params_encoded = jsonpickle.encode(learner_params)
+    learner_params_encoded = jsonpickle.encode(learner_params)
     filename = "MgO_slab_relaxation"
     #
     #    # Instantiate the Firework made up of one firetask
     # Let's try and tune the uncertain_tol by launching parallel FireWorks
 
-    learner_params_set = [dict(learner_params, uncertain_tol=tol) for tol in [0.6]]
-    learner_params_set_encoded = [jsonpickle.encode(lps) for lps in learner_params_set]
+    #learner_params_set = [dict(learner_params, uncertain_tol=tol) for tol in [uncertain_tol]]
+    #learner_params_set_encoded = [jsonpickle.encode(lps) for lps in learner_params_set]
 
 
     fireworks = [Firework(
         OnlineLearnerTask(),
         spec={
-            "learner_params": lpse,
+            "learner_params": learner_params_encoded,
             "trainer_config": trainer_config_encoded,
             "parent_dataset": os.path.join(os.getcwd(), "images.traj"),
             "filename": filename,
@@ -161,10 +161,10 @@ if __name__ == "__main__":
                 os.getcwd(), "MgO_init_structure.traj"
             ),  # absolute path of the .traj file containing the initial structure
             #"db_path": "/home/jovyan/atomate/config/db.json",
-            "task_name":f"OAL_{lps['uncertain_tol']}_thresh",
+            "task_name":f"OAL_{uncertain_tol}_thresh",
             "scheduler_file": '/home/jovyan/my-scheduler.json' },
-        name=f"OAL_{lps['uncertain_tol']}_thresh",
-    ) for lps,lpse in zip(learner_params_set, learner_params_set_encoded)]
+        name=f"OAL_{uncertain_tol}_thresh",
+    )]
 
     # Let's try and screen through a hyperparameter like n_ensembles through Fireworks. We will start might just add a set of FWs to the WF and run them
     # "all at once"
