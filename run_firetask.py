@@ -39,7 +39,7 @@ if __name__ == "__main__":
     # Set the environment variables for VASP
     os.environ[
         "VASP_COMMAND"
-    ] = "mpirun -np 10 /opt/vasp.6.1.2_pgi_mkl_beef/bin/vasp_std"
+    ] = "mpirun -np 20 /opt/vasp.6.1.2_pgi_mkl_beef/bin/vasp_std"
     #breakpoint()
     launchpad = LaunchPad(host='mongodb07.nersc.gov',
                           name='fw_oal',
