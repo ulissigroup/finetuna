@@ -2,8 +2,11 @@
 
 - param_set:
     uncertain_tol: 0.1
+    cores: 20
 - param_set:
     uncertain_tol: 0.5
+    cores: 20
 - param_set:
     uncertain_tol: 0.7
+    cores: 20
   
