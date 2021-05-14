@@ -32,7 +32,7 @@ def extract_job_parameters(job_id):
 
 if __name__ == "__main__":
 
-    job_id = os.environ['JOB_ID']
+    job_id = int(os.environ['JOB_ID']) # should be unique ID
 
     params = extract_job_parameters(job_id)
 

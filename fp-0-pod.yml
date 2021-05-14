@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: new-pod
+  namespace: yurisanspeur
+spec:
+  template:
+    metadata:
+      labels:
+        app: new-pod
+      name: new-pod
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      initContainers:
+        # This container's purpose is to securely clone a desired git repo to EmptyDir volume
+       - name: git-clone
+         image: alpine/git
+         args:
+           - clone
+           - --single-branch
+           - --branch
+           - MgO_run_firetask
+           - https://github.com/ulissigroup/al_mlp.git
+           - /home/jovyan
+         volumeMounts:
+          - name: git-repo
+            mountPath: /home/jovyan
+      containers:
+      - env:
+        - name: NB_PREFIX
+          value: /notebook/yurisanspeur/nw
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: none
+        image: ulissigroup/kubeflow_vasp:atomate_stack_mlp
+        imagePullPolicy: Always
+        name: nw 
+        ports:
+        - containerPort: 8888
+          name: notebook-port
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "20"
+            memory: 100Gi
+          requests:
+            cpu: "20"
+            memory: 100Gi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /home/jovyan
+          name: workspace-atomate
+        - mountPath: /home/jovyan/al_mlp
+          name: git-repo
+          readOnly: false
+        workingDir: /home/jovyan
+      volumes:
+        - name: git-repo
+          emptyDir: {}
+        - name: workspace-atomate
+          persistentVolumeClaim:
+            claimName: workspace-atomate
