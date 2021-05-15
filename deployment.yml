@@ -7,6 +7,8 @@ spec:
   parallelism: 1
   template:
     metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
       name: test-job-$ID 
       labels:
         app: test-job-$ID 
@@ -25,7 +27,7 @@ spec:
          volumeMounts:
           - name: git-repo
             mountPath: /home/jovyan
-      restartPolicy: OnFailure 
+      restartPolicy: OnFailure
       containers:
        - name: test-job-$ID 
          image: ulissigroup/kubeflow_vasp:atomate_stack_mlp_test_python
