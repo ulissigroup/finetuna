@@ -33,6 +33,7 @@ def extract_job_parameters(job_id):
 if __name__ == "__main__":
 
     job_id = int(os.environ['JOB_ID']) # should be unique ID
+    host_id = os.environ['HOSTNAME']
 
     params = extract_job_parameters(job_id)
 
@@ -158,10 +159,11 @@ if __name__ == "__main__":
             "filename": filename,
             "init_structure_path": os.path.join(
                 os.getcwd(), "MgO_init_structure.traj"
-            ),  # absolute path of the .traj file containing the initial structure
-            #"db_path": "/home/jovyan/atomate/config/db.json",
-            "task_name":f"OAL_{uncertain_tol}_thresh",
-            "scheduler_file": '/home/jovyan/my-scheduler.json' },
+            ),
+            "task_name": f"OAL_{host_id}",
+            "scheduler_file": '/home/jovyan/my-scheduler.json' 
+            },
+
         name=f"OAL_{uncertain_tol}_thresh",
     )]
 
