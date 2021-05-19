@@ -25,7 +25,7 @@ class offline_CuNP(unittest.TestCase):
         cls.emt_counter = CounterCalc(parent_calc)
         EMT_initial_structure.set_calculator(cls.emt_counter)
         cls.EMT_structure_optim = Relaxation(
-            EMT_initial_structure, BFGS, fmax=0.01, steps=30
+            EMT_initial_structure, BFGS, fmax=0.01, steps=30, maxstep=0.05
         )
         cls.EMT_structure_optim.run(cls.emt_counter, "CuNP_emt")
 
