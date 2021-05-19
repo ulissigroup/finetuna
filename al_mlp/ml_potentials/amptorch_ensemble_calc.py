@@ -77,7 +77,7 @@ class AmptorchEnsembleCalc(Calculator):
         # self.results["max_force_stds"] = np.array(max_forces_var) ** 0.5
         # self.results["energy_stds"] = energy_var ** 0.2
 
-    def train(self, parent_dataset):
+    def train(self, parent_dataset, new_dataset=None):
         """
         Uses Dask to parallelize, must have previously set up cluster,
         image to use, and pool of workers

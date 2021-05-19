@@ -66,7 +66,7 @@ class OCPEnsembleCalc(Calculator):
         atoms.info["energy_stds"] = energy_var ** 0.2
         atoms.info["max_force_stds"] = max_forces_var ** 0.5
 
-    def train(self, parent_dataset):
+    def train(self, parent_dataset, new_dataset=None):
         """
         Uses Dask to parallelize, must have previously set up cluster,
         image to use, and pool of workers

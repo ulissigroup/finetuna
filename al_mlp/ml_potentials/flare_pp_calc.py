@@ -109,7 +109,7 @@ class FlarePPCalc(Calculator):
     def calculation_required(self, atoms, quantities):
         return True
 
-    def train(self, parent_dataset):
+    def train(self, parent_dataset, new_dataset=None):
         self.species_map = {}
         a_numbers = np.unique(parent_dataset[0].numbers)
         for i in range(len(a_numbers)):
@@ -165,8 +165,30 @@ class FlarePPCalc(Calculator):
             max_iterations=self.flare_params["max_iterations"],
         )
 
-        for image in parent_dataset:
-            print(image.get_positions())
+        if new_dataset:
+            self.partial_fit(new_dataset)
+        else:
+            self.fit(parent_dataset)
+        # for image in parent_dataset:
+        #     print(image.get_positions())
+        #     train_structure = struc.Structure(
+        #         image.get_cell(), image.get_atomic_numbers(), image.get_positions()
+        #     )
+
+        #     forces = image.get_forces(apply_constraint=False)
+        #     energy = image.get_potential_energy(apply_constraint=False)
+
+        #     self.gp_model.update_db(
+        #         train_structure, forces, [], energy, mode="all", update_qr=True
+        #     )
+
+        self.gp_model.train()
+        self.descriptor_calcs = [calc]
+        self.kernels = [kernel]
+        return
+
+    def partial_fit(self, new_dataset):
+        for image in new_dataset:
             train_structure = struc.Structure(
                 image.get_cell(), image.get_atomic_numbers(), image.get_positions()
             )
@@ -178,7 +200,15 @@ class FlarePPCalc(Calculator):
                 train_structure, forces, [], energy, mode="all", update_qr=True
             )
 
-        self.gp_model.train()
-        self.descriptor_calcs = [calc]
-        self.kernels = [kernel]
-        return
+    def fit(self, parent_data):
+        for image in parent_data:
+            train_structure = struc.Structure(
+                image.get_cell(), image.get_atomic_numbers(), image.get_positions()
+            )
+
+            forces = image.get_forces(apply_constraint=False)
+            energy = image.get_potential_energy(apply_constraint=False)
+
+            self.gp_model.update_db(
+                train_structure, forces, [], energy, mode="all", update_qr=True
+            )

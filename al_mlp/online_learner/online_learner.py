@@ -37,6 +37,10 @@ class OnlineLearner(Calculator):
 
         self.uncertain_tol = learner_params["uncertain_tol"]
         self.parent_calls = 0
+        self.retrain_idx = []
+        self.curr_step = 0
+        self.unsafe_list = {}
+        self.force_list = []
 
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
@@ -47,6 +51,7 @@ class OnlineLearner(Calculator):
             energy, force = self.add_data_and_retrain(atoms)
             self.results["energy"] = energy
             self.results["forces"] = force
+            self.curr_step += 1
             return
 
         # Make a copy of the atoms with ensemble energies as a SP
@@ -67,19 +72,29 @@ class OnlineLearner(Calculator):
         # Return the energy/force
         self.results["energy"] = energy
         self.results["forces"] = force
+        self.curr_step += 1
 
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force
         uncertainty = atoms.info["max_force_stds"]
         base_uncertainty = np.nanmax(np.abs(atoms.get_forces()))
-        uncertainty_tol = self.uncertain_tol * base_uncertainty
+        dynamic_tol = self.uncertain_tol * base_uncertainty
+        uncertainty_tol = max(
+            [self.uncertain_tol * base_uncertainty, self.uncertain_tol]
+        )
 
         print(
             "Max Force Std: %1.3f eV/A, Max Force Threshold: %1.3f eV/A"
             % (uncertainty, uncertainty_tol)
         )
 
+        print(
+            "static tol: %1.3f eV/A, dynamic tol: %1.3f eV/A"
+            % (self.uncertain_tol, self.uncertain_tol * base_uncertainty)
+        )
         if uncertainty > uncertainty_tol:
+            maxf = np.nanmax(np.abs(atoms.get_forces(apply_constraint=False)))
+            self.unsafe_list[self.curr_step] = [maxf, uncertainty, uncertainty_tol]
             return True
         else:
             return False
@@ -87,10 +102,16 @@ class OnlineLearner(Calculator):
     def parent_verify(self, atoms):
         forces = atoms.get_forces()
         fmax = np.sqrt((forces ** 2).sum(axis=1).max())
+        # fmax = np.max(np.abs(forces))
+        print("fmax ", fmax, "/n")
+        print("verify threshold ", self.fmax_verify_threshold)
+        self.force_list.append(self.curr_step)
+
         return fmax <= self.fmax_verify_threshold
 
     def add_data_and_retrain(self, atoms):
         print("OnlineLearner: Parent calculation required")
+        self.retrain_idx.append(self.curr_step)
 
         atoms_copy = atoms.copy()
         atoms_copy.set_calculator(copy.copy(self.parent_calc))
@@ -104,7 +125,7 @@ class OnlineLearner(Calculator):
 
         # Don't bother training if we have less than two datapoints
         if len(self.parent_dataset) >= 2:
-            self.ml_potential.train(self.parent_dataset)
+            self.ml_potential.train(self.parent_dataset, [new_data])
 
         self.parent_calls += 1
 
