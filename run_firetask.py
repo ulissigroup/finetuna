@@ -148,7 +148,7 @@ if __name__ == "__main__":
                 os.getcwd(), "MgO_init_structure.traj"
             ),
             "task_name": f"OAL_{host_id}",
-            "scheduler_file": '/home/jovyan/al_mlp/my-scheduler.json' 
+            "scheduler_file": '/home/jovyan/al_mlp_repo/my-scheduler.json' 
             },
 
         name=f"OAL_{uncertain_tol}_thresh",
