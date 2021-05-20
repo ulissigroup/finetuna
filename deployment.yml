@@ -13,6 +13,14 @@ spec:
       labels:
         app: test-job-$ID 
     spec:
+      #affinity:
+      #  nodeAffinity:
+      #    requiredDuringSchedulingIgnoredDuringExecution:
+      #      nodeSelectorTerms:
+      #      - matchExpressions:
+      #        - key: "nvidia.com/gpu.product"
+      #          operator: "DoesNotExist"
+      nodeName: apt-swine 
       initContainers:
         # This container's purpose is to securely clone a desired git repo to EmptyDir volume
        - name: git-clone
@@ -27,7 +35,7 @@ spec:
          volumeMounts:
           - name: git-repo
             mountPath: /home/jovyan
-      restartPolicy: OnFailure
+      restartPolicy: Never
       containers:
        - name: test-job-$ID 
          image: ulissigroup/kubeflow_vasp:atomate_stack_mlp_test_python
@@ -38,20 +46,19 @@ spec:
          command: ["/bin/bash", "-c"]
          args:
          - echo Launching all processes... &&
-           ./run_fireworks.sh
+           ./al_mlp/run_fireworks.sh
          volumeMounts:
-           - mountPath: /home/jovyan/
+           - mountPath: /home/jovyan/al_mlp
              name: git-repo 
-           - mountPath: /home/jovyan/atomate
-             subPath: atomate
+           - mountPath: /home/jovyan/
              name: workspace-atomate
          resources:
            limits:
-             cpu: "20"
+             cpu: "36"
              memory: 100G
            requests:
              cpu: "20"
-             memory: 100G
+             memory: 60G
       volumes:
         - name: git-repo
           emptyDir: {}
