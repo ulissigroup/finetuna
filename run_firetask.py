@@ -176,4 +176,5 @@ if __name__ == "__main__":
 #                         num_jobs=1,
 #                         sleep_time=0.5,
 #                         ppn=20)
+    os.chdir('../')
     rapidfire(launchpad, FWorker(name="test_kubernetes"))
