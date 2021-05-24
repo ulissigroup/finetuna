@@ -42,7 +42,8 @@ class OnlineLearner(Calculator):
         else:
             self.fmax_verify_threshold = np.nan  # always False
 
-        self.uncertain_tol = learner_params["uncertain_tol"]
+        self.stat_uncertain_tol = learner_params["stat_uncertain_tol"]
+        self.dyn_uncertain_tol = learner_params["dyn_uncertain_tol"]
         self.parent_calls = 0
         self.iteration = 0
 
@@ -133,17 +134,23 @@ class OnlineLearner(Calculator):
 
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force
-        self.uncertainty = atoms.calc.results["max_force_stds"]
-        #breakpoint()
-        self.base_uncertainty = np.nanmax(np.abs(atoms.get_forces()))
-        self.uncertainty_tol = self.uncertain_tol * self.base_uncertainty
+        uncertainty = atoms.calc.results["max_force_stds"]
+        base_uncertainty = np.nanmax(np.abs(atoms.get_forces()))
+        uncertainty_tol = max(
+            [self.dyn_uncertain_tol * base_uncertainty, self.stat_uncertain_tol]
+        )
 
         print(
             "Max Force Std: %1.3f eV/A, Max Force Threshold: %1.3f eV/A"
-            % (self.uncertainty, self.uncertainty_tol)
+            % (uncertainty, uncertainty_tol)
         )
 
-        if self.uncertainty > self.uncertainty_tol:
+        print(
+            "static tol: %1.3f eV/A, dynamic tol: %1.3f eV/A"
+            % (self.stat_uncertain_tol, self.dyn_uncertain_tol * base_uncertainty)
+        )
+        if uncertainty > uncertainty_tol:
+            maxf = np.nanmax(np.abs(atoms.get_forces(apply_constraint=False)))
             return True
         else:
             return False

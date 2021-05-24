@@ -1,8 +1,6 @@
 import numpy as np
 from al_mlp.online_learner.online_learner import OnlineLearner
-from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
-
-from amptorch.trainer import AtomsTrainer
+from al_mlp.ml_potentials.flare_pp_calc import FlarePPCalc
 import os
 import torch
 
@@ -62,18 +60,26 @@ def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
             "single-threaded": True,
         },
     }
+    flare_params = {
+        "sigma": 1.0,
+        "power": 2,
+        "cutoff_function": "quadratic",
+        "cutoff": 3.0,
+        "radial_basis": "chebyshev",
+        "cutoff_hyps": [],
+        "sigma_e": 1.0,
+        "sigma_f": 0.1,
+        "sigma_s": 0.0,
+        "max_iterations": 50,
+    }
+    ml_potential = FlarePPCalc(flare_params)
 
-    trainer = AtomsTrainer(config)
-
-    ml_potential = AmptorchEnsembleCalc(trainer, learner_params["n_ensembles"])
     onlinecalc = OnlineLearner(
         learner_params,
-        trainer,
         images,
         ml_potential,
         parent_calc,
     )
-
     if os.path.exists("dft_calls.db"):
         os.remove("dft_calls.db")
     atomistic_method.run(onlinecalc, filename=dbname)
