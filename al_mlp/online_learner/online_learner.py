@@ -78,7 +78,6 @@ class OnlineLearner(Calculator):
         # Set the desired tolerance based on the current max predcited force
         uncertainty = atoms.info["max_force_stds"]
         base_uncertainty = np.nanmax(np.abs(atoms.get_forces()))
-        dynamic_tol = self.uncertain_tol * base_uncertainty
         uncertainty_tol = max(
             [self.uncertain_tol * base_uncertainty, self.uncertain_tol]
         )
@@ -126,6 +125,8 @@ class OnlineLearner(Calculator):
         # Don't bother training if we have less than two datapoints
         if len(self.parent_dataset) >= 2:
             self.ml_potential.train(self.parent_dataset, [new_data])
+        else:
+            self.ml_potential.train(self.parent_dataset)
 
         self.parent_calls += 1
 
