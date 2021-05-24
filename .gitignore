@@ -33,3 +33,6 @@ al_mlp.egg-info
 .ipynb_checkpoints
 */checkpoints/*
 stored-primes/
+
+# pytest outputs
+.pytest_cache
