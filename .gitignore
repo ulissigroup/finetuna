@@ -23,6 +23,8 @@ al_mlp.egg-info
 *.dirlock
 *.lock
 *.swp
+*.lmdb
+*.lmdb-lock
 
 */test_figs/*
 */dask-worker-space/*
