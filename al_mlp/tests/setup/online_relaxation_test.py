@@ -25,7 +25,7 @@ def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
         "samples_to_retrain": 1,
         "filename": "relax_example",
         "file_dir": "./",
-        "stat_uncertain_tol": 0.1,
+        "stat_uncertain_tol": 0.15,
         "dyn_uncertain_tol": 1.2,
         "fmax_verify_threshold": 0.05,  # eV/AA
         "relative_variance": True,
