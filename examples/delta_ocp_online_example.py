@@ -1,4 +1,5 @@
 from ocpmodels.models import dimenet_plus_plus
+from al_mlp.utils import compute_with_calc
 from al_mlp.calcs import DeltaCalc
 from al_mlp.base_calcs.ocp_model import OCPModel
 from al_mlp.atomistic_methods import Relaxation
@@ -55,10 +56,11 @@ if __name__ == "__main__":
         "samples_to_retrain": 1,
         "filename": "relax_example",
         "file_dir": "./",
-        "uncertain_tol": 5.0,
+        "stat_uncertain_tol": 0.1,
+        "dyn_uncertain_tol": 1.2,
         "fmax_verify_threshold": 0.05,  # eV/AA
         "relative_variance": True,
-        "n_ensembles": 10,
+        "n_ensembles": 5,
         "use_dask": True,
     }
 
@@ -100,8 +102,9 @@ if __name__ == "__main__":
         "/home/jovyan/working/ocp-dev/configs/s2ef/2M/dimenet_plus_plus/dpp.yml"
     )
     base_calc = OCPModel(model_path=model_path, checkpoint_path=checkpoint_path)
-    base_initial_structure = initial_structure.copy()
-    base_initial_structure.set_calculator(base_calc)
+    # base_initial_structure = initial_structure.copy()
+    base_initial_structure = compute_with_calc([initial_structure.copy()], base_calc)[0]
+    # base_initial_structure.set_calculator(base_calc)
 
     delta_calc = DeltaCalc(
         [parent_calc, base_calc],
