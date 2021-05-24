@@ -12,13 +12,59 @@ class FlarePPCalc(Calculator):
 
     implemented_properties = ["energy", "forces", "stress", "stds"]
 
-    def __init__(self, flare_params):
+    def __init__(self, flare_params, initial_image):
         super().__init__()
         self.gp_model = None
         self.results = {}
         self.use_mapping = False
         self.mgp_model = None
         self.flare_params = flare_params
+        self.initial_image = initial_image
+        self.init_species_map()
+        # self.init_flare()
+
+    def init_species_map(self):
+        self.species_map = {}
+        a_numbers = np.unique(self.initial_image[0].numbers)
+        for i in range(len(a_numbers)):
+            self.species_map[a_numbers[i]] = i
+
+    def init_flare(self):
+        self.kernel = NormalizedDotProduct(
+            self.flare_params["sigma"], self.flare_params["power"]
+        )
+        radial_hyps = [0.0, self.flare_params["cutoff"]]
+        settings = [len(self.species_map), 12, 3]
+        self.B2calc = B2(
+            self.flare_params["radial_basis"],
+            self.flare_params["cutoff_function"],
+            radial_hyps,
+            self.flare_params["cutoff_hyps"],
+            settings,
+        )
+
+        bounds = [
+            (None, None),
+            (self.flare_params["sigma_e"], None),
+            (None, None),
+            (None, None),
+        ]
+
+        self.gp_model = SGP_Wrapper(
+            [self.kernel],
+            [self.B2calc],
+            self.flare_params["cutoff"],
+            self.flare_params["sigma_e"],
+            self.flare_params["sigma_f"],
+            self.flare_params["sigma_s"],
+            self.species_map,
+            bounds=bounds,
+            stress_training=False,
+            variance_type="SOR",
+            max_iterations=self.flare_params["max_iterations"],
+        )
+        self.gp_model.descriptor_calcs = [self.B2calc]
+        self.gp_model.kernels = [self.kernel]
 
     # TODO: Figure out why this is called twice per MD step.
     def calculate(self, atoms=None, properties=None, system_changes=all_changes):
@@ -110,10 +156,6 @@ class FlarePPCalc(Calculator):
         return True
 
     def train(self, parent_dataset, new_dataset=None):
-        self.species_map = {}
-        a_numbers = np.unique(parent_dataset[0].numbers)
-        for i in range(len(a_numbers)):
-            self.species_map[a_numbers[i]] = i
         # # Create sparse GP model.
         # sigma = 1.0
         # power = 2
@@ -130,61 +172,26 @@ class FlarePPCalc(Calculator):
         # sigma_s = 0.0
         # max_iterations = 20
         # bounds = [(None, None), (sigma_e, None), (None, None), (None, None)]
-
-        kernel = NormalizedDotProduct(
-            self.flare_params["sigma"], self.flare_params["power"]
-        )
-        radial_hyps = [0.0, self.flare_params["cutoff"]]
-        settings = [len(self.species_map), 12, 3]
-        calc = B2(
-            self.flare_params["radial_basis"],
-            self.flare_params["cutoff_function"],
-            radial_hyps,
-            self.flare_params["cutoff_hyps"],
-            settings,
-        )
-
-        bounds = [
-            (None, None),
-            (self.flare_params["sigma_e"], None),
-            (None, None),
-            (None, None),
-        ]
-
-        self.gp_model = SGP_Wrapper(
-            [kernel],
-            [calc],
-            self.flare_params["cutoff"],
-            self.flare_params["sigma_e"],
-            self.flare_params["sigma_f"],
-            self.flare_params["sigma_s"],
-            self.species_map,
-            bounds=bounds,
-            stress_training=False,
-            variance_type="SOR",
-            max_iterations=self.flare_params["max_iterations"],
-        )
-
-        if new_dataset:
-            self.partial_fit(new_dataset)
-        else:
+        if hasattr(self, "gp_model") or not new_dataset:
+            self.init_flare()
             self.fit(parent_dataset)
-        # for image in parent_dataset:
-        #     print(image.get_positions())
-        #     train_structure = struc.Structure(
-        #         image.get_cell(), image.get_atomic_numbers(), image.get_positions()
-        #     )
+        else:
+            self.partial_fit(new_dataset)
 
-        #     forces = image.get_forces(apply_constraint=False)
-        #     energy = image.get_potential_energy(apply_constraint=False)
-
-        #     self.gp_model.update_db(
-        #         train_structure, forces, [], energy, mode="all", update_qr=True
-        #     )
+        # if new_dataset:
+        #     print(self.gp_model)
+        #     print("partial_fit")
+        #     self.partial_fit(new_dataset)
+        # else:
+        #     self.init_flare()
+        #     print(self.gp_model)
+        #     self.fit(parent_dataset)
+        #     print("fit")
 
         self.gp_model.train()
-        self.descriptor_calcs = [calc]
-        self.kernels = [kernel]
+        # self.gp_model.descriptor_calcs = [self.B2calc]
+        # self.gp_model.kernels = [self.kernel]
+
         return
 
     def partial_fit(self, new_dataset):
@@ -192,10 +199,8 @@ class FlarePPCalc(Calculator):
             train_structure = struc.Structure(
                 image.get_cell(), image.get_atomic_numbers(), image.get_positions()
             )
-
             forces = image.get_forces(apply_constraint=False)
             energy = image.get_potential_energy(apply_constraint=False)
-
             self.gp_model.update_db(
                 train_structure, forces, [], energy, mode="all", update_qr=True
             )
@@ -210,5 +215,5 @@ class FlarePPCalc(Calculator):
             energy = image.get_potential_energy(apply_constraint=False)
 
             self.gp_model.update_db(
-                train_structure, forces, [], energy, mode="all", update_qr=True
+                train_structure, forces, [], energy, mode="all", update_qr=False
             )
