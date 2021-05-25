@@ -21,6 +21,9 @@ class FlarePPCalc(Calculator):
         self.flare_params = flare_params
         self.initial_image = initial_image
         self.init_species_map()
+        self.update_gp_mode = self.flare_params.get("update_gp_mode", "all")
+        self.update_gp_range = self.flare_params.get("update_gp_range", [])
+
         # self.init_flare()
 
     def init_species_map(self):
@@ -202,7 +205,12 @@ class FlarePPCalc(Calculator):
             forces = image.get_forces(apply_constraint=False)
             energy = image.get_potential_energy(apply_constraint=False)
             self.gp_model.update_db(
-                train_structure, forces, [], energy, mode="all", update_qr=True
+                train_structure,
+                forces,
+                self.update_gp_range,
+                energy,
+                mode=self.update_gp_mode,
+                update_qr=True,
             )
 
     def fit(self, parent_data):
