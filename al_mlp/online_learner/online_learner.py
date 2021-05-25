@@ -83,15 +83,15 @@ class OnlineLearner(Calculator):
             [self.dyn_uncertain_tol * base_uncertainty, self.stat_uncertain_tol]
         )
 
-        print(
-            "Max Force Std: %1.3f eV/A, Max Force Threshold: %1.3f eV/A"
-            % (uncertainty, uncertainty_tol)
-        )
+        # print(
+        #     "Max Force Std: %1.3f eV/A, Max Force Threshold: %1.3f eV/A"
+        #     % (uncertainty, uncertainty_tol)
+        # )
 
-        print(
-            "static tol: %1.3f eV/A, dynamic tol: %1.3f eV/A"
-            % (self.stat_uncertain_tol, self.dyn_uncertain_tol * base_uncertainty)
-        )
+        # print(
+        #     "static tol: %1.3f eV/A, dynamic tol: %1.3f eV/A"
+        #     % (self.stat_uncertain_tol, self.dyn_uncertain_tol * base_uncertainty)
+        # )
         if uncertainty > uncertainty_tol:
             maxf = np.nanmax(np.abs(atoms.get_forces(apply_constraint=False)))
             self.unsafe_list[self.curr_step] = [maxf, uncertainty, uncertainty_tol]
@@ -103,10 +103,12 @@ class OnlineLearner(Calculator):
         forces = atoms.get_forces()
         fmax = np.sqrt((forces ** 2).sum(axis=1).max())
         # fmax = np.max(np.abs(forces))
-        print("fmax ", fmax, "/n")
-        print("verify threshold ", self.fmax_verify_threshold)
+        # print("fmax ", fmax, "/n")
+        # print("verify threshold ", self.fmax_verify_threshold)
         self.force_list.append(self.curr_step)
 
+        if fmax <= self.fmax_verify_threshold:
+            print("Force below threshold: check with parent")
         return fmax <= self.fmax_verify_threshold
 
     def add_data_and_retrain(self, atoms):
