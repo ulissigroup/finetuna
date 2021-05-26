@@ -175,10 +175,13 @@ class FlarePPCalc(Calculator):
         # sigma_s = 0.0
         # max_iterations = 20
         # bounds = [(None, None), (sigma_e, None), (None, None), (None, None)]
-        if hasattr(self, "gp_model") or not new_dataset:
+        if not self.gp_model or not new_dataset:
             self.init_flare()
             self.fit(parent_dataset)
+            print("fit all here")
+
         else:
+            print("partial fit here")
             self.partial_fit(new_dataset)
 
         # if new_dataset:
@@ -204,13 +207,15 @@ class FlarePPCalc(Calculator):
             )
             forces = image.get_forces(apply_constraint=False)
             energy = image.get_potential_energy(apply_constraint=False)
+            print("range: ", self.update_gp_range)
+            print("mode: ", self.update_gp_mode)
             self.gp_model.update_db(
                 train_structure,
                 forces,
                 self.update_gp_range,
                 energy,
                 mode=self.update_gp_mode,
-                update_qr=True,
+                update_qr=False,
             )
 
     def fit(self, parent_data):
