@@ -178,10 +178,7 @@ class FlarePPCalc(Calculator):
         if not self.gp_model or not new_dataset:
             self.init_flare()
             self.fit(parent_dataset)
-            print("fit all here")
-
         else:
-            print("partial fit here")
             self.partial_fit(new_dataset)
 
         # if new_dataset:
@@ -207,8 +204,6 @@ class FlarePPCalc(Calculator):
             )
             forces = image.get_forces(apply_constraint=False)
             energy = image.get_potential_energy(apply_constraint=False)
-            print("range: ", self.update_gp_range)
-            print("mode: ", self.update_gp_mode)
             self.gp_model.update_db(
                 train_structure,
                 forces,
