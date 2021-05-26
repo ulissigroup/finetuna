@@ -8,32 +8,24 @@ class OfflineActiveLearner:
     """Offline Active Learner.
     This class serves as a parent class to inherit more sophisticated
     learners with different query and termination strategies.
-
     Parameters
     ----------
     learner_params: dict
         Dictionary of learner parameters and settings.
-
-    ml_potential: object
-        An isntance of a ml_potential that has a train and predict method.
-
+    trainer: object
+        An isntance of a trainer that has a train and predict method.
     training_data: list
         A list of ase.Atoms objects that have attached calculators.
         Used as the first set of training data.
-
     parent_calc: ase Calculator object
         Calculator used for querying training data.
-
     base_calc: ase Calculator object
         Calculator used to calculate delta data for training.
-
     """
 
-    def __init__(
-        self, learner_params, ml_potential, training_data, parent_calc, base_calc
-    ):
+    def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc):
         self.learner_params = learner_params
-        self.ml_potential = ml_potential
+        self.trainer = trainer
         self.training_data = training_data
         self.parent_calc = parent_calc
         self.base_calc = base_calc
@@ -86,12 +78,10 @@ class OfflineActiveLearner:
             parent_E = sp_image[0].info["parent energy"]
             base_E = sp_image[0].info["base energy"]
             write_to_db(queries_db, sp_image, "initial", parent_E, base_E)
-        self.initial_image_energy = self.refs[0].get_potential_energy()
 
     def learn(self):
         """
         Conduct offline active learning.
-
         Parameters
         ----------
         atomistic_method: object
@@ -106,7 +96,7 @@ class OfflineActiveLearner:
 
     def do_before_train(self):
         """
-        Executes before training the ml_potential in every active learning loop.
+        Executes before training the trainer in every active learning loop.
         """
         if self.iterations > 0:
             self.query_data()
@@ -114,13 +104,13 @@ class OfflineActiveLearner:
 
     def do_train(self):
         """
-        Executes the training of ml_potential
+        Executes the training of trainer
         """
-        self.ml_potential.train(self.training_data, self.new_dataset)
+        self.trainer.train(self.training_data)
 
     def do_after_train(self):
         """
-        Executes after training the ml_potential in every active learning loop.
+        Executes after training the trainer in every active learning loop.
         """
 
         trainer_calc = self.make_trainer_calc()
@@ -148,8 +138,7 @@ class OfflineActiveLearner:
 
         random.seed(self.query_seeds[self.iterations - 1])
         queried_images = self.query_func()
-        self.new_dataset = compute_with_calc(queried_images, self.delta_sub_calc)
-        self.training_data += self.new_dataset
+        self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
 
     def check_terminate(self):
         """
@@ -173,12 +162,12 @@ class OfflineActiveLearner:
         self.parent_calls += len(queried_images)
         return queried_images
 
-    def make_trainer_calc(self, ml_potential=None):
+    def make_trainer_calc(self, trainer=None):
         """
-        Default ml_potential calc after train. Assumes ml_potential has a 'get_calc'
+        Default trainer calc after train. Assumes trainer has a 'get_calc'
         method.
-        If ml_potential is passed in, it will get its calculator instead
+        If trainer is passed in, it will get its calculator instead
         """
-        if ml_potential is not None:
-            return ml_potential.get_calc()
-        return self.ml_potential.get_calc()
+        if trainer is not None:
+            return trainer.get_calc()
+        return self.trainer.get_calc()

@@ -12,12 +12,8 @@ class FmaxLearner(OfflineActiveLearner):
     Replaces termination criteria with a max force in the constructor and the check_terminate method
     """
 
-    def __init__(
-        self, learner_params, ml_potential, training_data, parent_calc, base_calc
-    ):
-        super().__init__(
-            learner_params, ml_potential, training_data, parent_calc, base_calc
-        )
+    def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc):
+        super().__init__(learner_params, trainer, training_data, parent_calc, base_calc)
         self.max_evA = learner_params["max_evA"]
 
     def check_terminate(self):
@@ -90,23 +86,13 @@ class FmaxLearner(OfflineActiveLearner):
         )
 
         final_point_image = [self.sample_candidates[-1]]
-        # print(final_point_image[0].get_positions())
         final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
         self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
         self.training_data += subtract_deltas(
             final_point_evA, self.base_calc, self.refs
         )
         self.parent_calls += 1
-        # final_queries_db = ase.db.connect("final_queried_images.db")
         random.seed(self.query_seeds[self.iterations - 1] + 1)
-        # write_to_db(final_queries_db, final_point_image)
-
-        if self.iterations == 0:
-            writer = TrajectoryWriter("final_images.traj", mode="w")
-            writer.write(final_point_image[0])
-        else:
-            writer = TrajectoryWriter("final_images.traj", mode="a")
-            writer.write(final_point_image[0])
 
         self.terminate = self.check_terminate()
         self.iterations += 1
