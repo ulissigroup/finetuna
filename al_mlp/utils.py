@@ -32,6 +32,8 @@ def convert_to_singlepoint(images):
         sample_energy = image.get_potential_energy(apply_constraint=False)
         sample_forces = image.get_forces(apply_constraint=False)
         if isinstance(image.get_calculator(), DeltaCalc):
+            print(image.get_calculator().parent_results["energy"])
+            print(image.get_calculator().base_results["energy"])
             image.info["parent energy"] = image.get_calculator().parent_results[
                 "energy"
             ]

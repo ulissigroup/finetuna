@@ -55,12 +55,9 @@ class DeltaCalc(LinearCombinationCalculator):
             raise Exception("calc[1] and refs[1] calc are the same")
 
         super().calculate(atoms, properties, system_changes)
+
         self.parent_results = self.calcs[0].results
         self.base_results = self.calcs[1].results
-
-        # self.calcs[0].results = self.parent_results
-        # self.calcs[1].results = self.base_results
-        # super().calculate(atoms, properties, system_changes)
 
         if "energy" in self.results:
             if self.mode == "sub":

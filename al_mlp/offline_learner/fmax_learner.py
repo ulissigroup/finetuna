@@ -4,7 +4,6 @@ import numpy as np
 import ase
 import random
 from al_mlp.calcs import DeltaCalc
-from ase.io.trajectory import TrajectoryWriter
 
 
 class FmaxLearner(OfflineActiveLearner):
@@ -31,34 +30,14 @@ class FmaxLearner(OfflineActiveLearner):
         """
         Default random query strategy.
         """
-        # queries_db = ase.db.connect("queried_images.db")
-        if len(self.sample_candidates) <= self.samples_to_retrain:
-            print(
-                "Number of sample candidates is less than or equal to the requested samples to retrain, defaulting to all samples but the initial and final"
-            )
-            query_idx = [*range(1, len(self.sample_candidates) - 1)]
-            if query_idx == []:
-                query_idx = [
-                    0
-                ]  # EDGE CASE WHEN samples = 2 (need a better way to do it)
-
-        else:
-            query_idx = random.sample(
-                range(1, len(self.sample_candidates) - 1),
-                self.samples_to_retrain - 1,
-            )
+        queries_db = ase.db.connect("queried_images.db")
+        query_idx = random.sample(
+            range(1, len(self.sample_candidates) - 1),
+            self.samples_to_retrain - 1,
+        )
         # query_idx = np.append(query_idx, [len(self.sample_candidates) - 1])
         queried_images = [self.sample_candidates[idx] for idx in query_idx]
-        # write_to_db(queries_db, queried_images)
-        if self.iterations == 1:
-            writer = TrajectoryWriter("queried_images.traj", mode="w")
-            for i in queried_images:
-                writer.write(i)
-        else:
-            writer = TrajectoryWriter("queried_images.traj", mode="a")
-            for i in queried_images:
-                writer.write(i)
-
+        write_to_db(queries_db, queried_images)
         self.parent_calls += len(queried_images)
         return queried_images
 
@@ -86,11 +65,11 @@ class FmaxLearner(OfflineActiveLearner):
         )
 
         final_point_image = [self.sample_candidates[-1]]
-        final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
-        self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
-        self.training_data += subtract_deltas(
-            final_point_evA, self.base_calc, self.refs
-        )
+        final_point_evA = compute_with_calc(final_point_image, self.delta_sub_calc)
+        self.final_point_force = final_point_evA[0].info["parent fmax"]
+        parent_E = final_point_evA[0].info["parent energy"]
+        base_E = final_point_evA[0].info["base energy"]
+        # write_to_db(queries_db, final_point_evA, "final image", parent_E, base_E)
         self.parent_calls += 1
         random.seed(self.query_seeds[self.iterations - 1] + 1)
 

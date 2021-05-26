@@ -8,19 +8,25 @@ class OfflineActiveLearner:
     """Offline Active Learner.
     This class serves as a parent class to inherit more sophisticated
     learners with different query and termination strategies.
+
     Parameters
     ----------
     learner_params: dict
         Dictionary of learner parameters and settings.
+
     trainer: object
         An isntance of a trainer that has a train and predict method.
+
     training_data: list
         A list of ase.Atoms objects that have attached calculators.
         Used as the first set of training data.
+
     parent_calc: ase Calculator object
         Calculator used for querying training data.
+
     base_calc: ase Calculator object
         Calculator used to calculate delta data for training.
+
     """
 
     def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc):
@@ -82,6 +88,7 @@ class OfflineActiveLearner:
     def learn(self):
         """
         Conduct offline active learning.
+
         Parameters
         ----------
         atomistic_method: object

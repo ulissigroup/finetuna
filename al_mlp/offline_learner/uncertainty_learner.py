@@ -40,18 +40,20 @@ class UncertaintyOffAL(EnsembleLearner):
     def __init__(
         self,
         learner_params,
-        ml_potential,
+        trainer,
         training_data,
         parent_calc,
         base_calc,
+        ml_potential,
         uncertainty_tol=0.5,
     ):
         super().__init__(
             learner_params,
-            ml_potential,
+            trainer,
             training_data,
             parent_calc,
             base_calc,
+            ml_potential,
         )
         self.uncertainty_tol = uncertainty_tol
         self.max_evA = learner_params.get("max_evA", 0.05)
@@ -64,39 +66,34 @@ class UncertaintyOffAL(EnsembleLearner):
     def restrict_candidates(self):
         restricted_candidates = []
         remaining_candidates = []
-        self.uncertainty_list = []
-        self.tol_list = []
-        for i in range(1, len(self.sample_candidates) - 1):
+        uncertainty_list = []
+        tol_list = []
+        for i in range(len(self.sample_candidates)):
             uncertainty = self.sample_candidates[i].info["max_force_stds"]
-            self.uncertainty_list.append(uncertainty)
+            uncertainty_list.append(uncertainty)
             uncertainty_tol = (
                 np.nanmax(np.abs(self.sample_candidates[i].get_forces()))
                 * self.get_uncertainty_tol()
             )
-            self.tol_list.append(uncertainty_tol)
+            tol_list.append(uncertainty_tol)
             if uncertainty < uncertainty_tol:
                 restricted_candidates.append(self.sample_candidates[i])
+
             else:
                 remaining_candidates.append(self.sample_candidates[i])
         # if there aren't enough candidates based on criteria, get the lowest uncertainty remaining
         # candidates to return
         if len(restricted_candidates) < self.samples_to_retrain:
             print("Warning: not enough sample candidates which meet criteria")
-            # remaining_candidates.sort(
-            #     key=lambda candidate: candidate.info["max_force_stds"]
-            # )
-            # restricted_candidates.extend(
-            #     remaining_candidates[
-            #         : self.samples_to_retrain - len(restricted_candidates)
-            #     ]
-            # )
-            # rand = random.sample(
-            #     range(1, len(remaining_candidates)),
-            #     self.samples_to_retrain,
-            # )
-            restricted_candidates.append(self.sample_candidates[-1])
-        # if len(self.sample_candidates) == len(restricted_candidates):
-        #     self.terminate = True
+            remaining_candidates.sort(
+                key=lambda candidate: candidate.info["max_force_stds"]
+            )
+            restricted_candidates.extend(
+                remaining_candidates[
+                    : self.samples_to_retrain - len(restricted_candidates)
+                ]
+            )
+
         return restricted_candidates
 
     def check_final_force(self):
@@ -104,15 +101,15 @@ class UncertaintyOffAL(EnsembleLearner):
         final_point_evA = compute_with_calc(final_point_image, self.delta_sub_calc)
 
         self.final_point_force = final_point_evA[0].info["parent fmax"]
-        print("final point fmax: ", self.final_point_force)
-        # only add the last image to training data if the last image is safe to query
-        if final_point_evA[0].info["parent energy"] < self.initial_image_energy:
-            self.training_data += final_point_evA
-            random.seed(self.query_seeds[self.iterations - 1] + 1)
-            queries_db = ase.db.connect("queried_images.db")
-            parent_E = final_point_evA[0].info["parent energy"]
-            base_E = final_point_evA[0].info["base energy"]
-            write_to_db(queries_db, final_point_evA, "final image", parent_E, base_E)
+        # self.energy_list.append(final_point_evA[0].get_potential_energy())
+        # final_point = subtract_deltas(final_point_evA, self.base_calc, self.refs)
+        self.training_data += final_point_evA
+        random.seed(self.query_seeds[self.iterations - 1] + 1)
+        queries_db = ase.db.connect("queried_images.db")
+        parent_E = final_point_evA[0].info["parent energy"]
+        base_E = final_point_evA[0].info["base energy"]
+        write_to_db(queries_db, final_point_evA, "final image", parent_E, base_E)
+        # self.parent_dataset, self.training_data = self.add_data(final_point)
         self.parent_calls += 1
 
     def query_func(self):
@@ -129,22 +126,18 @@ class UncertaintyOffAL(EnsembleLearner):
         Designed to be overwritable
         """
         random.seed(self.query_seeds[self.iterations - 1])
-        query_idx = [-1]
-        if self.samples_to_retrain > 1:
-            query_idx.append(
-                random.sample(range(len(candidates_list)), self.samples_to_retrain - 1)
-            )
-
+        query_idx = random.sample(
+            range(len(candidates_list)),
+            self.samples_to_retrain,
+        )
         return query_idx
 
     def check_terminate(self):
         if self.iterations >= self.max_iterations:
             return True
         else:
-            if self.iterations > 0:
-                self.check_final_force()
-                if self.final_point_force <= self.max_evA:
-                    return True
+            if self.iterations > 0 and self.final_point_force <= self.max_evA:
+                return True
         return False
 
     def get_uncertainty_tol(self):

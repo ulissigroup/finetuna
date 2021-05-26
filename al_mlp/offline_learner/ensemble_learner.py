@@ -53,40 +53,36 @@ class EnsembleLearner(OfflineActiveLearner):
     def __init__(
         self,
         learner_params,
-        ml_potential,
+        trainer,
         training_data,
         parent_calc,
         base_calc,
+        ml_potential,
     ):
-        super().__init__(
-            learner_params, ml_potential, training_data, parent_calc, base_calc
-        )
+        super().__init__(learner_params, trainer, training_data, parent_calc, base_calc)
 
         # assert isinstance(ensemble, int) and ensemble > 1, "Invalid ensemble!"
         # self.ncores = self.learner_params.get("ncores", ensemble)
         self.ml_potential = ml_potential
-        self.ensemble = learner_params.get("n_ensembles")
+        self.ensemble = self.ml_potential.n_ensembles
         self.parent_calls = 0
 
     def do_before_train(self):
         if self.iterations > 0:
             queried_images = self.query_func()
-            self.new_dataset = compute_with_calc(queried_images, self.delta_sub_calc)
+            queried_images = compute_with_calc(queried_images, self.delta_sub_calc)
             queries_db = ase.db.connect("queried_images.db")
-            for image in self.new_dataset:
+            for image in queried_images:
                 parent_E = image.info["parent energy"]
                 base_E = image.info["base energy"]
                 write_to_db(queries_db, [image], "queried", parent_E, base_E)
-            self.training_data += self.new_dataset
-            self.parent_calls += len(self.new_dataset)
+            self.training_data += queried_images
+            self.parent_calls += len(queried_images)
         self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
         # self.ensemble_sets = self.training_data
 
     def do_train(self):
-        if self.iterations > 0:
-            self.ml_potential.train(self.training_data, self.new_dataset)
-        else:
-            self.ml_potential.train(self.training_data)
+        self.ml_potential.train(self.training_data)
         self.trained_calc = DeltaCalc(
             [self.ml_potential, self.base_calc], "add", self.refs
         )
@@ -99,7 +95,7 @@ class EnsembleLearner(OfflineActiveLearner):
         self.sample_candidates = list(
             self.atomistic_method.get_trajectory(filename=self.fn_label)
         )
-        # self.check_final_force()
+        self.check_final_force()
         self.terminate = self.check_terminate()
         self.iterations += 1
 
