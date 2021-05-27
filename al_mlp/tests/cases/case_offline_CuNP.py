@@ -7,7 +7,7 @@ from ase.cluster.icosahedron import Icosahedron
 from ase.optimize import BFGS
 import unittest
 
-FORCE_THRESHOLD = 0.06
+FORCE_THRESHOLD = 0.05
 ENERGY_THRESHOLD = 0.03
 # Set up parent calculator and image environment
 
