@@ -1,4 +1,4 @@
-from al_mlp.offline_active_learner import OfflineActiveLearner
+from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
 
 
 class SingleIterationLearner(OfflineActiveLearner):

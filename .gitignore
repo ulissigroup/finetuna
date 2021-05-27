@@ -23,10 +23,16 @@ al_mlp.egg-info
 *.dirlock
 *.lock
 *.swp
+*.lmdb
+*.lmdb-lock
 
 */test_figs/*
 */dask-worker-space/*
+*/logs/*
 
 .ipynb_checkpoints
 */checkpoints/*
 stored-primes/
+
+# pytest outputs
+.pytest_cache

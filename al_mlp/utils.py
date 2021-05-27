@@ -2,6 +2,7 @@ import os
 import copy
 from ase.calculators.singlepoint import SinglePointCalculator as sp
 from al_mlp.calcs import DeltaCalc
+import numpy as np
 
 
 def convert_to_singlepoint(images):
@@ -26,9 +27,29 @@ def convert_to_singlepoint(images):
         os.chdir("./vasp_temp")
         sample_energy = image.get_potential_energy(apply_constraint=False)
         sample_forces = image.get_forces(apply_constraint=False)
+        if isinstance(image.get_calculator(), DeltaCalc):
+            print(image.get_calculator().parent_results["energy"])
+            print(image.get_calculator().base_results["energy"])
+            image.info["parent energy"] = image.get_calculator().parent_results[
+                "energy"
+            ]
+            image.info["base energy"] = image.get_calculator().base_results["energy"]
+            image.info["parent fmax"] = np.max(
+                np.abs(image.get_calculator().parent_results["forces"])
+            )
+
         sp_calc = sp(atoms=image, energy=float(sample_energy), forces=sample_forces)
         sp_calc.implemented_properties = ["energy", "forces"]
         image.set_calculator(sp_calc)
+        # image.get_potential_energy()
+        # image.get_forces()
+
+        # image.calc.results["energy"] = float(image.calc.results["energy"])
+
+        # sp_calc = sp(atoms=image, **image.calc.results)
+        # sp_calc.implemented_properties = list(image.calc.results.keys())
+
+        # image.set_calculator(sp_calc)
         singlepoint_images.append(image)
         os.chdir(cwd)
         os.system("rm -rf ./vasp_temp")
@@ -106,6 +127,9 @@ def copy_images(images):
     return new_images
 
 
-def write_to_db(database, queried_images):
+def write_to_db(database, queried_images, datatype="N/A", parentE="N/A", baseE="N/A"):
     for image in queried_images:
-        database.write(image)
+        database.write(
+            image,
+            key_value_pairs={"type": datatype, "parentE": parentE, "baseE": baseE},
+        )

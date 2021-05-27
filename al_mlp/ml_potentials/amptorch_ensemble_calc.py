@@ -3,6 +3,7 @@ from ase.calculators.calculator import Calculator
 import random
 import copy
 from amptorch.trainer import AtomsTrainer
+from al_mlp.ml_potentials.bootstrap import non_bootstrap_ensemble
 import torch
 import uuid
 
@@ -12,7 +13,7 @@ __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
 
 
-class EnsembleCalc(Calculator):
+class AmptorchEnsembleCalc(Calculator):
     """Atomistics Machine-Learning Potential (AMP) ASE calculator
     Parameters
     ----------
@@ -26,12 +27,13 @@ class EnsembleCalc(Calculator):
 
     """
 
-    implemented_properties = ["energy", "forces", "uncertainty"]
+    implemented_properties = ["energy", "forces", "max_force_stds", "energy_stds"]
     executor = None
 
-    def __init__(self, trained_calcs):
+    def __init__(self, amptorch_trainer, n_ensembles):
         Calculator.__init__(self)
-        self.trained_calcs = trained_calcs
+        self.amptorch_trainer = amptorch_trainer
+        self.n_ensembles = n_ensembles
 
     def calculate_stats(self, energies, forces):
         # energies_mean = np.mean(energies,axis=0)
@@ -45,12 +47,13 @@ class EnsembleCalc(Calculator):
         energy_median = energies[median_idx]
         forces_median = forces[median_idx]
         max_forces_var = np.nanmax(np.nanvar(forces, axis=0))
-        # max_energy_var = np.nanvar(energies)
+        energy_var = np.nanvar(energies)
         return (
             energy_median,
             forces_median,
             max_forces_var,
-        )  # change back to max forces var
+            energy_var,
+        )
 
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
@@ -62,28 +65,37 @@ class EnsembleCalc(Calculator):
 
         energies = np.array(energies)
         forces = np.array(forces)
-        energy_pred, force_pred, uncertainty = self.calculate_stats(energies, forces)
+        energy_pred, force_pred, max_forces_var, energy_var = self.calculate_stats(
+            energies, forces
+        )
 
         self.results["energy"] = energy_pred
         self.results["forces"] = force_pred
-        atoms.info["uncertainty"] = np.array([uncertainty])
+        atoms.info["energy_stds"] = energy_var ** 0.2
+        atoms.info["max_force_stds"] = max_forces_var ** 0.5
 
-    @classmethod
-    def make_ensemble(cls, ensemble_sets, trainer):
+        # self.results["max_force_stds"] = np.array(max_forces_var) ** 0.5
+        # self.results["energy_stds"] = energy_var ** 0.2
+
+    def train(self, parent_dataset, new_dataset=None):
         """
         Uses Dask to parallelize, must have previously set up cluster,
         image to use, and pool of workers
         """
+
+        ensemble_sets, parent_dataset = non_bootstrap_ensemble(
+            parent_dataset, n_ensembles=self.n_ensembles
+        )
 
         def train_and_combine(args_list):
             """
             method for training trainer on ensemble sets, then create neural net calc,
             returns trained calc
             """
-            ensemble_set = args_list[0]
+            training_dataset = args_list[0]
             trainer = args_list[1]
 
-            trainer.train(raw_data=ensemble_set)
+            trainer.train(raw_data=training_dataset)
             check_path = trainer.cp_dir
             trainer = AtomsTrainer()
             trainer.load_pretrained(checkpoint_path=check_path)
@@ -93,34 +105,34 @@ class EnsembleCalc(Calculator):
         # split ensemble sets into separate args_lists, clone: trainer,
         # base calc and add to args_lists, add: refs to args_lists
         args_lists = []
-        random.seed(trainer.config["cmd"]["seed"])
+        random.seed(self.amptorch_trainer.config["cmd"]["seed"])
         randomlist = [random.randint(0, 4294967295) for set in ensemble_sets]
         for i in range(len(ensemble_sets)):
-            set = ensemble_sets[i]
+            ensemble_set = ensemble_sets[i]
 
-            copy_config = copy.deepcopy(trainer.config)
+            copy_config = copy.deepcopy(self.amptorch_trainer.config)
             copy_config["cmd"]["seed"] = randomlist[i]
             copy_config["cmd"]["identifier"] = copy_config["cmd"]["identifier"] + str(
                 uuid.uuid4()
             )
 
             trainer_copy = AtomsTrainer(copy_config)
-            args_lists.append((set, trainer_copy))
+            args_lists.append((ensemble_set, trainer_copy))
 
         # map training method, returns array of delta calcs
         trained_calcs = []
-        if cls.executor is not None:
+        if self.executor is not None:
             futures = []
             for args_list in args_lists:
-                big_future = cls.executor.scatter(args_list)
-                futures.append(cls.executor.submit(train_and_combine, big_future))
+                big_future = self.executor.scatter(args_list)
+                futures.append(self.executor.submit(train_and_combine, big_future))
             trained_calcs = [future.result() for future in futures]
         else:
             for args_list in args_lists:
                 trained_calcs.append(train_and_combine(args_list))
 
         # call init to construct ensemble calc from array of delta calcs
-        return cls(trained_calcs)
+        self.trained_calcs = trained_calcs
 
     @classmethod
     def set_executor(cls, executor):
