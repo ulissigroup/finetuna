@@ -71,8 +71,6 @@ class FmaxLearner(OfflineActiveLearner):
         Queries data from a list of images. Calculates the properties
         and adds them to the training data.
         """
-<<<<<<< HEAD:al_mlp/offline_learner/fmax_learner.py
-=======
         random.seed(self.query_seeds[self.iterations - 1])
         queried_images = self.query_func()
         self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
@@ -101,7 +99,6 @@ class FmaxLearner(OfflineActiveLearner):
         # final_queries_db = ase.db.connect("final_queried_images.db")
         random.seed(self.query_seeds[self.iterations - 1] + 1)
         # write_to_db(final_queries_db, final_point_image)
->>>>>>> master:al_mlp/preset_learners/fmax_learner.py
 
         if self.iterations == 0:
             writer = TrajectoryWriter("final_images.traj", mode="w")

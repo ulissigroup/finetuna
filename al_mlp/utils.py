@@ -23,17 +23,8 @@ def convert_to_singlepoint(images):
         if isinstance(image.get_calculator(), sp):
             singlepoint_images.append(image)
             continue
-<<<<<<< HEAD
-        os.makedirs("./temp", exist_ok=True)
-        os.chdir("./temp")
-
-        # Force a call to the underlying calculation for energy/forces
-        # also convert energy to float to stop complaint from amptorch
-
-=======
         os.makedirs("./vasp_temp")  # , exist_ok=True)
         os.chdir("./vasp_temp")
->>>>>>> master
         sample_energy = image.get_potential_energy(apply_constraint=False)
         sample_forces = image.get_forces(apply_constraint=False)
         if isinstance(image.get_calculator(), DeltaCalc):
