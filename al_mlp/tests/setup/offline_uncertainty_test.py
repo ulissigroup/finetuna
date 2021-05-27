@@ -93,11 +93,10 @@ def run_offline_al(atomistic_method, images, dbname, parent_calc):
     ml_potential = AmptorchEnsembleCalc(trainer, learner_params["n_ensembles"])
     learner = UncertaintyOffAL(
         learner_params,
-        trainer,
+        ml_potential,
         images,
         parent_calc,
         base_calc,
-        ml_potential,
     )
 
     learner.learn()
