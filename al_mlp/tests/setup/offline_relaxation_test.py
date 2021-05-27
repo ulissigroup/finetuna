@@ -54,7 +54,7 @@ def run_offline_al(atomistic_method, images, dbname, parent_calc):
         },
         "optim": {
             "device": "cpu",
-            "force_coefficient": 40,
+            "force_coefficient": 30,
             "lr": 1,
             "batch_size": 10,
             "epochs": 100,  # was 100
