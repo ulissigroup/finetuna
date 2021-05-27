@@ -11,8 +11,12 @@ class FmaxLearner(OfflineActiveLearner):
     Replaces termination criteria with a max force in the constructor and the check_terminate method
     """
 
-    def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc):
-        super().__init__(learner_params, trainer, training_data, parent_calc, base_calc)
+    def __init__(
+        self, learner_params, ml_potential, training_data, parent_calc, base_calc
+    ):
+        super().__init__(
+            learner_params, ml_potential, training_data, parent_calc, base_calc
+        )
         self.max_evA = learner_params["max_evA"]
 
     def check_terminate(self):
@@ -53,7 +57,7 @@ class FmaxLearner(OfflineActiveLearner):
 
     def do_after_train(self):
         """
-        Executes after training the trainer in every active learning loop.
+        Executes after training the ml_potential in every active learning loop.
         """
 
         trainer_calc = self.make_trainer_calc()
