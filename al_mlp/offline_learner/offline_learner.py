@@ -29,7 +29,9 @@ class OfflineActiveLearner:
 
     """
 
-    def __init__(self, learner_params, ml_potential, training_data, parent_calc, base_calc):
+    def __init__(
+        self, learner_params, ml_potential, training_data, parent_calc, base_calc
+    ):
         self.learner_params = learner_params
         self.ml_potential = ml_potential
         self.training_data = training_data
@@ -85,7 +87,7 @@ class OfflineActiveLearner:
             base_E = sp_image[0].info["base energy"]
             write_to_db(queries_db, sp_image, "initial", parent_E, base_E)
         self.initial_image_energy = self.refs[0].get_potential_energy()
-        
+
     def learn(self):
         """
         Conduct offline active learning.
