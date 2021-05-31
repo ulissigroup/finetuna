@@ -7,7 +7,8 @@
 ./run_scheduler.sh & # start the primary process and put it in the background
 
 # Start the second process
-rlaunch singleshot
+cd .. # launch in PVC /home/jovyan
+rlaunch rapidfire --nlaunches infinite -sleep 10
 #./add_fw.sh
 
 
