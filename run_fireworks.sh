@@ -2,13 +2,13 @@
 
 # First deploy the dask cluster in the background
 
-set -m
+#set -m
 
 ./run_scheduler.sh & # start the primary process and put it in the background
 
 # Start the second process
-
-./run_fw.sh
+rlaunch singleshot
+#./add_fw.sh
 
 
 
