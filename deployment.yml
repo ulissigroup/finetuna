@@ -46,8 +46,8 @@ spec:
            value: "$ID"
          command: ["/bin/bash", "-c"]
          args:
-         - echo Launching all processes... &&
-           ./run_fireworks.sh
+         - echo Adding all jobs to the queue... &&
+           ./add_fw.sh
          volumeMounts:
            - mountPath: /home/jovyan/al_mlp_repo
              name: git-repo 
@@ -58,8 +58,8 @@ spec:
              cpu: "36"
              memory: 60G
            requests:
-             cpu: "10"
-             memory: 40G
+             cpu: "2"
+             memory: 5G
       volumes:
         - name: git-repo
           emptyDir: {}
