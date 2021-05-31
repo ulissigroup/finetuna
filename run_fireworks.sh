@@ -8,7 +8,7 @@
 
 # Start the second process
 cd .. # launch in PVC /home/jovyan
-rlaunch rapidfire --nlaunches infinite -sleep 10
+rlaunch rapidfire --nlaunches infinite --sleep 10
 #./add_fw.sh
 
 
