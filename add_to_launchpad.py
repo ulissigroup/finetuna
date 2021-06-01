@@ -44,7 +44,8 @@ if __name__ == "__main__":
 #    cluster = LocalCluster(processes=True, n_workers=10, threads_per_worker=1)
 #    client = Client(cluster)
 #    AmptorchEnsembleCalc.set_executor(client)
-    elements = ["Mg", "O"]
+    elements = ["Cu"]
+    #elements = ["Mg", "O"]
 
     Gs = {
         "default": {
@@ -67,11 +68,11 @@ if __name__ == "__main__":
         ediff=1e-4,
         ediffg=-0.05,
         xc="rpbe",
-        encut=500,  # planewave cutoff
-        lreal=True,  # for slabs lreal is True for bulk False
+        encut=300,  # planewave cutoff
+#        lreal=True,  # for slabs lreal is True for bulk False
         nsw=0,  # number of ionic steps in the relaxation
         #                isym=-1,
-        kpts=(5, 4, 1),
+        kpts=(3, 3, 3),
     )
 
     learner_params = {
@@ -144,7 +145,7 @@ if __name__ == "__main__":
             "trainer_config": trainer_config_encoded,
             "parent_dataset": "/home/jovyan/al_mlp_repo/images.traj",
             "filename": filename,
-            "init_structure_path": "/home/jovyan/al_mlp_repo/MgO_init_structure.traj",
+            "init_structure_path": "/home/jovyan/al_mlp_repo/Icosahedron_init_structure.traj",
             "task_name": f"OAL_{host_id}",
             "scheduler_file": '/home/jovyan/al_mlp_repo/my-scheduler.json' 
             },
