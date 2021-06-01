@@ -55,8 +55,8 @@ spec:
              name: workspace-atomate
          resources:
            limits:
-             cpu: "36"
-             memory: 60G
+             cpu: "2"
+             memory: 5G
            requests:
              cpu: "2"
              memory: 5G
