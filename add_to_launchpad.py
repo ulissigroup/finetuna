@@ -26,12 +26,12 @@ if __name__ == "__main__":
 
     # Unpack the params to variables
     uncertain_tol = params['uncertain_tol']
-    cores = params['cores']
+#    cores = params['cores']
     # Set the environment variables for VASP
     os.environ[
         "VASP_COMMAND"
     ] = f"mpirun -np {cores} /opt/vasp.6.1.2_pgi_mkl_beef/bin/vasp_std"
-    #breakpoint()
+    # Point the launchpad to the remote database on NERSC 
     launchpad = LaunchPad(host='mongodb07.nersc.gov',
                           name='fw_oal',
                           password='gfde223223222rft3',
