@@ -116,7 +116,7 @@ class OnlineLearner(Calculator):
         self.retrain_idx.append(self.curr_step)
 
         atoms_copy = atoms.copy()
-        atoms_copy.set_calculator(copy.copy(self.parent_calc))
+        atoms_copy.set_calculator(self.parent_calc)
         print(atoms_copy)
         (new_data,) = convert_to_singlepoint([atoms_copy])
 
