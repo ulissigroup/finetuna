@@ -77,41 +77,6 @@ class FmaxLearner(OfflineActiveLearner):
 
     def do_after_train(self):
         """
-        Executes after training the trainer in every active learning loop.
-        """
-
-        trainer_calc = self.make_trainer_calc()
-        self.trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
-
-        self.atomistic_method.run(calc=self.trained_calc, filename=self.fn_label)
-        self.sample_candidates = list(
-            self.atomistic_method.get_trajectory(filename=self.fn_label)
-        )
-
-        final_point_image = [self.sample_candidates[-1]]
-        # print(final_point_image[0].get_positions())
-        final_point_evA = compute_with_calc(final_point_image, self.parent_calc)
-        self.final_point_force = np.max(np.abs(final_point_evA[0].get_forces()))
-        self.training_data += subtract_deltas(
-            final_point_evA, self.base_calc, self.refs
-        )
-        self.parent_calls += 1
-        # final_queries_db = ase.db.connect("final_queried_images.db")
-        random.seed(self.query_seeds[self.iterations - 1] + 1)
-        # write_to_db(final_queries_db, final_point_image)
-
-        if self.iterations == 0:
-            writer = TrajectoryWriter("final_images.traj", mode="w")
-            writer.write(final_point_image[0])
-        else:
-            writer = TrajectoryWriter("final_images.traj", mode="a")
-            writer.write(final_point_image[0])
-
-        self.terminate = self.check_terminate()
-        self.iterations += 1
-
-    def do_after_train(self):
-        """
         Executes after training the ml_potential in every active learning loop.
         """
 
