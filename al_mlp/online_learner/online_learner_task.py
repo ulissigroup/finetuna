@@ -47,51 +47,51 @@ class OnlineLearnerTask(FiretaskBase):
 
         # Set up the trainer for the online learner
         trainer = AtomsTrainer(trainer_config)
-
-        # Set up the online calc
-        online_calc = OnlineLearner(
-            learner_params, trainer, images,
-            learner_params['ml_potential'](trainer,
-                                           learner_params['n_ensembles']),
-                                           learner_params["parent_calc"],
-                                           task_name
-        )
-
-        # Set up the Relaxer
-        OAL_Relaxer = Relaxation(
-            OAL_initial_structure,
-            learner_params["optim_relaxer"],
-            fmax=learner_params["f_max"],
-            steps=learner_params["steps"],
-            maxstep=learner_params["maxstep"],
-        )
-
-        # Run the relaxation with online calc
-        OAL_Relaxer.run(online_calc, filename=filename)
-
-        OAL_image = OAL_Relaxer.get_trajectory(filename)[-1]
-        OAL_image.set_calculator(learner_params["parent_calc"])
-
-        # We can store arbitrary amounts of data into a clean (without fireworks metadata) collection called oal. Let's start with
-        # just the final energy, the number of parent calls and the number of optimization steps
-        # Make a connection to the database
-
-        if db_path is not None:
-            db = VaspCalcDb.from_db_file(db_path, admin=True)
-            db.db["oal"].insert_one(
-                {
-                    "final_energy": OAL_image.get_potential_energy(),
-                    "optimizer_steps": len(OAL_Relaxer.get_trajectory(filename)),
-                    "parent_calls": online_calc.parent_calls,
-                    "learner_params": learner_params_str,
-                }
+        with learner_params['parent_calc'] as parent_calc:
+            # Set up the online calc
+            online_calc = OnlineLearner(
+                learner_params, trainer, images,
+                learner_params['ml_potential'](trainer,
+                                               learner_params['n_ensembles']),
+                                               parent_calc,
+                                               task_name
             )
 
-        return FWAction(
-            stored_data={
-                "final_energy": OAL_image.get_potential_energy(),
-                "parent_calls": online_calc.parent_calls,
-                "optimizer_steps": len(OAL_Relaxer.get_trajectory(filename)),
-                "learner_params": learner_params_str,
-            },
-        )
+            # Set up the Relaxer
+            OAL_Relaxer = Relaxation(
+                OAL_initial_structure,
+                learner_params["optim_relaxer"],
+                fmax=learner_params["f_max"],
+                steps=learner_params["steps"],
+                maxstep=learner_params["maxstep"],
+            )
+
+            # Run the relaxation with online calc
+            OAL_Relaxer.run(online_calc, filename=filename)
+
+            OAL_image = OAL_Relaxer.get_trajectory(filename)[-1]
+            OAL_image.set_calculator(parent_calc)
+
+            # We can store arbitrary amounts of data into a clean (without fireworks metadata) collection called oal. Let's start with
+            # just the final energy, the number of parent calls and the number of optimization steps
+            # Make a connection to the database
+
+            if db_path is not None:
+                db = VaspCalcDb.from_db_file(db_path, admin=True)
+                db.db["oal"].insert_one(
+                    {
+                        "final_energy": OAL_image.get_potential_energy(),
+                        "optimizer_steps": len(OAL_Relaxer.get_trajectory(filename)),
+                        "parent_calls": online_calc.parent_calls,
+                        "learner_params": learner_params_str,
+                    }
+                )
+
+            return FWAction(
+                stored_data={
+                    "final_energy": OAL_image.get_potential_energy(),
+                    "parent_calls": online_calc.parent_calls,
+                    "optimizer_steps": len(OAL_Relaxer.get_trajectory(filename)),
+                    "learner_params": learner_params_str,
+                },
+            )
