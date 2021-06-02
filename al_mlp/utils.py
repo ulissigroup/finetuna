@@ -110,7 +110,7 @@ def subtract_deltas(images, base_calc, refs):
 def copy_images(images):
     """
     Copies images and returns the new instances.
-    The new images also have copied calculators.
+    The new images DO NOT have copied calculators.
 
     Parameters
     ----------
@@ -122,7 +122,7 @@ def copy_images(images):
     for image in images:
         calc = image.get_calculator()
         new_image = image.copy()
-        new_image.set_calculator(copy.deepcopy(calc))
+        new_image.set_calculator(calc)
         new_images.append(new_image)
     return new_images
 
