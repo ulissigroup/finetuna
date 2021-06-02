@@ -28,10 +28,6 @@ if __name__ == "__main__":
     # Unpack the params to variables
     uncertain_tol = params['uncertain_tol']
 #    cores = params['cores']
-    # Set the environment variables for VASP
-#    os.environ[
-#        "VASP_COMMAND"
-#    ] = f"mpirun -np {cores} /opt/vasp.6.1.2_pgi_mkl_beef/bin/vasp_std"
     # Point the launchpad to the remote database on NERSC 
     launchpad = LaunchPad(host='mongodb07.nersc.gov',
                           name='fw_oal',
@@ -67,6 +63,7 @@ if __name__ == "__main__":
         ismear=0,
         ispin=1,  # assume no magnetic moment initially
         ediff=1e-4,
+        command=f"mpirun -np {cores} /opt/vasp.6.1.2_pgi_mkl_beef/bin/vasp_std",
         ediffg=-0.05,
         xc="rpbe",
         encut=300,  # planewave cutoff
