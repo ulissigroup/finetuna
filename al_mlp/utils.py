@@ -23,7 +23,7 @@ def convert_to_singlepoint(images):
         if isinstance(image.get_calculator(), sp):
             singlepoint_images.append(image)
             continue
-        os.makedirs("./vasp_temp")  # , exist_ok=True)
+        os.makedirs("./vasp_temp", exist_ok=True)
         os.chdir("./vasp_temp")
         sample_energy = image.get_potential_energy(apply_constraint=False)
         sample_forces = image.get_forces(apply_constraint=False)
@@ -73,7 +73,7 @@ def compute_with_calc(images, calculator):
 
     images = copy_images(images)
     for image in images:
-        image.set_calculator(copy.deepcopy(calculator))
+        image.set_calculator(calculator)
     return convert_to_singlepoint(images)
 
 
