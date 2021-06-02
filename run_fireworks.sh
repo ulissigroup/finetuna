@@ -7,10 +7,6 @@
 ./run_scheduler.sh & # start the primary process and put it in the background
 
 
-# Until we can install it in the docker image
-pip install git+https://github.com/ulissigroup/vasp-interactive.git
-
-
 # Start the second process
 cd .. # launch in PVC /home/jovyan
 rlaunch rapidfire --nlaunches infinite --sleep 10
