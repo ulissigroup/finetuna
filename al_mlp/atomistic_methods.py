@@ -157,7 +157,7 @@ class Relaxation:
         else:
             dyn = self.optimizer(structure, trajectory="{}.traj".format(filename))
 
-            dyn.run(fmax=self.fmax, steps=self.steps)
+        dyn.run(fmax=self.fmax, steps=self.steps)
 
     def get_trajectory(self, filename):
         trajectory = ase.io.Trajectory(filename + ".traj")
