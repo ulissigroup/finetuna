@@ -138,7 +138,9 @@ class MDsimulate:
 
 
 class Relaxation:
-    def __init__(self, initial_geometry, optimizer, fmax=0.05, steps=None, maxstep=None):
+    def __init__(
+        self, initial_geometry, optimizer, fmax=0.05, steps=None, maxstep=None
+    ):
         self.initial_geometry = initial_geometry
         self.optimizer = optimizer
         self.fmax = fmax
@@ -148,16 +150,14 @@ class Relaxation:
     def run(self, calc, filename):
         structure = self.initial_geometry.copy()
         structure.set_calculator(calc)
-	if self.maxstep is not None:
-		dyn = self.optimizer(
-		    structure, maxstep=self.maxstep, trajectory="{}.traj".format(filename)
-		)
-	else:
-		dyn = self.optimizer(
-		    structure, trajectory="{}.traj".format(filename)
-		)
+        if self.maxstep is not None:
+            dyn = self.optimizer(
+                structure, maxstep=self.maxstep, trajectory="{}.traj".format(filename)
+            )
+        else:
+            dyn = self.optimizer(structure, trajectory="{}.traj".format(filename))
 
-        dyn.run(fmax=self.fmax, steps=self.steps)
+            dyn.run(fmax=self.fmax, steps=self.steps)
 
     def get_trajectory(self, filename):
         trajectory = ase.io.Trajectory(filename + ".traj")

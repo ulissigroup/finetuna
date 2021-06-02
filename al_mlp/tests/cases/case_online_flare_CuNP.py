@@ -12,7 +12,7 @@ FORCE_THRESHOLD = 0.05
 ENERGY_THRESHOLD = 0.01
 
 
-class online_CuNP(unittest.TestCase):
+class online_flare_CuNP(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         # Set up parent calculator and image environment
