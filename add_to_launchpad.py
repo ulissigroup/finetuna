@@ -24,7 +24,7 @@ if __name__ == "__main__":
     host_id = os.environ['HOSTNAME']
 
     params = extract_job_parameters(job_id)
-
+    cores=20
     # Unpack the params to variables
     uncertain_tol = params['uncertain_tol']
 #    cores = params['cores']
