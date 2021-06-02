@@ -15,6 +15,7 @@ import os
 import copy
 import jsonpickle
 from utilities import extract_job_parameters
+from vasp_interactive import VaspInteractive
 
 
 if __name__ == "__main__":
@@ -58,10 +59,10 @@ if __name__ == "__main__":
         },
     }
 
-    parent_calc = Vasp(
+    parent_calc = VaspInteractive(
         algo="Fast",
         prec="Accurate",
-        ibrion=2,  # conjugate gradient descent for relaxations
+#        ibrion=2,  # conjugate gradient descent for relaxations
         isif=0,
         ismear=0,
         ispin=1,  # assume no magnetic moment initially
@@ -70,7 +71,7 @@ if __name__ == "__main__":
         xc="rpbe",
         encut=300,  # planewave cutoff
 #        lreal=True,  # for slabs lreal is True for bulk False
-        nsw=0,  # number of ionic steps in the relaxation
+#        nsw=0,  # number of ionic steps in the relaxation
         #                isym=-1,
         kpts=(3, 3, 3),
     )
