@@ -1,60 +1,20 @@
 - param_set:
     uncertain_tol: 0.0
 - param_set:
-    uncertain_tol: 0.1724137931034483
+    uncertain_tol: 0.5555555555555556
 - param_set:
-    uncertain_tol: 0.3448275862068966
+    uncertain_tol: 1.1111111111111112
 - param_set:
-    uncertain_tol: 0.5172413793103449
+    uncertain_tol: 1.6666666666666667
 - param_set:
-    uncertain_tol: 0.6896551724137931
+    uncertain_tol: 2.2222222222222223
 - param_set:
-    uncertain_tol: 0.8620689655172414
+    uncertain_tol: 2.7777777777777777
 - param_set:
-    uncertain_tol: 1.0344827586206897
+    uncertain_tol: 3.3333333333333335
 - param_set:
-    uncertain_tol: 1.206896551724138
+    uncertain_tol: 3.8888888888888893
 - param_set:
-    uncertain_tol: 1.3793103448275863
-- param_set:
-    uncertain_tol: 1.5517241379310347
-- param_set:
-    uncertain_tol: 1.7241379310344829
-- param_set:
-    uncertain_tol: 1.896551724137931
-- param_set:
-    uncertain_tol: 2.0689655172413794
-- param_set:
-    uncertain_tol: 2.241379310344828
-- param_set:
-    uncertain_tol: 2.413793103448276
-- param_set:
-    uncertain_tol: 2.586206896551724
-- param_set:
-    uncertain_tol: 2.7586206896551726
-- param_set:
-    uncertain_tol: 2.931034482758621
-- param_set:
-    uncertain_tol: 3.1034482758620694
-- param_set:
-    uncertain_tol: 3.2758620689655173
-- param_set:
-    uncertain_tol: 3.4482758620689657
-- param_set:
-    uncertain_tol: 3.620689655172414
-- param_set:
-    uncertain_tol: 3.793103448275862
-- param_set:
-    uncertain_tol: 3.9655172413793105
-- param_set:
-    uncertain_tol: 4.137931034482759
-- param_set:
-    uncertain_tol: 4.310344827586207
-- param_set:
-    uncertain_tol: 4.482758620689656
-- param_set:
-    uncertain_tol: 4.655172413793104
-- param_set:
-    uncertain_tol: 4.827586206896552
+    uncertain_tol: 4.444444444444445
 - param_set:
     uncertain_tol: 5.0
