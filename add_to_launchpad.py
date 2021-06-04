@@ -41,8 +41,8 @@ if __name__ == "__main__":
 #    cluster = LocalCluster(processes=True, n_workers=10, threads_per_worker=1)
 #    client = Client(cluster)
 #    AmptorchEnsembleCalc.set_executor(client)
-    elements = ["Cu"]
-    #elements = ["Mg", "O"]
+#    elements = ["Cu"]
+    elements = ["Mg", "O"]
 
     Gs = {
         "default": {
@@ -66,11 +66,11 @@ if __name__ == "__main__":
         command=f"mpirun -np {cores} /opt/vasp.6.1.2_pgi_mkl_beef/bin/vasp_std",
         ediffg=-0.05,
         xc="rpbe",
-        encut=300,  # planewave cutoff
-#        lreal=True,  # for slabs lreal is True for bulk False
+        encut=500,  # planewave cutoff
+        lreal=True,  # for slabs lreal is True for bulk False
 #        nsw=0,  # number of ionic steps in the relaxation
         #                isym=-1,
-        kpts=(3, 3, 3),
+        kpts=(5, 4, 1),
     )
 
     learner_params = {
@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     trainer_config_encoded = jsonpickle.encode(config)
     learner_params_encoded = jsonpickle.encode(learner_params)
-    filename = "MgO_slab_relaxation"
+    filename = "MgO_relaxation"
     #
     #    # Instantiate the Firework made up of one firetask
     # Let's try and tune the uncertain_tol by launching parallel FireWorks
@@ -144,11 +144,11 @@ if __name__ == "__main__":
             "parent_dataset": "/home/jovyan/al_mlp_repo/images.traj",
             "filename": filename,
             "init_structure_path": "/home/jovyan/al_mlp_repo/Icosahedron_init_structure.traj",
-            "task_name": f"OAL_{host_id}",
+            "task_name": f"OAL_MgO_VaspInt",
             "scheduler_file": '/home/jovyan/al_mlp_repo/my-scheduler.json' 
             },
 
-        name=f"OAL_{uncertain_tol}_thresh",
+        name=f"OAL_MgO_{uncertain_tol}_VaspInt",
     )]
 
     # Let's try and screen through a hyperparameter like n_ensembles through Fireworks. We will start might just add a set of FWs to the WF and run them
