@@ -143,8 +143,8 @@ if __name__ == "__main__":
             "trainer_config": trainer_config_encoded,
             "parent_dataset": "/home/jovyan/al_mlp_repo/images.traj",
             "filename": filename,
-            "init_structure_path": "/home/jovyan/al_mlp_repo/Icosahedron_init_structure.traj",
-            "task_name": f"OAL_MgO_VaspInt",
+            "init_structure_path": "/home/jovyan/al_mlp_repo/MgO_init_structure.traj",
+            "task_name": f"OAL_MgO_VaspInt_{host_id}",
             "scheduler_file": '/home/jovyan/al_mlp_repo/my-scheduler.json' 
             },
 
