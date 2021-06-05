@@ -1,4 +1,5 @@
-from fireworks import Firework, LaunchPad, FWorker, Workflow
+from fireworks.user_objects.dupefinders.dupefinder_exact import DupeFinderExact
+from fireworks import Ferework, LaunchPad, FWorker, Workflow
 from fireworks.features.multi_launcher import launch_multiprocess
 from fireworks.core.rocket_launcher import rapidfire
 from al_mlp.online_learner.online_learner_task import OnlineLearnerTask
@@ -145,7 +146,8 @@ if __name__ == "__main__":
             "filename": filename,
             "init_structure_path": "/home/jovyan/al_mlp_repo/MgO_init_structure.traj",
             "task_name": f"OAL_MgO_VaspInt_{host_id}",
-            "scheduler_file": '/home/jovyan/al_mlp_repo/my-scheduler.json' 
+            "scheduler_file": '/home/jovyan/al_mlp_repo/my-scheduler.json',
+            "_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
             },
 
         name=f"OAL_MgO_{uncertain_tol}_VaspInt",
