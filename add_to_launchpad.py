@@ -1,5 +1,5 @@
 from fireworks.user_objects.dupefinders.dupefinder_exact import DupeFinderExact
-from fireworks import Ferework, LaunchPad, FWorker, Workflow
+from fireworks import FireWork, LaunchPad, FWorker, Workflow
 from fireworks.features.multi_launcher import launch_multiprocess
 from fireworks.core.rocket_launcher import rapidfire
 from al_mlp.online_learner.online_learner_task import OnlineLearnerTask
