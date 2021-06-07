@@ -6,7 +6,7 @@ from flare_pp.sparse_gp import SGP_Wrapper
 from ase.calculators.calculator import Calculator, all_changes
 from flare import struc
 import numpy as np
-
+import time
 
 class FlarePPCalc(Calculator):
 
@@ -23,8 +23,8 @@ class FlarePPCalc(Calculator):
         self.init_species_map()
         self.update_gp_mode = self.flare_params.get("update_gp_mode", "all")
         self.update_gp_range = self.flare_params.get("update_gp_range", [])
-
-        # self.init_flare()
+        self.freeze_hyps = self.flare_params.get("freeze_hyps", None)
+        self.iteration = 0
 
     def init_species_map(self):
         self.species_map = {}
@@ -61,10 +61,11 @@ class FlarePPCalc(Calculator):
             self.flare_params["sigma_f"],
             self.flare_params["sigma_s"],
             self.species_map,
-            bounds=bounds,
-            stress_training=False,
             variance_type="SOR",
+            stress_training=False,
             max_iterations=self.flare_params["max_iterations"],
+            opt_method="BFGS",
+            bounds=bounds,
         )
         self.gp_model.descriptor_calcs = [self.B2calc]
         self.gp_model.kernels = [self.kernel]
@@ -134,24 +135,44 @@ class FlarePPCalc(Calculator):
         # The "local" variance type should be used only if the model has a
         # single atom-centered descriptor.
         # TODO: Generalize this variance type to multiple descriptors.
-        #         elif self.gp_model.variance_type == "local":
-        #             variances = structure_descriptor.local_uncertainties[0]
-        #             sorted_variances = sort_variances(structure_descriptor, variances)
-        #             stds = np.zeros(len(sorted_variances))
-        #             for n in range(len(sorted_variances)):
-        #                 var = sorted_variances[n]
-        #                 if var > 0:
-        #                     stds[n] = np.sqrt(var)
-        #                 else:
-        #                     stds[n] = -np.sqrt(np.abs(var))
-        #             stds_full = np.zeros((len(sorted_variances), 3))
+        elif self.gp_model.variance_type == "local":
+            variances = structure_descriptor.local_uncertainties[0]
+            sorted_variances = self.sort_variances(structure_descriptor, variances)
+            stds = np.zeros(len(sorted_variances))
+            for n in range(len(sorted_variances)):
+                var = sorted_variances[n]
+                if var > 0:
+                    stds[n] = np.sqrt(var)
+                else:
+                    stds[n] = -np.sqrt(np.abs(var))
+            stds_full = np.zeros((len(sorted_variances), 3))
 
-        #             # Divide by the signal std to get a unitless value.
-        #             stds_full[:, 0] = stds / self.gp_model.hyps[0]
-        #             self.results["stds"] = stds_full
+            # Divide by the signal std to get a unitless value.
+            stds_full[:, 0] = stds / self.gp_model.hyps[0]
+            self.results["force_stds"] = stds_full
 
         atoms.info["max_force_stds"] = np.nanmax(self.results["force_stds"])
+        
+    def sort_variances(self, structure_descriptor, variances):
+        # Check that the variance length matches the number of atoms.
+        assert(len(variances) == structure_descriptor.noa)
+        sorted_variances = np.zeros(len(variances))
 
+        # Sort the variances by atomic order.
+        descriptor_values = structure_descriptor.descriptors[0]
+        atom_indices = descriptor_values.atom_indices
+        n_types = descriptor_values.n_types
+        assert(n_types == len(atom_indices))
+
+        v_count = 0
+        for s in range(n_types):
+            for n in range(len(atom_indices[s])):
+                atom_index = atom_indices[s][n]
+                sorted_variances[atom_index] = variances[v_count]
+                v_count += 1
+
+        return sorted_variances
+    
     def get_uncertainties(self, atoms):
         return self.get_property("stds", atoms)
 
@@ -180,21 +201,20 @@ class FlarePPCalc(Calculator):
             self.fit(parent_dataset)
         else:
             self.partial_fit(new_dataset)
-
-        # if new_dataset:
-        #     print(self.gp_model)
-        #     print("partial_fit")
-        #     self.partial_fit(new_dataset)
-        # else:
-        #     self.init_flare()
-        #     print(self.gp_model)
-        #     self.fit(parent_dataset)
-        #     print("fit")
-
-        self.gp_model.train()
-        # self.gp_model.descriptor_calcs = [self.B2calc]
-        # self.gp_model.kernels = [self.kernel]
-
+        start_time = time.time()
+        if isinstance(self.freeze_hyps, int) and self.iteration < self.freeze_hyps:
+            # print("freeze_hyps = ", self.freeze_hyps)
+            self.gp_model.train()
+            self.iteration += 1
+            # print("---training time %s min ---" % ((time.time() - start_time)/60))
+            return
+        elif self.freeze_hyps == 0:
+            return
+        elif not self.freeze_hyps:
+            # print("freeze hyps not set")
+            self.gp_model.train()
+            self.iteration += 1
+            # print("---training time %s min ---" % ((time.time() - start_time)/60))
         return
 
     def partial_fit(self, new_dataset):
