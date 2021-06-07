@@ -8,6 +8,7 @@ from flare import struc
 import numpy as np
 import time
 
+
 class FlarePPCalc(Calculator):
 
     implemented_properties = ["energy", "forces", "stress", "stds"]
@@ -152,17 +153,17 @@ class FlarePPCalc(Calculator):
             self.results["force_stds"] = stds_full
 
         atoms.info["max_force_stds"] = np.nanmax(self.results["force_stds"])
-        
+
     def sort_variances(self, structure_descriptor, variances):
         # Check that the variance length matches the number of atoms.
-        assert(len(variances) == structure_descriptor.noa)
+        assert len(variances) == structure_descriptor.noa
         sorted_variances = np.zeros(len(variances))
 
         # Sort the variances by atomic order.
         descriptor_values = structure_descriptor.descriptors[0]
         atom_indices = descriptor_values.atom_indices
         n_types = descriptor_values.n_types
-        assert(n_types == len(atom_indices))
+        assert n_types == len(atom_indices)
 
         v_count = 0
         for s in range(n_types):
@@ -172,7 +173,7 @@ class FlarePPCalc(Calculator):
                 v_count += 1
 
         return sorted_variances
-    
+
     def get_uncertainties(self, atoms):
         return self.get_property("stds", atoms)
 
