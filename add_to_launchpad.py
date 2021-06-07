@@ -146,7 +146,7 @@ if __name__ == "__main__":
             "filename": filename,
             "init_structure_path": "/home/jovyan/al_mlp_repo/MgO_init_structure.traj",
             "task_name": f"OAL_MgO_VaspInt_{host_id}",
-            "scheduler_file": '/home/jovyan/al_mlp_repo/my-scheduler.json',
+            "scheduler_file": '/tmp/my-scheduler.json',
             "_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
             },
 
