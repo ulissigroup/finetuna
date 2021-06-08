@@ -202,7 +202,7 @@ class FlarePPCalc(Calculator):
             self.fit(parent_dataset)
         else:
             self.partial_fit(new_dataset)
-        start_time = time.time()
+        # start_time = time.time()
         if isinstance(self.freeze_hyps, int) and self.iteration < self.freeze_hyps:
             # print("freeze_hyps = ", self.freeze_hyps)
             self.gp_model.train()
@@ -231,7 +231,7 @@ class FlarePPCalc(Calculator):
                 self.update_gp_range,
                 energy,
                 mode=self.update_gp_mode,
-                update_qr=False,
+                update_qr=True,
             )
 
     def fit(self, parent_data):
@@ -244,5 +244,5 @@ class FlarePPCalc(Calculator):
             energy = image.get_potential_energy(apply_constraint=False)
 
             self.gp_model.update_db(
-                train_structure, forces, [], energy, mode="all", update_qr=False
+                train_structure, forces, [], energy, mode="all", update_qr=True
             )
