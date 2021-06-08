@@ -2,6 +2,7 @@ import copy
 import numpy as np
 from ase.calculators.calculator import Calculator
 from al_mlp.utils import convert_to_singlepoint
+import math
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -78,6 +79,8 @@ class OnlineLearner(Calculator):
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force
         uncertainty = atoms.info["max_force_stds"]
+        if math.isnan(uncertainty):
+            raise ValueError("Input is not a positive integer")
         base_uncertainty = np.nanmax(np.abs(atoms.get_forces()))
         uncertainty_tol = max(
             [self.dyn_uncertain_tol * base_uncertainty, self.stat_uncertain_tol]
