@@ -1,4 +1,3 @@
-#! /usr/bin/bash
 
 # First deploy the dask cluster in the background
 
