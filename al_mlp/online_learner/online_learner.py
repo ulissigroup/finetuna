@@ -158,7 +158,7 @@ class OnlineLearner(Calculator):
         print("OnlineLearner: Parent calculation required")
 
         atoms_copy = atoms.copy()
-        atoms_copy.set_calculator(copy.copy(self.parent_calc))
+        atoms_copy.set_calculator(self.parent_calc)
         print(atoms_copy)
         (new_data,) = convert_to_singlepoint([atoms_copy])
 
