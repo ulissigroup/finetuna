@@ -2,6 +2,7 @@ import copy
 import numpy as np
 from ase.calculators.calculator import Calculator
 from al_mlp.utils import convert_to_singlepoint
+import time
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -113,6 +114,7 @@ class OnlineLearner(Calculator):
 
     def add_data_and_retrain(self, atoms):
         print("OnlineLearner: Parent calculation required")
+        start = time.time()
         self.retrain_idx.append(self.curr_step)
 
         atoms_copy = atoms.copy()
@@ -132,5 +134,7 @@ class OnlineLearner(Calculator):
             self.ml_potential.train(self.parent_dataset)
 
         self.parent_calls += 1
+        end = time.time()
+        print("Time to call parent: "+str(end - start))
 
         return energy_actual, force_actual
