@@ -1,6 +1,7 @@
 from ase.calculators.calculator import all_changes
 from ase.calculators.mixing import LinearCombinationCalculator
 from ase.calculators.calculator import Calculator
+from ase.calculators.calculator import PropertyNotImplementedError
 import copy
 
 
@@ -88,24 +89,21 @@ class DeltaCalc(LinearCombinationCalculator):
             atoms = self.atoms
             system_changes = []
         else:
-            system_changes = self.calcs[0].check_state(atoms) # only check the non-base calc for changes
-            if system_changes:
-                self.reset()
-        if name not in self.results:
-            if not allow_calculation:
-                return None
-            self.calculate(atoms, [name], system_changes)
+            self.calcs[0].system_changes = self.calcs[0].check_state(atoms)
+            if self.calcs[0].system_changes:
+                self.calcs[0].reset()
+            self.calcs[1].system_changes = self.calcs[1].check_state(atoms)
+            if self.calcs[1].system_changes:
+                self.calcs[1].reset()
+        return super().get_property(name, atoms=atoms, allow_calculation=allow_calculation)
 
-        if name not in self.results:
-            # For some reason the calculator was not able to do what we want,
-            # and that is OK.
-            raise PropertyNotImplementedError('{} not present in this '
-                                              'calculation'.format(name))
-
-        result = self.results[name]
-        if isinstance(result, np.ndarray):
-            result = result.copy()
-        return result
+    def reset(self):
+        """
+        Unlike linearcombinationcalc, this does not clear all previous results recursively from all of the calculators.
+        Instead it only clears delta calc and leaves the subcalcs untouched, 
+        then get property manually calls reset on them if they have system changes
+        """
+        super(LinearCombinationCalculator, self).reset()
 
 
 
