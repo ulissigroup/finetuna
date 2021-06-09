@@ -133,3 +133,24 @@ def write_to_db(database, queried_images, datatype="N/A", parentE="N/A", baseE="
             image,
             key_value_pairs={"type": datatype, "parentE": parentE, "baseE": baseE},
         )
+
+def write_to_db_online(
+    database,
+    queried_images,
+    parent_call,
+    uncertainty="-",
+    tol="-",
+    parentE="-",
+    parentFmax="-",
+):
+    for image in queried_images:
+        database.write(
+            image,
+            key_value_pairs={
+                "uncertainty": uncertainty,
+                "tolerance": tol,
+                "parent call": parent_call,
+                "parentE": parentE,
+                "parentFmax": parentFmax,
+            },
+        )
