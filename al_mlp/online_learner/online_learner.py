@@ -165,9 +165,9 @@ class OnlineLearner(Calculator):
 
         self.parent_dataset += [new_data]
 
-        end = time.time()
-        print("Time to call parent: " + str(end - start))
         self.parent_calls += 1
+        end = time.time()
+        print("Time to call parent (call #"+str(self.parent_calls)+"): " + str(end - start))
 
         # Don't bother training if we have less than two datapoints
         if len(self.parent_dataset) >= 2:
