@@ -5,7 +5,7 @@ from al_mlp.atomistic_methods import Relaxation
 from amptorch.trainer import AtomsTrainer
 from ase.io import Trajectory
 from atomate.vasp.database import VaspCalcDb
-from al_mlp.mongo import make_doc_from_atoms 
+from pymatgen.io.ase import AseAtomsAdaptor as AAA
 from pymongo import MongoClient
 import jsonpickle
 
@@ -78,10 +78,10 @@ class OnlineLearnerTask(FiretaskBase):
 
             client = MongoClient('mongodb://fw_oal_admin:gfde223223222rft3@mongodb07.nersc.gov:27017/fw_oal')
             db = client.get_database('fw_oal')
-            atoms_doc = make_doc_from_atoms(OAL_image)
-            calcs_reversed = {'calcs_reversed':[{'output':{'energy': OAL_image.get_potential_energy(),
-                                                           'structure': atoms_doc,
-                                                           'task_label': task_name}}]} # keep the same data structure as Javi's workflow
+            calcs_reversed = {'task_label': task_name,
+                              'calcs_reversed': [{'output':{'energy': OAL_image.get_potential_energy(),
+                                                           'structure': AAA.get_structure(),
+                                                           }}]} # keep the same data structure as Javi's workflow
             print(calcs_reversed)
             db['tasks'].insert_one(calcs_reversed) # Store the final relaxed structure and energy into the tasks collection
                 #db = VaspCalcDb.from_db_file(db_path, admin=True)
