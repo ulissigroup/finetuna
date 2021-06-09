@@ -79,6 +79,18 @@ class DeltaCalc(LinearCombinationCalculator):
                 )
         self.force_calls += 1
 
+    def get_property(self, name, atoms=None, allow_calculation=True):
+        if name not in self.implemented_properties:
+            raise PropertyNotImplementedError('{} property not implemented'
+                                              .format(name))
+
+        if atoms is None:
+            atoms = self.atoms
+            system_changes = []
+        else:
+            self.calcs[0].system_changes = self.calcs[0].check_state(atoms)
+        return super().get_property(name, atoms=atoms, allow_calculation=allow_calculation)
+
 
 class CounterCalc(Calculator):
     implemented_properties = ["energy", "forces", "uncertainty"]
