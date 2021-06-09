@@ -24,7 +24,7 @@ class OnlineLearner(Calculator):
         self.parent_calc = parent_calc
         self.learner_params = learner_params
         self.parent_dataset = convert_to_singlepoint(parent_dataset)
-        self.queried_db = ase.db.connect("queried_images.db", append=False)
+        self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
 
         self.ml_potential = ml_potential
 
@@ -61,8 +61,8 @@ class OnlineLearner(Calculator):
             self.results["energy"] = energy
             self.results["forces"] = force
             self.curr_step += 1
-            queried_db = ase.db.connect("queried_images.db")
-            write_to_db_online(queried_db, atoms, "initial")
+            queried_db = ase.db.connect("oal_queried_images.db")
+            write_to_db_online(queried_db, [atoms], "initial")
             return
 
         # Make a copy of the atoms with ensemble energies as a SP
@@ -77,10 +77,10 @@ class OnlineLearner(Calculator):
             # We ran DFT, so just use that energy/force
             energy, force = self.add_data_and_retrain(atoms)
             parent_fmax = np.max(np.abs(force))
-            queried_db = ase.db.connect("queried_images.db")
+            queried_db = ase.db.connect("oal_queried_images.db")
             write_to_db_online(
                 queried_db,
-                atoms_ML,
+                [atoms_ML],
                 True,
                 atoms_ML.info["max_force_stds"],
                 atoms_ML.info["uncertain_tol"],
@@ -90,10 +90,10 @@ class OnlineLearner(Calculator):
         else:
             energy = atoms_ML.get_potential_energy(apply_constraint=False)
             force = atoms_ML.get_forces(apply_constraint=False)
-            queried_db = ase.db.connect("queried_images.db")
+            queried_db = ase.db.connect("oal_queried_images.db")
             write_to_db_online(
                 queried_db,
-                atoms_ML,
+                [atoms_ML],
                 False,
                 atoms_ML.info["max_force_stds"],
                 atoms_ML.info["uncertain_tol"],
