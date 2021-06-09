@@ -96,12 +96,14 @@ class DeltaCalc(LinearCombinationCalculator):
             self.calcs[1].system_changes = self.calcs[1].check_state(atoms)
             if self.calcs[1].system_changes:
                 self.calcs[1].reset()
-        return super().get_property(name, atoms=atoms, allow_calculation=allow_calculation)
+        return super().get_property(
+            name, atoms=atoms, allow_calculation=allow_calculation
+        )
 
     def reset(self):
         """
         Unlike linearcombinationcalc, this does not clear all previous results recursively from all of the calculators.
-        Instead it only clears delta calc and leaves the subcalcs untouched, 
+        Instead it only clears delta calc and leaves the subcalcs untouched,
         then get property manually calls reset on them if they have system changes
         """
         super(LinearCombinationCalculator, self).reset()
