@@ -88,7 +88,7 @@ class DeltaCalc(LinearCombinationCalculator):
             atoms = self.atoms
             system_changes = []
         else:
-            self.calcs[1].system_changes = self.check_state(atoms)
+            self.calcs[0].system_changes = self.calcs[0].check_state(atoms)
         return super().get_property(name, atoms=atoms, allow_calculation=allow_calculation)
 
 
