@@ -29,7 +29,7 @@ def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
         "dyn_uncertain_tol": 1.5,
         "fmax_verify_threshold": 0.05,  # eV/AA
         "relative_variance": True,
-        "n_ensembles": 10,
+        "n_ensembles": 5,
         "use_dask": True,
     }
 
@@ -38,7 +38,7 @@ def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
         "optim": {
             "device": "cpu",
             "force_coefficient": 4.0,
-            "lr": 1,
+            "lr": 1e-2,
             "batch_size": 10,
             "epochs": 100,
             "optimizer": torch.optim.LBFGS,

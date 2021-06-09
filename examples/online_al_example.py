@@ -16,7 +16,7 @@ if __name__ == "__main__":
     from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
     from dask.distributed import Client, LocalCluster
 
-    cluster = LocalCluster(processes=True, threads_per_worker=1)
+    cluster = LocalCluster(n_workers=5, processes=True, threads_per_worker=1)
     client = Client(cluster)
     AmptorchEnsembleCalc.set_executor(client)
 
@@ -56,7 +56,7 @@ if __name__ == "__main__":
         "dyn_uncertain_tol": 1.5,
         "fmax_verify_threshold": 0.05,  # eV/AA
         "relative_variance": True,
-        "n_ensembles": 10,
+        "n_ensembles": 5,
         "use_dask": True,
     }
 
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         "optim": {
             "device": "cpu",
             "force_coefficient": 4.0,
-            "lr": 1,
+            "lr": 1e-2,
             "batch_size": 10,
             "epochs": 100,
             "optimizer": torch.optim.LBFGS,
@@ -84,7 +84,7 @@ if __name__ == "__main__":
             "run_dir": "./",
             "seed": 1,
             "identifier": "test",
-            "verbose": False,
+            "verbose": True,
             # "logger": True,
             "single-threaded": True,
         },
