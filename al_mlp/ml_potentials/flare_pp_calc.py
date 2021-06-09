@@ -25,6 +25,9 @@ class FlarePPCalc(Calculator):
         self.update_gp_mode = self.flare_params.get("update_gp_mode", "all")
         self.update_gp_range = self.flare_params.get("update_gp_range", [])
         self.freeze_hyps = self.flare_params.get("freeze_hyps", None)
+        self.variance_type = self.flare_params.get("variance_type", "SOR")
+        self.opt_method = self.flare_params.get("opt_method", "BFGS")
+
         self.iteration = 0
 
     def init_species_map(self):
@@ -62,10 +65,10 @@ class FlarePPCalc(Calculator):
             self.flare_params["sigma_f"],
             self.flare_params["sigma_s"],
             self.species_map,
-            variance_type="SOR",
+            variance_type=self.variance_type,
             stress_training=False,
             max_iterations=self.flare_params["max_iterations"],
-            opt_method="BFGS",
+            opt_method=self.opt_method,
             bounds=bounds,
         )
         self.gp_model.descriptor_calcs = [self.B2calc]
@@ -202,7 +205,7 @@ class FlarePPCalc(Calculator):
             self.fit(parent_dataset)
         else:
             self.partial_fit(new_dataset)
-        start_time = time.time()
+        # start_time = time.time()
         if isinstance(self.freeze_hyps, int) and self.iteration < self.freeze_hyps:
             # print("freeze_hyps = ", self.freeze_hyps)
             self.gp_model.train()
@@ -231,7 +234,7 @@ class FlarePPCalc(Calculator):
                 self.update_gp_range,
                 energy,
                 mode=self.update_gp_mode,
-                update_qr=False,
+                update_qr=True,
             )
 
     def fit(self, parent_data):
@@ -244,5 +247,5 @@ class FlarePPCalc(Calculator):
             energy = image.get_potential_energy(apply_constraint=False)
 
             self.gp_model.update_db(
-                train_structure, forces, [], energy, mode="all", update_qr=False
+                train_structure, forces, [], energy, mode="all", update_qr=True
             )
