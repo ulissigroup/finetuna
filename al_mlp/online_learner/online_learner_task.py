@@ -5,6 +5,8 @@ from al_mlp.atomistic_methods import Relaxation
 from amptorch.trainer import AtomsTrainer
 from ase.io import Trajectory
 from atomate.vasp.database import VaspCalcDb
+from al_mlp.mongo import make_doc_from_atoms 
+from pymongo import MongoClient
 import jsonpickle
 
 
@@ -72,20 +74,25 @@ class OnlineLearnerTask(FiretaskBase):
             OAL_image = OAL_Relaxer.get_trajectory(filename)[-1]
             OAL_image.set_calculator(parent_calc)
 
-            # We can store arbitrary amounts of data into a clean (without fireworks metadata) collection called oal. Let's start with
-            # just the final energy, the number of parent calls and the number of optimization steps
             # Make a connection to the database
 
-            if db_path is not None:
-                db = VaspCalcDb.from_db_file(db_path, admin=True)
-                db.db["oal"].insert_one(
-                    {
-                        "final_energy": OAL_image.get_potential_energy(),
-                        "optimizer_steps": len(OAL_Relaxer.get_trajectory(filename)),
-                        "parent_calls": online_calc.parent_calls,
-                        "learner_params": learner_params_str,
-                    }
-                )
+            client = MongoClient('mongodb://fw_oal_admin:gfde223223222rft3@mongodb07.nersc.gov:27017/fw_oal')
+            db = client.get_database('fw_oal')
+            atoms_doc = make_doc_from_atoms(OAL_image)
+            calcs_reversed = {'calcs_reversed':[{'output':{'energy': OAL_image.get_potential_energy(),
+                                                           'structure': atoms_doc,
+                                                           'task_label': task_name}}]} # keep the same data structure as Javi's workflow
+            print(calcs_reversed)
+            db['tasks'].insert_one(calcs_reversed) # Store the final relaxed structure and energy into the tasks collection
+                #db = VaspCalcDb.from_db_file(db_path, admin=True)
+                #db.db["oal"].insert_one(
+                #    {
+                #        "final_energy": OAL_image.get_potential_energy(),
+                #        "optimizer_steps": len(OAL_Relaxer.get_trajectory(filename)),
+                #        "parent_calls": online_calc.parent_calls,
+                #        "learner_params": learner_params_str,
+                #    }
+                #)
 
             return FWAction(
                 stored_data={

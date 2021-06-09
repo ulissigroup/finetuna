@@ -1,5 +1,5 @@
 - param_set:
-    uncertain_tol: 0.65
+    uncertain_tol: 0
 - param_set:
     uncertain_tol: 0.6526315789473685
 - param_set:
