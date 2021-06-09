@@ -36,6 +36,11 @@ class OnlineLearner(Calculator):
             self.fmax_verify_threshold = self.learner_params["fmax_verify_threshold"]
         else:
             self.fmax_verify_threshold = np.nan  # always False
+        
+        if "max_parent_calls" in self.learner_params:
+            self.max_parent_calls = self.learner_params["max_parent_calls"]
+        else:
+            self.max_parent_calls = None
 
         self.stat_uncertain_tol = learner_params["stat_uncertain_tol"]
         self.dyn_uncertain_tol = learner_params["dyn_uncertain_tol"]
@@ -117,6 +122,11 @@ class OnlineLearner(Calculator):
 
     def add_data_and_retrain(self, atoms):
         print("OnlineLearner: Parent calculation required")
+        if  self.max_parent_calls is not None and self.parent_calls >= self.max_parent_calls:
+            print("Parent call failed: max parent calls reached")
+            energy = atoms_ML.get_potential_energy(apply_constraint=False)
+            force = atoms_ML.get_forces(apply_constraint=False)
+            return energy, force
         start = time.time()
         self.retrain_idx.append(self.curr_step)
 
