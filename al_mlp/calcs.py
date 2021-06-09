@@ -81,14 +81,17 @@ class DeltaCalc(LinearCombinationCalculator):
 
     def get_property(self, name, atoms=None, allow_calculation=True):
         if name not in self.implemented_properties:
-            raise PropertyNotImplementedError('{} property not implemented'
-                                              .format(name))
+            raise PropertyNotImplementedError(
+                "{} property not implemented".format(name)
+            )
 
         if atoms is None:
             atoms = self.atoms
             system_changes = []
         else:
-            system_changes = self.calcs[0].check_state(atoms) # only check the non-base calc for changes
+            system_changes = self.calcs[0].check_state(
+                atoms
+            )  # only check the non-base calc for changes
             if system_changes:
                 self.reset()
         if name not in self.results:
@@ -99,14 +102,14 @@ class DeltaCalc(LinearCombinationCalculator):
         if name not in self.results:
             # For some reason the calculator was not able to do what we want,
             # and that is OK.
-            raise PropertyNotImplementedError('{} not present in this '
-                                              'calculation'.format(name))
+            raise PropertyNotImplementedError(
+                "{} not present in this " "calculation".format(name)
+            )
 
         result = self.results[name]
         if isinstance(result, np.ndarray):
             result = result.copy()
         return result
-
 
 
 class CounterCalc(Calculator):
