@@ -1,9 +1,10 @@
 import copy
 import numpy as np
 from ase.calculators.calculator import Calculator
-from al_mlp.utils import convert_to_singlepoint
+from al_mlp.utils import convert_to_singlepoint, write_to_db, write_to_db_online
 import time
 import math
+import ase.db
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -20,10 +21,10 @@ class OnlineLearner(Calculator):
         parent_calc,
     ):
         Calculator.__init__(self)
-
         self.parent_calc = parent_calc
         self.learner_params = learner_params
         self.parent_dataset = convert_to_singlepoint(parent_dataset)
+        self.queried_db = ase.db.connect("queried_images.db", append=False)
 
         self.ml_potential = ml_potential
 
@@ -36,7 +37,7 @@ class OnlineLearner(Calculator):
             self.fmax_verify_threshold = self.learner_params["fmax_verify_threshold"]
         else:
             self.fmax_verify_threshold = np.nan  # always False
-        
+
         if "max_parent_calls" in self.learner_params:
             self.max_parent_calls = self.learner_params["max_parent_calls"]
         else:
@@ -60,6 +61,8 @@ class OnlineLearner(Calculator):
             self.results["energy"] = energy
             self.results["forces"] = force
             self.curr_step += 1
+            queried_db = ase.db.connect("queried_images.db")
+            write_to_db_online(queried_db, atoms, "initial")
             return
 
         # Make a copy of the atoms with ensemble energies as a SP
@@ -73,9 +76,28 @@ class OnlineLearner(Calculator):
         if self.unsafe_prediction(atoms_ML) or self.parent_verify(atoms_ML):
             # We ran DFT, so just use that energy/force
             energy, force = self.add_data_and_retrain(atoms)
+            parent_fmax = np.max(np.abs(force))
+            queried_db = ase.db.connect("queried_images.db")
+            write_to_db_online(
+                queried_db,
+                atoms_ML,
+                True,
+                atoms_ML.info["max_force_stds"],
+                atoms_ML.info["uncertain_tol"],
+                energy,
+                parent_fmax,
+            )
         else:
             energy = atoms_ML.get_potential_energy(apply_constraint=False)
             force = atoms_ML.get_forces(apply_constraint=False)
+            queried_db = ase.db.connect("queried_images.db")
+            write_to_db_online(
+                queried_db,
+                atoms_ML,
+                False,
+                atoms_ML.info["max_force_stds"],
+                atoms_ML.info["uncertain_tol"],
+            )
 
         # Return the energy/force
         self.results["energy"] = energy
@@ -91,7 +113,7 @@ class OnlineLearner(Calculator):
         uncertainty_tol = max(
             [self.dyn_uncertain_tol * base_uncertainty, self.stat_uncertain_tol]
         )
-
+        atoms.info["uncertain_tol"] = uncertainty_tol
         # print(
         #     "Max Force Std: %1.3f eV/A, Max Force Threshold: %1.3f eV/A"
         #     % (uncertainty, uncertainty_tol)
@@ -122,7 +144,10 @@ class OnlineLearner(Calculator):
 
     def add_data_and_retrain(self, atoms):
         print("OnlineLearner: Parent calculation required")
-        if  self.max_parent_calls is not None and self.parent_calls >= self.max_parent_calls:
+        if (
+            self.max_parent_calls is not None
+            and self.parent_calls >= self.max_parent_calls
+        ):
             print("Parent call failed: max parent calls reached")
             energy = atoms_ML.get_potential_energy(apply_constraint=False)
             force = atoms_ML.get_forces(apply_constraint=False)
@@ -141,7 +166,7 @@ class OnlineLearner(Calculator):
         self.parent_dataset += [new_data]
 
         end = time.time()
-        print("Time to call parent: "+str(end - start))
+        print("Time to call parent: " + str(end - start))
         self.parent_calls += 1
 
         # Don't bother training if we have less than two datapoints

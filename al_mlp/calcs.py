@@ -82,8 +82,9 @@ class DeltaCalc(LinearCombinationCalculator):
 
     def get_property(self, name, atoms=None, allow_calculation=True):
         if name not in self.implemented_properties:
-            raise PropertyNotImplementedError('{} property not implemented'
-                                              .format(name))
+            raise PropertyNotImplementedError(
+                "{} property not implemented".format(name)
+            )
 
         if atoms is None:
             atoms = self.atoms
@@ -104,7 +105,6 @@ class DeltaCalc(LinearCombinationCalculator):
         then get property manually calls reset on them if they have system changes
         """
         super(LinearCombinationCalculator, self).reset()
-
 
 
 class CounterCalc(Calculator):
