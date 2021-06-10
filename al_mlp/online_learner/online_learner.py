@@ -5,6 +5,7 @@ from al_mlp.utils import convert_to_singlepoint, write_to_db, write_to_db_online
 import time
 import math
 import ase.db
+import random
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -166,8 +167,15 @@ class OnlineLearner(Calculator):
         self.parent_dataset += [new_data]
 
         self.parent_calls += 1
+        random.seed(self.parent_calc)
+
         end = time.time()
-        print("Time to call parent (call #"+str(self.parent_calls)+"): " + str(end - start))
+        print(
+            "Time to call parent (call #"
+            + str(self.parent_calls)
+            + "): "
+            + str(end - start)
+        )
 
         # Don't bother training if we have less than two datapoints
         if len(self.parent_dataset) >= 2:
