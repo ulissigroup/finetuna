@@ -5,6 +5,7 @@ from al_mlp.utils import convert_to_singlepoint, write_to_db, write_to_db_online
 import time
 import math
 import ase.db
+import random
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -58,17 +59,22 @@ class OnlineLearner(Calculator):
         # well calibrated so just use DFT
         if len(self.parent_dataset) < 2:
             energy, force = self.add_data_and_retrain(atoms)
+            parent_fmax = np.max(np.abs(force))
             self.results["energy"] = energy
             self.results["forces"] = force
             self.curr_step += 1
+            random.seed(self.curr_step)
             queried_db = ase.db.connect("oal_queried_images.db")
-            write_to_db_online(queried_db, [atoms], "initial")
+            write_to_db_online(
+                queried_db, [atoms], "initial", parentE=energy, parentFmax=parent_fmax
+            )
             return
 
         # Make a copy of the atoms with ensemble energies as a SP
         atoms_ML = atoms.copy()
         atoms_ML.set_calculator(self.ml_potential)
         self.ml_potential.calculate(atoms_ML, properties, system_changes)
+        self.curr_step += 1
 
         #         (atoms_ML,) = convert_to_singlepoint([atoms_copy])
 
@@ -77,6 +83,7 @@ class OnlineLearner(Calculator):
             # We ran DFT, so just use that energy/force
             energy, force = self.add_data_and_retrain(atoms)
             parent_fmax = np.max(np.abs(force))
+            random.seed(self.curr_step)
             queried_db = ase.db.connect("oal_queried_images.db")
             write_to_db_online(
                 queried_db,
@@ -90,6 +97,7 @@ class OnlineLearner(Calculator):
         else:
             energy = atoms_ML.get_potential_energy(apply_constraint=False)
             force = atoms_ML.get_forces(apply_constraint=False)
+            random.seed(self.curr_step)
             queried_db = ase.db.connect("oal_queried_images.db")
             write_to_db_online(
                 queried_db,
@@ -102,14 +110,13 @@ class OnlineLearner(Calculator):
         # Return the energy/force
         self.results["energy"] = energy
         self.results["forces"] = force
-        self.curr_step += 1
 
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force
         uncertainty = atoms.info["max_force_stds"]
         if math.isnan(uncertainty):
             raise ValueError("Input is not a positive integer")
-        base_uncertainty = np.nanmax(np.abs(atoms.get_forces()))
+        base_uncertainty = np.nanmax(np.abs(atoms.get_forces(apply_constraint=False)))
         uncertainty_tol = max(
             [self.dyn_uncertain_tol * base_uncertainty, self.stat_uncertain_tol]
         )
@@ -167,8 +174,14 @@ class OnlineLearner(Calculator):
         self.parent_dataset += [new_data]
 
         self.parent_calls += 1
+
         end = time.time()
-        print("Time to call parent (call #"+str(self.parent_calls)+"): " + str(end - start))
+        print(
+            "Time to call parent (call #"
+            + str(self.parent_calls)
+            + "): "
+            + str(end - start)
+        )
 
         # Don't bother training if we have less than two datapoints
         if len(self.parent_dataset) >= 2:
