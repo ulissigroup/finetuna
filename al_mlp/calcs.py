@@ -59,11 +59,18 @@ class DeltaCalc(LinearCombinationCalculator):
         self.parent_results = self.calcs[0].results
         self.base_results = self.calcs[1].results
 
-        # self.calcs[0].results = self.parent_results
-        # self.calcs[1].results = self.base_results
-        # super().calculate(atoms, properties, system_changes)
+        shared_properties = list(
+            set(self.parent_results).intersection(self.base_results)
+        )
+        for w, calc in zip(self.weights, self.calcs):
+            for k in shared_properties:
+                if k not in properties:
+                    if k not in self.results:
+                        self.results[k] = w * calc.results[k]
+                    else:
+                        self.results[k] += w * calc.results[k]
 
-        if "energy" in properties:
+        if "energy" in self.results:
             if self.mode == "sub":
                 self.results["energy"] -= self.refs[0].get_potential_energy(
                     apply_constraint=False
