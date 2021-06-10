@@ -110,7 +110,7 @@ class OnlineLearner(Calculator):
         uncertainty = atoms.info["max_force_stds"]
         if math.isnan(uncertainty):
             raise ValueError("Input is not a positive integer")
-        base_uncertainty = np.nanmax(np.abs(atoms.get_forces()))
+        base_uncertainty = np.nanmax(np.abs(atoms.get_forces(apply_constraint=False)))
         uncertainty_tol = max(
             [self.dyn_uncertain_tol * base_uncertainty, self.stat_uncertain_tol]
         )
