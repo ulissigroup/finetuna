@@ -58,20 +58,21 @@ if __name__ == "__main__":
 
     parent_calc = VaspInteractive(
         algo="Fast",
-        prec="Accurate",
+        prec="Normal",
 #        ibrion=2,  # conjugate gradient descent for relaxations
         isif=0,
         ismear=0,
         ispin=1,  # assume no magnetic moment initially
         ediff=1e-4,
         command=f"mpirun -np {cores} /opt/vasp.6.1.2_pgi_mkl_beef/bin/vasp_std",
-        ediffg=-0.05,
+        ediffg=-0.03,
         xc="rpbe",
-        encut=500,  # planewave cutoff
+        encut=400,  # planewave cutoff
         lreal=True,  # for slabs lreal is True for bulk False
 #        nsw=0,  # number of ionic steps in the relaxation
         #                isym=-1,
-        kpts=(5, 4, 1),
+        lwave=False, # Don't save the WAVECAR for memory reasons
+        kpts=(5, 5, 1),
     )
 
     learner_params = {
@@ -144,8 +145,8 @@ if __name__ == "__main__":
             "trainer_config": trainer_config_encoded,
             "parent_dataset": "/home/jovyan/al_mlp_repo/images.traj",
             "filename": filename,
-            "init_structure_path": "/home/jovyan/al_mlp_repo/MgO_init_structure.traj",
-            "task_name": f"OAL_MgO_VaspInt_{host_id}",
+            "init_structure_path": "/home/jovyan/al_mlp_repo/structures/ad_slab.traj",
+            "task_name": f"OAL_IrCH3_VaspInt_{host_id}",
             "scheduler_file": '/tmp/my-scheduler.json',
             "_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
             },
