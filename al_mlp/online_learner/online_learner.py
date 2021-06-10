@@ -62,6 +62,7 @@ class OnlineLearner(Calculator):
             self.results["energy"] = energy
             self.results["forces"] = force
             self.curr_step += 1
+            random.seed(self.curr_step)
             queried_db = ase.db.connect("oal_queried_images.db")
             write_to_db_online(queried_db, [atoms], "initial")
             return
@@ -70,6 +71,7 @@ class OnlineLearner(Calculator):
         atoms_ML = atoms.copy()
         atoms_ML.set_calculator(self.ml_potential)
         self.ml_potential.calculate(atoms_ML, properties, system_changes)
+        self.curr_step += 1
 
         #         (atoms_ML,) = convert_to_singlepoint([atoms_copy])
 
@@ -78,6 +80,7 @@ class OnlineLearner(Calculator):
             # We ran DFT, so just use that energy/force
             energy, force = self.add_data_and_retrain(atoms)
             parent_fmax = np.max(np.abs(force))
+            random.seed(self.curr_step)
             queried_db = ase.db.connect("oal_queried_images.db")
             write_to_db_online(
                 queried_db,
@@ -91,6 +94,7 @@ class OnlineLearner(Calculator):
         else:
             energy = atoms_ML.get_potential_energy(apply_constraint=False)
             force = atoms_ML.get_forces(apply_constraint=False)
+            random.seed(self.curr_step)
             queried_db = ase.db.connect("oal_queried_images.db")
             write_to_db_online(
                 queried_db,
@@ -103,7 +107,6 @@ class OnlineLearner(Calculator):
         # Return the energy/force
         self.results["energy"] = energy
         self.results["forces"] = force
-        self.curr_step += 1
 
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force
@@ -167,7 +170,6 @@ class OnlineLearner(Calculator):
         self.parent_dataset += [new_data]
 
         self.parent_calls += 1
-        random.seed(self.parent_calc)
 
         end = time.time()
         print(
