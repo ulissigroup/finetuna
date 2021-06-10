@@ -63,7 +63,7 @@ class DeltaCalc(LinearCombinationCalculator):
         # self.calcs[1].results = self.base_results
         # super().calculate(atoms, properties, system_changes)
 
-        if "energy" in self.results:
+        if "energy" in properties:
             if self.mode == "sub":
                 self.results["energy"] -= self.refs[0].get_potential_energy(
                     apply_constraint=False
