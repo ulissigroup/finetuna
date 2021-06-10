@@ -149,8 +149,9 @@ class OnlineLearner(Calculator):
             and self.parent_calls >= self.max_parent_calls
         ):
             print("Parent call failed: max parent calls reached")
-            energy = atoms_ML.get_potential_energy(apply_constraint=False)
-            force = atoms_ML.get_forces(apply_constraint=False)
+            atoms.set_calculator(self.ml_potential)
+            energy = atoms.get_potential_energy(apply_constraint=False)
+            force = atoms.get_forces(apply_constraint=False)
             return energy, force
         start = time.time()
         self.retrain_idx.append(self.curr_step)
