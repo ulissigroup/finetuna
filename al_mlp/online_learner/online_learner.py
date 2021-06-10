@@ -59,12 +59,15 @@ class OnlineLearner(Calculator):
         # well calibrated so just use DFT
         if len(self.parent_dataset) < 2:
             energy, force = self.add_data_and_retrain(atoms)
+            parent_fmax = np.max(np.abs(force))
             self.results["energy"] = energy
             self.results["forces"] = force
             self.curr_step += 1
             random.seed(self.curr_step)
             queried_db = ase.db.connect("oal_queried_images.db")
-            write_to_db_online(queried_db, [atoms], "initial")
+            write_to_db_online(
+                queried_db, [atoms], "initial", parentE=energy, parentFmax=parent_fmax
+            )
             return
 
         # Make a copy of the atoms with ensemble energies as a SP
