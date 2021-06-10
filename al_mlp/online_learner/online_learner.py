@@ -59,7 +59,7 @@ class OnlineLearner(Calculator):
         # well calibrated so just use DFT
         if len(self.parent_dataset) < 2:
             energy, force = self.add_data_and_retrain(atoms)
-            parent_fmax = np.max(np.abs(force))
+            parent_fmax = np.sqrt((force ** 2).sum(axis=1).max())
             self.results["energy"] = energy
             self.results["forces"] = force
             self.curr_step += 1
@@ -82,7 +82,7 @@ class OnlineLearner(Calculator):
         if self.unsafe_prediction(atoms_ML) or self.parent_verify(atoms_ML):
             # We ran DFT, so just use that energy/force
             energy, force = self.add_data_and_retrain(atoms)
-            parent_fmax = np.max(np.abs(force))
+            parent_fmax = np.sqrt((force ** 2).sum(axis=1).max())
             random.seed(self.curr_step)
             queried_db = ase.db.connect("oal_queried_images.db")
             write_to_db_online(
@@ -116,7 +116,8 @@ class OnlineLearner(Calculator):
         uncertainty = atoms.info["max_force_stds"]
         if math.isnan(uncertainty):
             raise ValueError("Input is not a positive integer")
-        base_uncertainty = np.nanmax(np.abs(atoms.get_forces(apply_constraint=False)))
+        forces = atoms.get_forces(apply_constraint=False)
+        base_uncertainty = np.sqrt((forces ** 2).sum(axis=1).max())
         uncertainty_tol = max(
             [self.dyn_uncertain_tol * base_uncertainty, self.stat_uncertain_tol]
         )
