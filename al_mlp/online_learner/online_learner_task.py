@@ -80,19 +80,11 @@ class OnlineLearnerTask(FiretaskBase):
             db = client.get_database('fw_oal')
             calcs_reversed = {'task_label': task_name,
                               'calcs_reversed': [{'output':{'energy': OAL_image.get_potential_energy(),
-                                                           'structure': AAA.get_structure(),
+                                                           'structure': AAA.get_structure(OAL_image), # To be consistent with how OptimizeFW
+                                                           # stores the relaxed object
                                                            }}]} # keep the same data structure as Javi's workflow
             print(calcs_reversed)
             db['tasks'].insert_one(calcs_reversed) # Store the final relaxed structure and energy into the tasks collection
-                #db = VaspCalcDb.from_db_file(db_path, admin=True)
-                #db.db["oal"].insert_one(
-                #    {
-                #        "final_energy": OAL_image.get_potential_energy(),
-                #        "optimizer_steps": len(OAL_Relaxer.get_trajectory(filename)),
-                #        "parent_calls": online_calc.parent_calls,
-                #        "learner_params": learner_params_str,
-                #    }
-                #)
 
             return FWAction(
                 stored_data={
