@@ -130,7 +130,7 @@ if __name__ == "__main__":
 
     trainer_config_encoded = jsonpickle.encode(config)
     learner_params_encoded = jsonpickle.encode(learner_params)
-    filename = "MgO_relaxation"
+    filename = "CH3_Ir_relaxation"
     #
     #    # Instantiate the Firework made up of one firetask
     # Let's try and tune the uncertain_tol by launching parallel FireWorks
