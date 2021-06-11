@@ -43,7 +43,8 @@ if __name__ == "__main__":
 #    client = Client(cluster)
 #    AmptorchEnsembleCalc.set_executor(client)
 #    elements = ["Cu"]
-    elements = ["Mg", "O"]
+#    elements = ["Mg", "O"]
+    elements = ['Ir', 'C', 'H']
 
     Gs = {
         "default": {
