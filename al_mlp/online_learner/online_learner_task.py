@@ -80,7 +80,7 @@ class OnlineLearnerTask(FiretaskBase):
             db = client.get_database('fw_oal')
             calcs_reversed = {'task_label': task_name,
                               'calcs_reversed': [{'output':{'energy': OAL_image.get_potential_energy(),
-                                                           'structure': AAA.get_structure(OAL_image), # To be consistent with how OptimizeFW
+                                                           'structure': AAA.get_structure(OAL_image).as_dict(), # To be consistent with how OptimizeFW
                                                            # stores the relaxed object
                                                            }}]} # keep the same data structure as Javi's workflow
             print(calcs_reversed)
