@@ -5,16 +5,36 @@
 - param_set:
     num_layers: 2
     num_nodes: 50
-    uncertain_tol: 0.375
+    uncertain_tol: 0.022222222222222223
 - param_set:
     num_layers: 2
     num_nodes: 50
-    uncertain_tol: 0.75
+    uncertain_tol: 0.044444444444444446
 - param_set:
     num_layers: 2
     num_nodes: 50
-    uncertain_tol: 1.125
+    uncertain_tol: 0.06666666666666667
 - param_set:
     num_layers: 2
     num_nodes: 50
-    uncertain_tol: 1.5
+    uncertain_tol: 0.08888888888888889
+- param_set:
+    num_layers: 2
+    num_nodes: 50
+    uncertain_tol: 0.11111111111111112
+- param_set:
+    num_layers: 2
+    num_nodes: 50
+    uncertain_tol: 0.13333333333333333
+- param_set:
+    num_layers: 2
+    num_nodes: 50
+    uncertain_tol: 0.15555555555555556
+- param_set:
+    num_layers: 2
+    num_nodes: 50
+    uncertain_tol: 0.17777777777777778
+- param_set:
+    num_layers: 2
+    num_nodes: 50
+    uncertain_tol: 0.2
