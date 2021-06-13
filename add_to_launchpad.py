@@ -28,6 +28,8 @@ if __name__ == "__main__":
     cores=20
     # Unpack the params to variables
     uncertain_tol = params['uncertain_tol']
+    num_layers = params['num_layers']
+    num_nodes = params['num_nodes']
 #    cores = params['cores']
     # Point the launchpad to the remote database on NERSC 
     launchpad = LaunchPad(host='mongodb07.nersc.gov',
@@ -95,7 +97,7 @@ if __name__ == "__main__":
     }
 
     config = {
-        "model": {"get_forces": True, "num_layers": 5, "num_nodes": 5},
+        "model": {"get_forces": True, "num_layers": num_layers, "num_nodes": num_nodes},
         "optim": {
             "device": "cpu",
             "force_coefficient": 20.0,

@@ -1,10 +1,20 @@
 - param_set:
+    num_layers: 2
+    num_nodes: 50
     uncertain_tol: 0.0
 - param_set:
+    num_layers: 2
+    num_nodes: 50
     uncertain_tol: 0.375
 - param_set:
+    num_layers: 2
+    num_nodes: 50
     uncertain_tol: 0.75
 - param_set:
+    num_layers: 2
+    num_nodes: 50
     uncertain_tol: 1.125
 - param_set:
+    num_layers: 2
+    num_nodes: 50
     uncertain_tol: 1.5
