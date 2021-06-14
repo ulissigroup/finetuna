@@ -66,7 +66,7 @@ class OnlineLearner(Calculator):
             random.seed(self.curr_step)
             queried_db = ase.db.connect("oal_queried_images.db")
             info = {
-                "check": "initial",
+                "check": True,
                 "parentE": energy,
                 "parentFmax": parent_fmax,
                 "parentF": str(force),
