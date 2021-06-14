@@ -33,17 +33,28 @@ RUN conda install --quiet --yes \
 
 EXPOSE 8888
 
+# Install htop
+
+RUN sudo apt update && sudo apt-get install htop
+
 #RUN wget https://raw.githubusercontent.com/hackingmaterials/automatminer/master/requirements.txt
 #RUN sed -i '/sci/d' ./infile
 #RUN pip install git+https://github.com/hackingmaterials/automatminer.git
 
+# Install Vasp Interactive in the image
+RUN pip install git+https://github.com/ulissigroup/vasp-interactive.git
+
+# Getting issues running mo-wulff-worklow because PPs not compatible with pymatgen
+RUN pmg config --add PMG_VASP_PSP_DIR $HOME/atomate/POTCARs/ && \
+    pmg config --add PMG_DEFAULT_FUNCTIONAL PBE
+
 # Switch back to jovyan to avoid accidental container runs as root
-WORKDIR $HOME
-COPY start_scheduler.py /home/jovyan
+WORKDIR $HOME/
+#COPY start_scheduler.py /home/jovyan/
 # Launch the dask cluster in the container. This will also output the scheduler_file.json
 #RUN python start_scheduler.py
-CMD ["python3", "start_scheduler.py"]
-
+#CMD ["python3", "start_scheduler.py"]
+ENV PYTHONPATH "$PYTHONPATH/home/jovyan/al_mlp_repo:/home/jovyan/mo-wulff-workflow"
 USER root
 RUN fix-permissions /home/$NB_USER
 
@@ -52,4 +63,3 @@ USER $NB_UID
 
 ENV NB_PREFIX /
 #CMD ["sh","-c", "jupyter notebook --notebook-dir=/home/jovyan --ip=0.0.0.0 --no-browser --allow-root --port=8888 --NotebookApp.token='' --NotebookApp.password='' --NotebookApp.allow_origin='*' --NotebookApp.base_url=${NB_PREFIX}"]
-CMD ["python3", "start_scheduler.py"]
