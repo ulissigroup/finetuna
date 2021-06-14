@@ -40,6 +40,8 @@ class OCPModel(Calculator):
         model_dict = {}
         with open(model_path) as model_yaml:
             model_dict = yaml.safe_load(model_yaml)
+        model_dict["optim"]["num_workers"] = 16
+        # model_dict["model"]["freeze"] = False
 
         if not task:
             task = {
@@ -56,7 +58,7 @@ class OCPModel(Calculator):
         if not dataset:
             dataset = [
                 {
-                    "src": "/home/jovyan/working/ocp/data/s2ef/2M/train/",
+                    "src": "/home/jovyan/working/ocp/data/s2ef/200k/train/",
                     "normalize_labels": False,
                 }
             ]
@@ -82,10 +84,12 @@ class OCPModel(Calculator):
             dataset=dataset,
             optimizer=model_dict["optim"],
             identifier=identifier,
+            is_debug=True,
+            is_vis=False,
             cpu=True,
         )
 
-        self.trainer.load_pretrained(checkpoint_path=checkpoint_path)
+        self.trainer.load_pretrained(checkpoint_path=checkpoint_path, ddp_to_dp=True)
 
     def calculate(self, atoms=None, properties=["forces"], system_changes=all_changes):
         Calculator.calculate(
@@ -100,24 +104,13 @@ class OCPModel(Calculator):
         data_objects = self.ase_to_data(atoms_list, self.a2g_predict)
         batch = self.data_to_batch(data_objects)
 
-        prediction = self.trainer._forward([batch])
+        prediction = self.trainer.predict(batch)
 
-        energy = prediction["energy"].data.numpy()[0]
-        forces = prediction["forces"].data.numpy()
+        energy = prediction["energy"][0]
+        forces = prediction["forces"][0]
 
         self.results["energy"] = energy
         self.results["forces"] = forces
-
-    def __deepcopy__(self, memo):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            if k != "trainer":
-                setattr(result, k, copy.deepcopy(v, memo))
-            else:
-                setattr(result, k, v)
-        return result
 
     @staticmethod
     def ase_to_data(ase_images_list, a2g, disable_tqdm=True):
