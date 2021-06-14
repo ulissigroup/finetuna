@@ -161,6 +161,7 @@ class OnlineLearner(Calculator):
             energy = atoms.get_potential_energy(apply_constraint=False)
             force = atoms.get_forces(apply_constraint=False)
             return energy, force
+
         start = time.time()
         self.retrain_idx.append(self.curr_step)
 
