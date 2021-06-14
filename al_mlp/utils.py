@@ -1,6 +1,7 @@
 import os
 import copy
 from ase.calculators.singlepoint import SinglePointCalculator as sp
+from ase.db.core import check
 from al_mlp.calcs import DeltaCalc
 import numpy as np
 
@@ -127,7 +128,7 @@ def copy_images(images):
     return new_images
 
 
-def write_to_db(database, queried_images, datatype="N/A", parentE="N/A", baseE="N/A"):
+def write_to_db(database, queried_images, datatype="-", parentE="-", baseE="-"):
     for image in queried_images:
         database.write(
             image,
@@ -138,20 +139,18 @@ def write_to_db(database, queried_images, datatype="N/A", parentE="N/A", baseE="
 def write_to_db_online(
     database,
     queried_images,
-    parent_call,
-    uncertainty="-",
-    tol="-",
-    parentE="-",
-    parentFmax="-",
+    info,
 ):
     for image in queried_images:
         database.write(
             image,
             key_value_pairs={
-                "check": parent_call,
-                "uncertainty": uncertainty,
-                "tolerance": tol,
-                "parentE": parentE,
-                "parentFmax": parentFmax,
+                "check": info.get("check"),
+                "uncertainty": info.get("uncertainty", "-"),
+                "tolerance": info.get("tol", "-"),
+                "parentE": info.get("parentE", "-"),
+                "parentFmax": info.get("parentFmax", "-"),
+                "parentF": info.get("parentF", "-"),
+                "oalF": info.get("oalF", "-"),
             },
         )

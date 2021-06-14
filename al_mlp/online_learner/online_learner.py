@@ -65,8 +65,16 @@ class OnlineLearner(Calculator):
             self.curr_step += 1
             random.seed(self.curr_step)
             queried_db = ase.db.connect("oal_queried_images.db")
+            info = {
+                "check": "initial",
+                "parentE": energy,
+                "parentFmax": parent_fmax,
+                "parentF": str(force),
+            }
             write_to_db_online(
-                queried_db, [atoms], "initial", parentE=energy, parentFmax=parent_fmax
+                queried_db,
+                [atoms],
+                info,
             )
             return
 
@@ -85,26 +93,35 @@ class OnlineLearner(Calculator):
             parent_fmax = np.sqrt((force ** 2).sum(axis=1).max())
             random.seed(self.curr_step)
             queried_db = ase.db.connect("oal_queried_images.db")
+            info = {
+                "check": True,
+                "uncertainty": atoms_ML.info["max_force_stds"],
+                "tolerance": atoms_ML.info["uncertain_tol"],
+                "parentE": energy,
+                "parentFmax": parent_fmax,
+                "parentF": str(force),
+                "oalF": str(atoms_ML.get_forces()),
+            }
             write_to_db_online(
                 queried_db,
                 [atoms_ML],
-                True,
-                atoms_ML.info["max_force_stds"],
-                atoms_ML.info["uncertain_tol"],
-                energy,
-                parent_fmax,
+                info,
             )
         else:
             energy = atoms_ML.get_potential_energy(apply_constraint=False)
             force = atoms_ML.get_forces(apply_constraint=False)
             random.seed(self.curr_step)
             queried_db = ase.db.connect("oal_queried_images.db")
+            info = {
+                "check": False,
+                "uncertainty": atoms_ML.info["max_force_stds"],
+                "tolerance": atoms_ML.info["uncertain_tol"],
+                "oalF": str(force),
+            }
             write_to_db_online(
                 queried_db,
                 [atoms_ML],
-                False,
-                atoms_ML.info["max_force_stds"],
-                atoms_ML.info["uncertain_tol"],
+                info,
             )
 
         # Return the energy/force
