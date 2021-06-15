@@ -147,7 +147,7 @@ def write_to_db_online(
             key_value_pairs={
                 "check": info.get("check"),
                 "uncertainty": info.get("uncertainty", "-"),
-                "tolerance": info.get("tol", "-"),
+                "tolerance": info.get("tolerance", "-"),
                 "parentE": info.get("parentE", "-"),
                 "parentFmax": info.get("parentFmax", "-"),
                 "parentF": info.get("parentF", "-"),
