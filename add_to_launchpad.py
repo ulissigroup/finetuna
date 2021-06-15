@@ -27,7 +27,6 @@ if __name__ == "__main__":
     params = extract_job_parameters(job_id)
     cores=20
     # Unpack the params to variables
-    uncertain_tol = params['uncertain_tol']
     num_layers = params['num_layers']
     num_nodes = params['num_nodes']
     stat_uncertain_tol = params['stat_uncertain_tol']
