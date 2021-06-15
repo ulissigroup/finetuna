@@ -137,7 +137,7 @@ class OnlineLearner(Calculator):
         self.uncertainty = atoms.calc.results["max_force_stds"]
         self.base_uncertainty = np.nanmax(np.abs(atoms.get_forces()))
         self.uncertainty_tol = max(
-            [self.dyn_uncertain_tol * base_uncertainty, self.stat_uncertain_tol]
+            [self.dyn_uncertain_tol * self.base_uncertainty, self.stat_uncertain_tol]
         )
 
         print(
