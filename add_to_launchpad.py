@@ -157,7 +157,7 @@ if __name__ == "__main__":
             "_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
             },
 
-        name=f"OAL_MgO_{uncertain_tol}_VaspInt",
+        name=f"OAL_CH3Ir_{stat_uncertain_tol}_VaspInt",
     )]
 
     # Let's try and screen through a hyperparameter like n_ensembles through Fireworks. We will start might just add a set of FWs to the WF and run them
