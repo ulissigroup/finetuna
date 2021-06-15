@@ -30,6 +30,8 @@ if __name__ == "__main__":
     uncertain_tol = params['uncertain_tol']
     num_layers = params['num_layers']
     num_nodes = params['num_nodes']
+    stat_uncertain_tol = params['stat_uncertain_tol']
+    dyn_uncertain_tol = params['dyn_uncertain_tol']
 #    cores = params['cores']
     # Point the launchpad to the remote database on NERSC 
     launchpad = LaunchPad(host='mongodb07.nersc.gov',
@@ -83,8 +85,8 @@ if __name__ == "__main__":
         "samples_to_retrain": 1,
         "filename": "relax_example",
         "file_dir": "./",
-        "stat_uncertain_tol": 0.5, # eV/A
-        "dyn_uncertain_tol": 0., # Just a multiplier
+        "stat_uncertain_tol": stat_uncertain_tol, # eV/A
+        "dyn_uncertain_tol": dyn_uncertain_tol, # Just a multiplier
         "fmax_verify_threshold": 0.05,  # eV/AA
         "relative_variance": True,
         "n_ensembles": 10,
