@@ -83,7 +83,8 @@ if __name__ == "__main__":
         "samples_to_retrain": 1,
         "filename": "relax_example",
         "file_dir": "./",
-        "uncertain_tol": uncertain_tol,  # Very strict - will do mostly parent calls at the start and gather training data points
+        "stat_uncertain_tol": 0.5, # eV/A
+        "dyn_uncertain_tol": 0., # Just a multiplier
         "fmax_verify_threshold": 0.05,  # eV/AA
         "relative_variance": True,
         "n_ensembles": 10,
