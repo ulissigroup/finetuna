@@ -25,7 +25,7 @@ if __name__ == "__main__":
     host_id = os.environ['HOSTNAME']
 
     params = extract_job_parameters(job_id)
-    cores=20
+    cores=16
     # Unpack the params to variables
     num_layers = params['num_layers']
     num_nodes = params['num_nodes']
