@@ -40,7 +40,7 @@ class OCPModel(Calculator):
         model_dict = {}
         with open(model_path) as model_yaml:
             model_dict = yaml.safe_load(model_yaml)
-        model_dict["optim"]["num_workers"] = 16
+        model_dict["optim"]["num_workers"] = 4
         # model_dict["model"]["freeze"] = False
 
         if not task:
