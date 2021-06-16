@@ -60,7 +60,7 @@ if __name__ == "__main__":
         },
     }
 
-    parent_calc = VaspInteractive(
+    parent_calc = Vasp(
         algo="Fast",
         prec="Normal",
 #        ibrion=2,  # conjugate gradient descent for relaxations
@@ -94,7 +94,7 @@ if __name__ == "__main__":
         "optim_relaxer": BFGS,
         "f_max": 0.05,
         "steps": 100,
-        "maxstep": 0.02,
+        "maxstep": 0.2, # Might need larger time step
         "ml_potential": AmptorchEnsembleCalc,
     }
 
