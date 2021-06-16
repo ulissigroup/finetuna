@@ -81,7 +81,7 @@ class OnlineLearner(Calculator):
                     max_force_stds="NA",
                     base_uncertainty="NA",
                     uncertainty_tol="NA",
-                    max_force=float(np.nanmax(np.abs(force))),
+                    max_force=float(np.nanmax(np.abs(force))), # log forces with constraints since they are used for convergence criteria
                     task_name=self.task_name,
                     time_stamp=datetime.datetime.utcnow(),
                 )
@@ -107,8 +107,8 @@ class OnlineLearner(Calculator):
             # We ran DFT, so just use that energy/force
             energy, force = self.add_data_and_retrain(atoms)
         else:
-            energy = atoms_ML.get_potential_energy(apply_constraint=False)
-            force = atoms_ML.get_forces(apply_constraint=False)
+            energy = atoms_ML.get_potential_energy()
+            force = atoms_ML.get_forces()
 
         # Log to the database the metadata for the step
 
@@ -150,7 +150,7 @@ class OnlineLearner(Calculator):
             % (self.stat_uncertain_tol, self.dyn_uncertain_tol * self.base_uncertainty)
         )
         if self.uncertainty > self.uncertainty_tol:
-            maxf = np.nanmax(np.abs(atoms.get_forces(apply_constraint=False)))
+            maxf = np.nanmax(np.abs(atoms.get_forces()))
             return True
         else:
             return False
@@ -169,8 +169,8 @@ class OnlineLearner(Calculator):
         print(atoms_copy)
         (new_data,) = convert_to_singlepoint([atoms_copy])
 
-        energy_actual = new_data.get_potential_energy(apply_constraint=False)
-        force_actual = new_data.get_forces(apply_constraint=False)
+        energy_actual = new_data.get_potential_energy()
+        force_actual = new_data.get_forces()
 
         self.parent_dataset += [new_data]
 
