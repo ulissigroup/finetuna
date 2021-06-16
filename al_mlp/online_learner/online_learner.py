@@ -1,4 +1,5 @@
 import copy
+from ase.calculators.singlepoint import SinglePointCalculator
 import numpy as np
 from ase.calculators.calculator import Calculator
 from al_mlp.utils import convert_to_singlepoint, write_to_db, write_to_db_online
@@ -6,12 +7,16 @@ import time
 import math
 import ase.db
 import random
+from al_mlp.calcs import DeltaCalc
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
 
 
 class OnlineLearner(Calculator):
+    """
+    If base_calc is set to some calculator, OnlineLearner will assume that the ml_potential is some kind of subtracting DeltaCalc. It will add base_calc to all the results.
+    """
     implemented_properties = ["energy", "forces"]
 
     def __init__(
@@ -20,14 +25,22 @@ class OnlineLearner(Calculator):
         parent_dataset,
         ml_potential,
         parent_calc,
+        base_calc=None
     ):
         Calculator.__init__(self)
         self.parent_calc = parent_calc
         self.learner_params = learner_params
         self.parent_dataset = convert_to_singlepoint(parent_dataset)
         self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
-
         self.ml_potential = ml_potential
+
+        self.base_calc = base_calc
+        if self.base_calc is not None:
+            self.delta_calc = DeltaCalc(
+                [self.ml_potential, self.base_calc],
+                "add",
+                self.parent_calc.refs,
+            )
 
         # Don't bother training with only one data point,
         # as the uncertainty is meaningless
@@ -79,12 +92,22 @@ class OnlineLearner(Calculator):
             return
 
         # Make a copy of the atoms with ensemble energies as a SP
-        atoms_ML = atoms.copy()
-        atoms_ML.set_calculator(self.ml_potential)
-        self.ml_potential.calculate(atoms_ML, properties, system_changes)
+        atoms_copy = atoms.copy()
+        atoms_copy.set_calculator(self.ml_potential)
+        (atoms_ML,) = convert_to_singlepoint([atoms_copy])
         self.curr_step += 1
 
-        #         (atoms_ML,) = convert_to_singlepoint([atoms_copy])
+        if self.base_calc is not None:
+            new_delta = DeltaCalc(
+                    [atoms_ML.calc, self.base_calc],
+                    "add",
+                    self.parent_calc.refs,
+                )
+            atoms_copy.set_calculator(new_delta)
+            (atoms_delta,) = convert_to_singlepoint([atoms_copy])
+            for key, value in atoms_ML.info.items():
+                atoms_delta.info[key] = value
+            atoms_ML = atoms_delta
 
         # Check if we are extrapolating too far, and if so add/retrain
         if self.unsafe_prediction(atoms_ML) or self.parent_verify(atoms_ML):
@@ -187,9 +210,6 @@ class OnlineLearner(Calculator):
         print(atoms_copy)
         (new_data,) = convert_to_singlepoint([atoms_copy])
 
-        energy_actual = new_data.get_potential_energy(apply_constraint=False)
-        force_actual = new_data.get_forces(apply_constraint=False)
-
         self.parent_dataset += [new_data]
 
         self.parent_calls += 1
@@ -207,5 +227,17 @@ class OnlineLearner(Calculator):
             self.ml_potential.train(self.parent_dataset, [new_data])
         else:
             self.ml_potential.train(self.parent_dataset)
+
+        if self.base_calc is not None:
+            new_delta = DeltaCalc(
+                    [new_data.calc, self.base_calc],
+                    "add",
+                    self.parent_calc.refs,
+                )
+            atoms_copy.set_calculator(new_delta)
+            (new_data,) = convert_to_singlepoint([atoms_copy])
+
+        energy_actual = new_data.get_potential_energy(apply_constraint=False)
+        force_actual = new_data.get_forces(apply_constraint=False)
 
         return energy_actual, force_actual
