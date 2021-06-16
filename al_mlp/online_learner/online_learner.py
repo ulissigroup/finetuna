@@ -149,7 +149,7 @@ class OnlineLearner(Calculator):
         #     % (self.stat_uncertain_tol, self.dyn_uncertain_tol * base_uncertainty)
         # )
         if uncertainty > uncertainty_tol:
-            maxf = np.nanmax(np.abs(atoms.get_forces(apply_constraint=False)))
+            maxf = np.sqrt((atoms.get_forces(apply_constraint=False) ** 2).sum(axis=1).max())
             self.unsafe_list[self.curr_step] = [maxf, uncertainty, uncertainty_tol]
             return True
         else:
