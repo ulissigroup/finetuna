@@ -8,7 +8,7 @@ if __name__ == '__main__':
 
     # Get the number of workers from the job_params.yml file
 #    workers = extract_job_parameters(int(os.environ['JOB_ID']))['cores']
-    workers=20
+    workers=10
     loop = IOLoop()
     cluster = LocalCluster(n_workers=workers, threads_per_worker=1, memory_limit=0)
     client = Client(cluster)
