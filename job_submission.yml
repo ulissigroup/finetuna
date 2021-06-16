@@ -35,6 +35,13 @@ spec:
          volumeMounts:
           - name: git-repo
             mountPath: /data
+         resources:
+           requests:
+             cpu: 1
+             memory: 1Gi
+           limits:
+             cpu: 1
+             memory: 1Gi
       restartPolicy: Never
       containers:
        - name: test-job-$ID 
@@ -55,11 +62,11 @@ spec:
              name: workspace-atomate
          resources:
            limits:
-             cpu: "2"
-             memory: 5G
+             cpu: "0.5"
+             memory: 0.5G
            requests:
-             cpu: "2"
-             memory: 5G
+             cpu: "0.5"
+             memory: 0.5G
       volumes:
         - name: git-repo
           emptyDir: {}
