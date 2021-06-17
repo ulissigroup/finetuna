@@ -30,6 +30,9 @@ class OnlineLearnerTask(FiretaskBase):
             "init_structure_path"
         )  # This has to be a full path
         db_path = fw_spec.get("db_path", None)  # This is the path to a db config
+        # Get the launch_id for this FW
+        launch_id = self.launchpad.launches.find({"fw_id": self.fw_id}, 
+                {"launch_id":1})['launch_id']
 
         # Decode the str back to objects to conduct the OAL
         learner_params = jsonpickle.decode(learner_params_str)
@@ -56,7 +59,8 @@ class OnlineLearnerTask(FiretaskBase):
             learner_params['ml_potential'](trainer,
                                            learner_params['n_ensembles']),
                                            parent_calc,
-                                           task_name
+                                           task_name,
+                                           launch_id
         )
 
         # Set up the Relaxer

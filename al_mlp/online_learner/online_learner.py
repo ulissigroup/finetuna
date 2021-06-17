@@ -20,6 +20,7 @@ class OnlineLearner(Calculator):
         ml_potential,
         parent_calc,
         task_name,
+        launch_id
     ):
         Calculator.__init__(self)
 
@@ -30,6 +31,7 @@ class OnlineLearner(Calculator):
 
         self.ml_potential = ml_potential
         self.task_name = task_name
+        self.launch_id = launch_id
 
         # Don't bother training with only one data point,
         # as the uncertainty is meaningless
@@ -83,6 +85,7 @@ class OnlineLearner(Calculator):
                     uncertainty_tol="NA",
                     max_force=float(np.nanmax(np.abs(force))), # log forces with constraints since they are used for convergence criteria
                     task_name=self.task_name,
+                    launch_id=self.launch_id,
                     time_stamp=datetime.datetime.utcnow(),
                 )
 
@@ -124,6 +127,7 @@ class OnlineLearner(Calculator):
                 uncertainty_tol=float(self.uncertainty_tol),
                 max_force=float(np.nanmax(np.abs(force))),
                 task_name=self.task_name,
+                launch_id=self.launch_id,
                 time_stamp=datetime.datetime.utcnow(),
             )
 

@@ -153,6 +153,7 @@ if __name__ == "__main__":
             "init_structure_path": "/home/jovyan/al_mlp_repo/structures/ad_slab.traj",
             "task_name": f"OAL_IrCH3_VaspInt_{host_id}",
             "scheduler_file": '/tmp/my-scheduler.json',
+            "_add_launchpad_and_fw_id": True,
             "_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
             },
 
