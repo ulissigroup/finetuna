@@ -17,15 +17,11 @@ class OnlineLearner(Calculator):
     """
     If base_calc is set to some calculator, OnlineLearner will assume that the ml_potential is some kind of subtracting DeltaCalc. It will add base_calc to all the results.
     """
+
     implemented_properties = ["energy", "forces"]
 
     def __init__(
-        self,
-        learner_params,
-        parent_dataset,
-        ml_potential,
-        parent_calc,
-        base_calc=None
+        self, learner_params, parent_dataset, ml_potential, parent_calc, base_calc=None
     ):
         Calculator.__init__(self)
         self.parent_calc = parent_calc
@@ -71,8 +67,8 @@ class OnlineLearner(Calculator):
         # If we have less than two data points, uncertainty is not
         # well calibrated so just use DFT
         if len(self.parent_dataset) < 2:
-            energy, force = self.add_data_and_retrain(atoms)
-            parent_fmax = np.sqrt((force ** 2).sum(axis=1).max())
+            energy, force, force_cons = self.add_data_and_retrain(atoms)
+            parent_fmax = np.sqrt((force_cons ** 2).sum(axis=1).max())
             self.results["energy"] = energy
             self.results["forces"] = force
             self.curr_step += 1
@@ -81,7 +77,7 @@ class OnlineLearner(Calculator):
             info = {
                 "check": True,
                 "parentE": energy,
-                "parentFmax": parent_fmax,
+                "parentMaxForce": parent_fmax,
                 "parentF": str(force),
             }
             write_to_db_online(
@@ -99,10 +95,10 @@ class OnlineLearner(Calculator):
 
         if self.base_calc is not None:
             new_delta = DeltaCalc(
-                    [atoms_ML.calc, self.base_calc],
-                    "add",
-                    self.parent_calc.refs,
-                )
+                [atoms_ML.calc, self.base_calc],
+                "add",
+                self.parent_calc.refs,
+            )
             atoms_copy.set_calculator(new_delta)
             (atoms_delta,) = convert_to_singlepoint([atoms_copy])
             for key, value in atoms_ML.info.items():
@@ -112,8 +108,8 @@ class OnlineLearner(Calculator):
         # Check if we are extrapolating too far, and if so add/retrain
         if self.unsafe_prediction(atoms_ML) or self.parent_verify(atoms_ML):
             # We ran DFT, so just use that energy/force
-            energy, force = self.add_data_and_retrain(atoms)
-            parent_fmax = np.sqrt((force ** 2).sum(axis=1).max())
+            energy, force, force_cons = self.add_data_and_retrain(atoms)
+            parent_fmax = np.sqrt((force_cons ** 2).sum(axis=1).max())
             random.seed(self.curr_step)
             queried_db = ase.db.connect("oal_queried_images.db")
             info = {
@@ -121,7 +117,7 @@ class OnlineLearner(Calculator):
                 "uncertainty": atoms_ML.info["max_force_stds"],
                 "tolerance": atoms_ML.info["uncertain_tol"],
                 "parentE": energy,
-                "parentFmax": parent_fmax,
+                "parentMaxForce": parent_fmax,
                 "parentF": str(force),
                 "oalF": str(atoms_ML.get_forces()),
             }
@@ -172,7 +168,9 @@ class OnlineLearner(Calculator):
         #     % (self.stat_uncertain_tol, self.dyn_uncertain_tol * base_uncertainty)
         # )
         if uncertainty > uncertainty_tol:
-            maxf = np.sqrt((atoms.get_forces(apply_constraint=False) ** 2).sum(axis=1).max())
+            maxf = np.sqrt(
+                (atoms.get_forces(apply_constraint=False) ** 2).sum(axis=1).max()
+            )
             self.unsafe_list[self.curr_step] = [maxf, uncertainty, uncertainty_tol]
             return True
         else:
@@ -181,9 +179,6 @@ class OnlineLearner(Calculator):
     def parent_verify(self, atoms):
         forces = atoms.get_forces()
         fmax = np.sqrt((forces ** 2).sum(axis=1).max())
-        # fmax = np.max(np.abs(forces))
-        # print("fmax ", fmax, "/n")
-        # print("verify threshold ", self.fmax_verify_threshold)
         self.force_list.append(self.curr_step)
 
         if fmax <= self.fmax_verify_threshold:
@@ -200,7 +195,8 @@ class OnlineLearner(Calculator):
             atoms.set_calculator(self.ml_potential)
             energy = atoms.get_potential_energy(apply_constraint=False)
             force = atoms.get_forces(apply_constraint=False)
-            return energy, force
+            force_cons = atoms.get_forces()
+            return energy, force, force_cons
 
         start = time.time()
         self.retrain_idx.append(self.curr_step)
@@ -230,14 +226,14 @@ class OnlineLearner(Calculator):
 
         if self.base_calc is not None:
             new_delta = DeltaCalc(
-                    [new_data.calc, self.base_calc],
-                    "add",
-                    self.parent_calc.refs,
-                )
+                [new_data.calc, self.base_calc],
+                "add",
+                self.parent_calc.refs,
+            )
             atoms_copy.set_calculator(new_delta)
             (new_data,) = convert_to_singlepoint([atoms_copy])
 
         energy_actual = new_data.get_potential_energy(apply_constraint=False)
         force_actual = new_data.get_forces(apply_constraint=False)
-
-        return energy_actual, force_actual
+        force_cons = new_data.get_forces()
+        return energy_actual, force_actual, force_cons
