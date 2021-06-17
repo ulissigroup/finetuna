@@ -5,6 +5,8 @@ from al_mlp.utils import convert_to_singlepoint
 import pymongo
 from atomate.vasp.database import VaspCalcDb
 import datetime
+from al_mlp.mongo import make_doc_from_atoms
+import hashlib
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -62,6 +64,8 @@ class OnlineLearner(Calculator):
 
             if "oal_metadata" not in db.collection_names():
                 db.create_collection("oal_metadata")
+            if "atoms_objects" not in db.collection_names():
+                db.create_collection("atoms_objects")
 
             collection = db.get_collection("oal_metadata")
 
@@ -88,6 +92,8 @@ class OnlineLearner(Calculator):
                     launch_id=self.launch_id,
                     time_stamp=datetime.datetime.utcnow(),
                 )
+                self.insert_atoms_object(atoms, db)
+                
 
             self.iteration += 1
 
@@ -130,6 +136,7 @@ class OnlineLearner(Calculator):
                 launch_id=self.launch_id,
                 time_stamp=datetime.datetime.utcnow(),
             )
+            self.insert_atoms_object(atoms, db)
 
         self.iteration += 1
         # Return the energy/force
@@ -195,3 +202,19 @@ class OnlineLearner(Calculator):
 
     def insert_row(self, collection, **kw_args):
         collection.insert_one(kw_args)
+
+    def insert_atoms_object(self, atoms, db):
+        # insert the Atoms object into another collection
+        doc = make_doc_from_atoms(atoms)
+        # check if the doc already exists in the collection using hash field
+        string = str(doc)
+        hash_ = hashlib.md5(string.encode('utf-8')).hexdigest()
+        if db["atoms_objects"].find_one({'hash_': hash_}) is None:
+            doc['hash_'] = hash_
+            self.insert_row(db["atoms_objects"], **doc)
+
+
+
+
+
+
