@@ -31,7 +31,7 @@ class OnlineLearnerTask(FiretaskBase):
         )  # This has to be a full path
         db_path = fw_spec.get("db_path", None)  # This is the path to a db config
         # Get the launch_id for this FW
-        launch_id = self.launchpad.launches.find({"fw_id": self.fw_id}, 
+        launch_id = self.launchpad.launches.find_one({"fw_id": self.fw_id}, 
                 {"launch_id":1})['launch_id']
 
         # Decode the str back to objects to conduct the OAL
