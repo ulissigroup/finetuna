@@ -31,6 +31,7 @@ if __name__ == "__main__":
     num_nodes = params['num_nodes']
     stat_uncertain_tol = params['stat_uncertain_tol']
     dyn_uncertain_tol = params['dyn_uncertain_tol']
+    maxstep = params['maxstep']
 #    cores = params['cores']
     # Point the launchpad to the remote database on NERSC 
     launchpad = LaunchPad(host='mongodb07.nersc.gov',
@@ -94,7 +95,7 @@ if __name__ == "__main__":
         "optim_relaxer": BFGS,
         "f_max": 0.05,
         "steps": 100,
-        "maxstep": 0.2, # Might need larger time step
+        "maxstep": maxstep, # Might need larger time step
         "ml_potential": AmptorchEnsembleCalc,
     }
 
@@ -151,13 +152,13 @@ if __name__ == "__main__":
             "parent_dataset": "/home/jovyan/al_mlp_repo/images.traj",
             "filename": filename,
             "init_structure_path": "/home/jovyan/al_mlp_repo/structures/ad_slab.traj",
-            "task_name": f"OAL_IrCH3_VaspInt_{host_id}",
+            "task_name": f"OAL_IrCH3_maxstep_{host_id}",
             "scheduler_file": '/tmp/my-scheduler.json',
             "_add_launchpad_and_fw_id": True,
             "_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
             },
 
-        name=f"OAL_CH3Ir_{stat_uncertain_tol}_VaspInt",
+        name=f"OAL_CH3Ir_{max_step}_maxstep",
     )]
 
     # Let's try and screen through a hyperparameter like n_ensembles through Fireworks. We will start might just add a set of FWs to the WF and run them
