@@ -158,7 +158,7 @@ if __name__ == "__main__":
             "_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
             },
 
-        name=f"OAL_CH3Ir_{max_step}_maxstep",
+        name=f"OAL_CH3Ir_{maxstep}_maxstep",
     )]
 
     # Let's try and screen through a hyperparameter like n_ensembles through Fireworks. We will start might just add a set of FWs to the WF and run them
