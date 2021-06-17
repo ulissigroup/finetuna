@@ -73,7 +73,7 @@ if __name__ == "__main__":
         xc="rpbe",
         encut=400,  # planewave cutoff
         lreal=True,  # for slabs lreal is True for bulk False
-#        nsw=0,  # number of ionic steps in the relaxation
+        nsw=0,  # number of ionic steps in the relaxation
         #                isym=-1,
         lwave=False, # Don't save the WAVECAR for memory reasons
         kpts=(5, 5, 1),
