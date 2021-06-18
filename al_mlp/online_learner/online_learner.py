@@ -73,7 +73,7 @@ class OnlineLearner(Calculator):
         # well calibrated so just use DFT
 
         if len(self.parent_dataset) < 2:
-            energy, force = self.add_data_and_retrain(atoms)
+            energy, force, atoms_sp, force_cons = self.add_data_and_retrain(atoms)
             self.results["energy"] = energy
             self.results["forces"] = force
 
@@ -87,12 +87,13 @@ class OnlineLearner(Calculator):
                     max_force_stds="NA",
                     base_uncertainty="NA",
                     uncertainty_tol="NA",
-                    max_force=float(np.nanmax(np.abs(force))), # log forces with constraints since they are used for convergence criteria
+                    max_force=float(np.sqrt((force ** 2).sum(axis=1).max())),
+                    max_force_cons=float(np.sqrt((force_cons ** 2).sum(axis=1).max())),
                     task_name=self.task_name,
                     launch_id=self.launch_id,
                     time_stamp=datetime.datetime.utcnow(),
                 )
-                self.insert_atoms_object(atoms, db)
+                self.insert_atoms_object(atoms_sp, db)
                 
 
             self.iteration += 1
@@ -102,7 +103,7 @@ class OnlineLearner(Calculator):
         # Make a copy of the atoms with ensemble energies as a SP
         atoms_ML = atoms.copy()
         atoms_ML.set_calculator(self.ml_potential)
-        atoms_ML.get_forces()
+        atoms_ML.get_forces(apply_constraint=False)
 
         #         (atoms_ML,) = convert_to_singlepoint([atoms_copy])
 
@@ -114,29 +115,49 @@ class OnlineLearner(Calculator):
         if self.unsafe_prediction(atoms_ML) or self.parent_verify(atoms_ML):
             parent_call = True
             # We ran DFT, so just use that energy/force
-            energy, force = self.add_data_and_retrain(atoms)
+            energy, force, atoms_sp, force_cons = self.add_data_and_retrain(atoms)
+            if conn is not None:
+                self.insert_row(
+                    collection,
+                    iteration=self.iteration,
+                    parent_call=parent_call,
+                    energy=energy,
+                    force=force.tolist(),
+                    max_force_stds=float(self.uncertainty),
+                    base_uncertainty=float(self.base_uncertainty),
+                    uncertainty_tol=float(self.uncertainty_tol),
+                    max_force=float(np.sqrt((force ** 2).sum(axis=1).max())),
+                    max_force_cons=float(np.sqrt((force_cons ** 2).sum(axis=1).max())),
+                    max_force_oal_cons=float(np.sqrt((atoms_ML.get_forces() ** 2).sum(axis=1).max())),
+                    task_name=self.task_name,
+                    launch_id=self.launch_id,
+                    time_stamp=datetime.datetime.utcnow(),
+                )
+                self.insert_atoms_object(atoms_sp, db)
         else:
-            energy = atoms_ML.get_potential_energy()
-            force = atoms_ML.get_forces()
+            energy = atoms_ML.get_potential_energy(apply_constraint=False)
+            force = atoms_ML.get_forces(apply_constraint=False)
+            force_cons = atoms_ML.get_forces()
+            if conn is not None:
+                self.insert_row(
+                    collection,
+                    iteration=self.iteration,
+                    parent_call=parent_call,
+                    energy=energy,
+                    force=force.tolist(),
+                    max_force_stds=float(self.uncertainty),
+                    base_uncertainty=float(self.base_uncertainty),
+                    uncertainty_tol=float(self.uncertainty_tol),
+                    max_force=float(np.sqrt((force ** 2).sum(axis=1).max())),
+                    max_force_cons=float(np.sqrt((force_cons ** 2).sum(axis=1).max())),
+                    task_name=self.task_name,
+                    launch_id=self.launch_id,
+                    time_stamp=datetime.datetime.utcnow(),
+                )
+                self.insert_atoms_object(atoms_ML, db)
 
         # Log to the database the metadata for the step
 
-        if conn is not None:
-            self.insert_row(
-                collection,
-                iteration=self.iteration,
-                parent_call=parent_call,
-                energy=energy,
-                force=force.tolist(),
-                max_force_stds=float(self.uncertainty),
-                base_uncertainty=float(self.base_uncertainty),
-                uncertainty_tol=float(self.uncertainty_tol),
-                max_force=float(np.nanmax(np.abs(force))),
-                task_name=self.task_name,
-                launch_id=self.launch_id,
-                time_stamp=datetime.datetime.utcnow(),
-            )
-            self.insert_atoms_object(atoms, db)
 
         self.iteration += 1
         # Return the energy/force
@@ -146,7 +167,8 @@ class OnlineLearner(Calculator):
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force
         self.uncertainty = atoms.calc.results["max_force_stds"]
-        self.base_uncertainty = np.nanmax(np.abs(atoms.get_forces()))
+        forces = atoms.get_forces(apply_constraint=False)
+        self.base_uncertainty = np.sqrt((forces ** 2).sum(axis=1).max())
         self.uncertainty_tol = max(
             [self.dyn_uncertain_tol * self.base_uncertainty, self.stat_uncertain_tol]
         )
@@ -161,7 +183,6 @@ class OnlineLearner(Calculator):
             % (self.stat_uncertain_tol, self.dyn_uncertain_tol * self.base_uncertainty)
         )
         if self.uncertainty > self.uncertainty_tol:
-            maxf = np.nanmax(np.abs(atoms.get_forces()))
             return True
         else:
             return False
@@ -175,13 +196,14 @@ class OnlineLearner(Calculator):
     def add_data_and_retrain(self, atoms):
         print("OnlineLearner: Parent calculation required")
 
-        atoms_copy = atoms.copy()
+        atoms_copy = atoms.copy() # YURI Let the atoms get mutated so that we can store it with all the attributes in the DB
         atoms_copy.set_calculator(self.parent_calc)
         print(atoms_copy)
-        (new_data,) = convert_to_singlepoint([atoms_copy])
+        (new_data,) = convert_to_singlepoint([atoms_copy]) # Where DFT happens
 
-        energy_actual = new_data.get_potential_energy()
-        force_actual = new_data.get_forces()
+        energy_actual = new_data.get_potential_energy(apply_constraint=False)
+        force_actual = new_data.get_forces(apply_constraint=False)
+        force_cons = new_data.get_forces()
 
         self.parent_dataset += [new_data]
 
@@ -192,7 +214,7 @@ class OnlineLearner(Calculator):
 
         self.parent_calls += 1
 
-        return energy_actual, force_actual
+        return energy_actual, force_actual, new_data, force_cons
 
     @classmethod
     def mongodb_conn(cls):
@@ -212,6 +234,8 @@ class OnlineLearner(Calculator):
         if db["atoms_objects"].find_one({'hash_': hash_}) is None:
             doc['hash_'] = hash_
             self.insert_row(db["atoms_objects"], **doc)
+        else:
+            print('Duplicate found, not adding to DB...')
 
 
 
