@@ -19,7 +19,7 @@ import spglib
 import numpy as np
 from ase import Atoms, Atom
 from ase.calculators.singlepoint import SinglePointCalculator
-from ase.io.jsonio import encode
+from ase.io.jsonio import encode, decode
 from ase.constraints import dict2constraint
 
 
@@ -210,13 +210,13 @@ def make_atoms_from_doc(doc):
         atoms   ase.Atoms object with an ase.SinglePointCalculator attached
     '''
     atoms = Atoms([Atom(atom['symbol'],
-                        atom['position'],
+                        decode(json.dumps(atom['position'])),
                         tag=atom['tag'],
-                        momentum=atom['momentum'],
+                        momentum=decode(json.dumps(atom['momentum'])),
                         magmom=atom['magmom'],
                         charge=atom['charge'])
                    for atom in doc['atoms']['atoms']],
-                  cell=doc['atoms']['cell'],
+                  cell=decode(json.dumps(doc['atoms']['cell'])),
                   pbc=doc['atoms']['pbc'],
                   info=doc['atoms']['info'],
                   constraint=[dict2constraint(constraint_dict)
