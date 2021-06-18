@@ -30,7 +30,8 @@ class OnlineLearnerTask(FiretaskBase):
             "init_structure_path"
         )  # This has to be a full path
         db_path = fw_spec.get("db_path", None)  # This is the path to a db config
-
+        # Get the latest launch_id for this FW
+        launch_id = self.launchpad.launches.find({"fw_id": self.fw_id}).sort([('launch_id',-1)]).limit(1)[0]['launch_id']
         # Decode the str back to objects to conduct the OAL
         learner_params = jsonpickle.decode(learner_params_str)
         trainer_config = jsonpickle.decode(trainer_config_str)
@@ -49,48 +50,49 @@ class OnlineLearnerTask(FiretaskBase):
 
         # Set up the trainer for the online learner
         trainer = AtomsTrainer(trainer_config)
-        with learner_params['parent_calc'] as parent_calc:
-            # Set up the online calc
-            online_calc = OnlineLearner(
-                learner_params, trainer, images,
-                learner_params['ml_potential'](trainer,
-                                               learner_params['n_ensembles']),
-                                               parent_calc,
-                                               task_name
-            )
+        parent_calc = learner_params['parent_calc']
+        # Set up the online calc
+        online_calc = OnlineLearner(
+            learner_params, trainer, images,
+            learner_params['ml_potential'](trainer,
+                                           learner_params['n_ensembles']),
+                                           parent_calc,
+                                           task_name,
+                                           launch_id
+        )
 
-            # Set up the Relaxer
-            OAL_Relaxer = Relaxation(
-                OAL_initial_structure,
-                learner_params["optim_relaxer"],
-                fmax=learner_params["f_max"],
-                steps=learner_params["steps"],
-                maxstep=learner_params["maxstep"],
-            )
+        # Set up the Relaxer
+        OAL_Relaxer = Relaxation(
+            OAL_initial_structure,
+            learner_params["optim_relaxer"],
+            fmax=learner_params["f_max"],
+            steps=learner_params["steps"],
+            maxstep=learner_params["maxstep"],
+        )
 
-            # Run the relaxation with online calc
-            OAL_Relaxer.run(online_calc, filename=filename)
+        # Run the relaxation with online calc
+        OAL_Relaxer.run(online_calc, filename=filename)
 
-            OAL_image = OAL_Relaxer.get_trajectory(filename)[-1]
-            OAL_image.set_calculator(parent_calc)
+        OAL_image = OAL_Relaxer.get_trajectory(filename)[-1]
+        OAL_image.set_calculator(parent_calc)
 
-            # Make a connection to the database
+        # Make a connection to the database
 
-            client = MongoClient('mongodb://fw_oal_admin:gfde223223222rft3@mongodb07.nersc.gov:27017/fw_oal')
-            db = client.get_database('fw_oal')
-            calcs_reversed = {'task_label': task_name,
-                              'calcs_reversed': [{'output':{'energy': OAL_image.get_potential_energy(),
-                                                           'structure': AAA.get_structure(OAL_image).as_dict(), # To be consistent with how OptimizeFW
-                                                           # stores the relaxed object
-                                                           }}]} # keep the same data structure as Javi's workflow
-            print(calcs_reversed)
-            db['tasks'].insert_one(calcs_reversed) # Store the final relaxed structure and energy into the tasks collection
+        client = MongoClient('mongodb://fw_oal_admin:gfde223223222rft3@mongodb07.nersc.gov:27017/fw_oal')
+        db = client.get_database('fw_oal')
+        calcs_reversed = {'task_label': task_name,
+                          'calcs_reversed': [{'output':{'energy': OAL_image.get_potential_energy(),
+                                                       'structure': AAA.get_structure(OAL_image).as_dict(), # To be consistent with how OptimizeFW
+                                                       # stores the relaxed object
+                                                       }}]} # keep the same data structure as Javi's workflow
+        print(calcs_reversed)
+        db['tasks'].insert_one(calcs_reversed) # Store the final relaxed structure and energy into the tasks collection
 
-            return FWAction(
-                stored_data={
-                    "final_energy": OAL_image.get_potential_energy(),
-                    "parent_calls": online_calc.parent_calls,
-                    "optimizer_steps": len(OAL_Relaxer.get_trajectory(filename)),
-                    "learner_params": learner_params_str,
-                },
-            )
+        return FWAction(
+            stored_data={
+                "final_energy": OAL_image.get_potential_energy(),
+                "parent_calls": online_calc.parent_calls,
+                "optimizer_steps": len(OAL_Relaxer.get_trajectory(filename)),
+                "learner_params": learner_params_str,
+            },
+        )
