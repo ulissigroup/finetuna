@@ -6,6 +6,7 @@ import pymongo
 from atomate.vasp.database import VaspCalcDb
 import datetime
 from al_mlp.mongo import make_doc_from_atoms
+from pymongo.errors import InvalidDocument
 import hashlib
 
 __author__ = "Muhammed Shuaibi"
@@ -105,7 +106,7 @@ class OnlineLearner(Calculator):
         atoms_ML.set_calculator(self.ml_potential)
         atoms_ML.get_forces(apply_constraint=False)
 
-        #         (atoms_ML,) = convert_to_singlepoint([atoms_copy])
+        (atoms_ML_sp,) = convert_to_singlepoint([atoms_ML])
 
         # Check if we are extrapolating too far, and if so add/retrain
 
@@ -139,22 +140,26 @@ class OnlineLearner(Calculator):
             force = atoms_ML.get_forces(apply_constraint=False)
             force_cons = atoms_ML.get_forces()
             if conn is not None:
-                self.insert_row(
-                    collection,
-                    iteration=self.iteration,
-                    parent_call=parent_call,
-                    energy=energy,
-                    force=force.tolist(),
-                    max_force_stds=float(self.uncertainty),
-                    base_uncertainty=float(self.base_uncertainty),
-                    uncertainty_tol=float(self.uncertainty_tol),
-                    max_force=float(np.sqrt((force ** 2).sum(axis=1).max())),
-                    max_force_cons=float(np.sqrt((force_cons ** 2).sum(axis=1).max())),
-                    task_name=self.task_name,
-                    launch_id=self.launch_id,
-                    time_stamp=datetime.datetime.utcnow(),
-                )
-                self.insert_atoms_object(atoms_ML, db)
+                try:
+                    self.insert_row(
+                        collection,
+                        iteration=self.iteration,
+                        parent_call=parent_call,
+                        energy=energy,
+                        force=force.tolist(),
+                        max_force_stds=float(self.uncertainty),
+                        base_uncertainty=float(self.base_uncertainty),
+                        uncertainty_tol=float(self.uncertainty_tol),
+                        max_force=float(np.sqrt((force ** 2).sum(axis=1).max())),
+                        max_force_cons=float(np.sqrt((force_cons ** 2).sum(axis=1).max())),
+                        task_name=self.task_name,
+                        launch_id=self.launch_id,
+                        time_stamp=datetime.datetime.utcnow(),
+                    )
+                    self.insert_atoms_object(atoms_ML_sp, db)
+                except InvalidDocument as e:
+                    print(f"Failed to insert Atoms object because of {e}")
+                    pass
 
         # Log to the database the metadata for the step
 
