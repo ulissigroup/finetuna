@@ -106,7 +106,7 @@ class OnlineLearner(Calculator):
         atoms_ML.set_calculator(self.ml_potential)
         atoms_ML.get_forces(apply_constraint=False)
 
-        (atoms_ML_sp,) = convert_to_singlepoint([atoms_ML])
+        #(atoms_ML_sp,) = convert_to_singlepoint([atoms_ML])
 
         # Check if we are extrapolating too far, and if so add/retrain
 
@@ -156,7 +156,7 @@ class OnlineLearner(Calculator):
                         launch_id=self.launch_id,
                         time_stamp=datetime.datetime.utcnow(),
                     )
-                    self.insert_atoms_object(atoms_ML_sp, db)
+                    self.insert_atoms_object(atoms_ML, db)
                 except InvalidDocument as e:
                     print(f"Failed to insert Atoms object because of {e}")
                     pass
