@@ -67,7 +67,7 @@ class OnlineLearnerTask(FiretaskBase):
             learner_params["optim_relaxer"],
             fmax=learner_params["f_max"],
             steps=learner_params["steps"],
-            maxstep=learner_params["maxstep"],
+            #maxstep=learner_params["maxstep"],
         )
 
         # Run the relaxation with online calc
