@@ -95,7 +95,7 @@ if __name__ == "__main__":
         "optim_relaxer": GPMin,
         "f_max": 0.05,
         "steps": 100,
-        "maxstep": maxstep, # Might need larger time step
+        #"maxstep": maxstep, # Might need larger time step # Not used in GPMin
         "ml_potential": AmptorchEnsembleCalc,
     }
 
