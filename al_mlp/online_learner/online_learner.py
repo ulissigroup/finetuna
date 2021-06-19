@@ -2,6 +2,7 @@ import copy
 import numpy as np
 from ase.calculators.calculator import Calculator
 from al_mlp.utils import convert_to_singlepoint
+from ase.calculators.singlepoint import SinglePointCalculator
 import pymongo
 from atomate.vasp.database import VaspCalcDb
 import datetime
@@ -138,6 +139,11 @@ class OnlineLearner(Calculator):
         else:
             energy = atoms_ML.get_potential_energy(apply_constraint=False)
             force = atoms_ML.get_forces(apply_constraint=False)
+            atoms_ML_copy = atoms_ML.copy()
+            calc = SinglePointCalculator(energy=energy,
+                                         forces=force,
+                                         atoms=atoms_ML_copy)
+            atoms_ML_copy.set_calculator(calc)
             force_cons = atoms_ML.get_forces()
             if conn is not None:
                 try:
@@ -156,7 +162,7 @@ class OnlineLearner(Calculator):
                         launch_id=self.launch_id,
                         time_stamp=datetime.datetime.utcnow(),
                     )
-                    self.insert_atoms_object(atoms_ML, db)
+                    self.insert_atoms_object(atoms_ML_copy, db)
                 except InvalidDocument as e:
                     print(f"Failed to insert Atoms object because of {e}")
                     pass
