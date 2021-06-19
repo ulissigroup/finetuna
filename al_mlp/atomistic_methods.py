@@ -149,7 +149,7 @@ class Relaxation:
         structure = self.initial_geometry.copy()
         structure.set_calculator(calc)
         dyn = self.optimizer(
-            structure, maxstep=self.maxstep, trajectory="{}.traj".format(filename)
+            structure, trajectory="{}.traj".format(filename))#, maxstep=self.maxstep)
         )
         dyn.run(fmax=self.fmax, steps=self.steps)
 
