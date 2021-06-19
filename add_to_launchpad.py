@@ -10,7 +10,7 @@ from al_mlp.atomistic_methods import Relaxation
 from amptorch.trainer import AtomsTrainer
 from ase.io import Trajectory
 from al_mlp.online_learner.online_learner import OnlineLearner
-from ase.optimize import BFGS
+from ase.optimize import BFGS, GPMin
 import torch
 import os
 import copy
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         "n_ensembles": 10,
         "use_dask": False,
         "parent_calc": parent_calc,
-        "optim_relaxer": BFGS,
+        "optim_relaxer": GPMin,
         "f_max": 0.05,
         "steps": 100,
         "maxstep": maxstep, # Might need larger time step
