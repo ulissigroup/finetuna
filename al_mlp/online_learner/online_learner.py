@@ -22,7 +22,13 @@ class OnlineLearner(Calculator):
     implemented_properties = ["energy", "forces"]
 
     def __init__(
-        self, learner_params, parent_dataset, ml_potential, parent_calc, base_calc=None, mongo_db=None
+        self,
+        learner_params,
+        parent_dataset,
+        ml_potential,
+        parent_calc,
+        base_calc=None,
+        mongo_db=None,
     ):
         Calculator.__init__(self)
         self.parent_calc = parent_calc
@@ -31,7 +37,13 @@ class OnlineLearner(Calculator):
         ase.db.connect("oal_queried_images.db", append=False)
         self.queried_db = ase.db.connect("oal_queried_images.db")
         if mongo_db is not None:
-            self.mongo_wrapper = MongoWrapper(mongo_db['online_learner'], learner_params, ml_potential, parent_calc, base_calc)
+            self.mongo_wrapper = MongoWrapper(
+                mongo_db["online_learner"],
+                learner_params,
+                ml_potential,
+                parent_calc,
+                base_calc,
+            )
         self.ml_potential = ml_potential
 
         self.base_calc = base_calc
