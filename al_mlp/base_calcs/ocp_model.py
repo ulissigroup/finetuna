@@ -37,10 +37,10 @@ class OCPModel(Calculator):
         self.identifier = identifier
         self.kwargs = kwargs
 
-        model_dict = {}
+        self.model_dict = {}
         with open(model_path) as model_yaml:
-            model_dict = yaml.safe_load(model_yaml)
-        model_dict["optim"]["num_workers"] = 4
+            self.model_dict = yaml.safe_load(model_yaml)
+        self.model_dict["optim"]["num_workers"] = 4
         # model_dict["model"]["freeze"] = False
 
         if not task:
@@ -80,9 +80,9 @@ class OCPModel(Calculator):
 
         self.trainer = ForcesTrainer(
             task=task,
-            model=model_dict["model"],
+            model=self.model_dict["model"],
             dataset=dataset,
-            optimizer=model_dict["optim"],
+            optimizer=self.model_dict["optim"],
             identifier=identifier,
             is_debug=True,
             is_vis=False,
@@ -151,3 +151,8 @@ class OCPModel(Calculator):
         except NotImplementedError:
             print("LMDB does not contain edge index information, set otf_graph=True")
         return batch
+
+    def get_params(self):
+        params = {"checkpoint": self.checkpoint_path}
+        params.update(self.model_dict)
+        return params
