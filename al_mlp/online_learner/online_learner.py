@@ -8,6 +8,7 @@ import math
 import ase.db
 import random
 from al_mlp.calcs import DeltaCalc
+from al_mlp.mongo import MongoWrapper
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -21,13 +22,16 @@ class OnlineLearner(Calculator):
     implemented_properties = ["energy", "forces"]
 
     def __init__(
-        self, learner_params, parent_dataset, ml_potential, parent_calc, base_calc=None
+        self, learner_params, parent_dataset, ml_potential, parent_calc, base_calc=None, mongo_db=None
     ):
         Calculator.__init__(self)
         self.parent_calc = parent_calc
         self.learner_params = learner_params
         self.parent_dataset = convert_to_singlepoint(parent_dataset)
-        self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
+        ase.db.connect("oal_queried_images.db", append=False)
+        self.queried_db = ase.db.connect("oal_queried_images.db")
+        if mongo_db is not None:
+            self.mongo_wrapper = MongoWrapper(mongo_db['online_learner'], learner_params)
         self.ml_potential = ml_potential
 
         self.base_calc = base_calc
@@ -73,7 +77,6 @@ class OnlineLearner(Calculator):
             self.results["forces"] = force
             self.curr_step += 1
             random.seed(self.curr_step)
-            queried_db = ase.db.connect("oal_queried_images.db")
             info = {
                 "check": True,
                 "parentE": energy,
@@ -81,10 +84,11 @@ class OnlineLearner(Calculator):
                 "parentF": str(force),
             }
             write_to_db_online(
-                queried_db,
+                self.queried_db,
                 [atoms],
                 info,
             )
+            self.mongo_wrapper.write_to_mongo(atoms, info)
             return
 
         # Make a copy of the atoms with ensemble energies as a SP
@@ -111,37 +115,41 @@ class OnlineLearner(Calculator):
             energy, force, force_cons = self.add_data_and_retrain(atoms)
             parent_fmax = np.sqrt((force_cons ** 2).sum(axis=1).max())
             random.seed(self.curr_step)
-            queried_db = ase.db.connect("oal_queried_images.db")
             info = {
                 "check": True,
                 "uncertainty": atoms_ML.info["max_force_stds"],
                 "tolerance": atoms_ML.info["uncertain_tol"],
+                "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
+                "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
                 "parentE": energy,
                 "parentMaxForce": parent_fmax,
                 "parentF": str(force),
                 "oalF": str(atoms_ML.get_forces()),
             }
             write_to_db_online(
-                queried_db,
+                self.queried_db,
                 [atoms_ML],
                 info,
             )
+            self.mongo_wrapper.write_to_mongo(atoms_ML, info)
         else:
             energy = atoms_ML.get_potential_energy(apply_constraint=False)
             force = atoms_ML.get_forces(apply_constraint=False)
             random.seed(self.curr_step)
-            queried_db = ase.db.connect("oal_queried_images.db")
             info = {
                 "check": False,
                 "uncertainty": atoms_ML.info["max_force_stds"],
+                "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
+                "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
                 "tolerance": atoms_ML.info["uncertain_tol"],
                 "oalF": str(force),
             }
             write_to_db_online(
-                queried_db,
+                self.queried_db,
                 [atoms_ML],
                 info,
             )
+            self.mongo_wrapper.write_to_mongo(atoms_ML, info)
 
         # Return the energy/force
         self.results["energy"] = energy
@@ -157,6 +165,8 @@ class OnlineLearner(Calculator):
         uncertainty_tol = max(
             [self.dyn_uncertain_tol * base_uncertainty, self.stat_uncertain_tol]
         )
+        atoms.info["dyn_uncertain_tol"] = self.dyn_uncertain_tol * base_uncertainty
+        atoms.info["stat_uncertain_tol"] = self.stat_uncertain_tol
         atoms.info["uncertain_tol"] = uncertainty_tol
         # print(
         #     "Max Force Std: %1.3f eV/A, Max Force Threshold: %1.3f eV/A"
