@@ -277,9 +277,10 @@ class MongoWrapper:
                 )
             except Exception:
                 self.commit_id = None
+        self.run_id = uuid4()
         self.params = {
             "learner": learner_params,
-            "run_id": uuid4(),
+            "run_id": self.run_id,
             "ml_potential": _make_calculator_dict(ml_potential),
             "parent_calc": _make_calculator_dict(parent_calc),
         }
