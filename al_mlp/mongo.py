@@ -21,6 +21,8 @@ from ase import Atoms, Atom
 from ase.calculators.singlepoint import SinglePointCalculator
 from ase.io.jsonio import encode, decode
 from ase.constraints import dict2constraint
+import subprocess
+from uuid import uuid4
 
 
 def make_doc_from_atoms(atoms, **kwargs):
@@ -228,3 +230,28 @@ def make_atoms_from_doc(doc):
                                  atoms=atoms)
     atoms.set_calculator(calc)
     return atoms
+
+
+class MongoWrapper:
+    def __init__(self, mongo_collection, learner_params):
+        self.mongo_collection = mongo_collection
+        try:
+            self.commit_id = subprocess.check_output(["git", "describe", "--always"]).strip().decode()
+        except Exception:
+            try:
+                self.commit_id = subprocess.check_output(["git", "describe", "--always"],cwd="~/al_mlp").strip().decode()
+            except Exception:
+                self.commit_id = None
+        self.params = {
+            "learner": learner_params,
+            "run_id": uuid4()
+        }
+        if self.commit_id is not None:
+            self.params["commit"] = self.commit_id
+
+    def write_to_mongo(self, atoms, info):
+        atoms_doc = make_doc_from_atoms(atoms)
+        atoms_doc.update(self.params)
+        atoms_doc.update({"material": str(atoms.symbols)})
+        atoms_doc.update(info)
+        self.mongo_collection.insert_one(atoms_doc)
