@@ -58,7 +58,7 @@ class OCPModel(Calculator):
         if not dataset:
             dataset = [
                 {
-                    "src": "/home/jovyan/working/ocp/data/s2ef/200k/train/",
+                    "src": "/home/jovyan/shared-datasets/OC20/s2ef/30k/train",
                     "normalize_labels": False,
                 }
             ]
