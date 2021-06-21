@@ -54,7 +54,7 @@ jobs:
           command: |
             source /home/circleci/miniconda/etc/profile.d/conda.sh
             conda activate al_mlp
-            conda install spglib
             pip install -e .
+            pip install spglib
             OMP_NUM_THREADS=1 pytest al_mlp/tests/suites/light_suite.py
           no_output_timeout: 1.5h

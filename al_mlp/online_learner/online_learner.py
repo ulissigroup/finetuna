@@ -44,6 +44,8 @@ class OnlineLearner(Calculator):
                 parent_calc,
                 base_calc,
             )
+        else:
+            self.mongo_wrapper = None
         self.ml_potential = ml_potential
 
         self.base_calc = base_calc
@@ -100,7 +102,8 @@ class OnlineLearner(Calculator):
                 [atoms],
                 info,
             )
-            self.mongo_wrapper.write_to_mongo(atoms, info)
+            if self.mongo_wrapper is not None:
+                self.mongo_wrapper.write_to_mongo(atoms, info)
             return
 
         # Make a copy of the atoms with ensemble energies as a SP
@@ -143,7 +146,8 @@ class OnlineLearner(Calculator):
                 [atoms_ML],
                 info,
             )
-            self.mongo_wrapper.write_to_mongo(atoms_ML, info)
+            if self.mongo_wrapper is not None:
+                self.mongo_wrapper.write_to_mongo(atoms_ML, info)
         else:
             energy = atoms_ML.get_potential_energy(apply_constraint=False)
             force = atoms_ML.get_forces(apply_constraint=False)
@@ -161,7 +165,8 @@ class OnlineLearner(Calculator):
                 [atoms_ML],
                 info,
             )
-            self.mongo_wrapper.write_to_mongo(atoms_ML, info)
+            if self.mongo_wrapper is not None:
+                self.mongo_wrapper.write_to_mongo(atoms_ML, info)
 
         # Return the energy/force
         self.results["energy"] = energy
