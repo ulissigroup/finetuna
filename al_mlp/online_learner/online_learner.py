@@ -31,7 +31,7 @@ class OnlineLearner(Calculator):
         ase.db.connect("oal_queried_images.db", append=False)
         self.queried_db = ase.db.connect("oal_queried_images.db")
         if mongo_db is not None:
-            self.mongo_wrapper = MongoWrapper(mongo_db['online_learner'], learner_params)
+            self.mongo_wrapper = MongoWrapper(mongo_db['online_learner'], learner_params, ml_potential, parent_calc, base_calc)
         self.ml_potential = ml_potential
 
         self.base_calc = base_calc

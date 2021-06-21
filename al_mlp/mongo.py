@@ -48,7 +48,7 @@ def make_doc_from_atoms(atoms, **kwargs):
     doc = OrderedDict()
 
     atoms_dict = OrderedDict(_make_atoms_dict(atoms))
-    calc_dict = _make_calculator_dict(atoms)
+    calc_dict = _make_calculator_dict(atoms.get_calculator())
     results_dict = _make_results_dict(atoms)
     doc.update({'atoms': atoms_dict})
     doc.update({'calc': calc_dict})
@@ -138,7 +138,7 @@ def make_spglib_cell_from_atoms(atoms):
     return cell
 
 
-def _make_calculator_dict(atoms):
+def _make_calculator_dict(calculator):
     '''
     Create a dictionary from an ase.Atoms' object's `calculator` attribute
     Arg:
@@ -148,7 +148,6 @@ def _make_calculator_dict(atoms):
                     Returns an empty dictionary if there is no calculator.
     '''
     calc_dict = OrderedDict()
-    calculator = atoms.get_calculator()
 
     if calculator:
         try:
@@ -233,25 +232,38 @@ def make_atoms_from_doc(doc):
 
 
 class MongoWrapper:
-    def __init__(self, mongo_collection, learner_params):
+    def __init__(self, mongo_collection, learner_params, ml_potential, parent_calc, base_calc):
+        self.first = True
         self.mongo_collection = mongo_collection
         try:
             self.commit_id = subprocess.check_output(["git", "describe", "--always"]).strip().decode()
         except Exception:
             try:
-                self.commit_id = subprocess.check_output(["git", "describe", "--always"],cwd="~/al_mlp").strip().decode()
+                self.commit_id = subprocess.check_output(["git", "describe", "--always"],cwd="/home/al_mlp").strip().decode()
             except Exception:
                 self.commit_id = None
         self.params = {
             "learner": learner_params,
-            "run_id": uuid4()
+            "run_id": uuid4(),
+            "ml_potential": _make_calculator_dict(ml_potential),
+            "parent_calc": _make_calculator_dict(parent_calc),
         }
+        if base_calc is not None:
+            self.params["base_calc"] = _make_calculator_dict(base_calc)
+            self.params["parent_calc"]["parent_calc"] = _make_calculator_dict(parent_calc.calcs[0])
+            self.params["parent_calc"]["base_calc"] = _make_calculator_dict(parent_calc.calcs[1])
+
         if self.commit_id is not None:
             self.params["commit"] = self.commit_id
 
     def write_to_mongo(self, atoms, info):
         atoms_doc = make_doc_from_atoms(atoms)
         atoms_doc.update(self.params)
-        atoms_doc.update({"material": str(atoms.symbols)})
+        atoms_doc.update({
+            "material": str(atoms.symbols),
+            "first": self.first
+            })
+        if self.first is True:
+            self.first=False
         atoms_doc.update(info)
         self.mongo_collection.insert_one(atoms_doc)
