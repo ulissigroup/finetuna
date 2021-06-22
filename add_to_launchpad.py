@@ -155,7 +155,7 @@ if __name__ == "__main__":
             "task_name": f"OAL_IrCH3_maxstep_{host_id}",
             "scheduler_file": '/tmp/my-scheduler.json',
             "_add_launchpad_and_fw_id": True,
-            "_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
+#            "_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
             },
 
         name=f"OAL_CH3Ir_{maxstep}_maxstep",
