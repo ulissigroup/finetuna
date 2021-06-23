@@ -74,10 +74,7 @@ class OnlineLearner(Calculator):
         self.stat_uncertain_tol = learner_params["stat_uncertain_tol"]
         self.dyn_uncertain_tol = learner_params["dyn_uncertain_tol"]
         self.parent_calls = 0
-        self.retrain_idx = []
         self.curr_step = 0
-        self.unsafe_list = {}
-        self.force_list = []
 
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
@@ -194,19 +191,11 @@ class OnlineLearner(Calculator):
         #     "static tol: %1.3f eV/A, dynamic tol: %1.3f eV/A"
         #     % (self.stat_uncertain_tol, self.dyn_uncertain_tol * base_uncertainty)
         # )
-        if uncertainty > uncertainty_tol:
-            maxf = np.sqrt(
-                (atoms.get_forces(apply_constraint=False) ** 2).sum(axis=1).max()
-            )
-            self.unsafe_list[self.curr_step] = [maxf, uncertainty, uncertainty_tol]
-            return True
-        else:
-            return False
+        return uncertainty > uncertainty_tol
 
     def parent_verify(self, atoms):
         forces = atoms.get_forces()
         fmax = np.sqrt((forces ** 2).sum(axis=1).max())
-        self.force_list.append(self.curr_step)
 
         if fmax <= self.fmax_verify_threshold:
             print("Force below threshold: check with parent")
@@ -226,7 +215,6 @@ class OnlineLearner(Calculator):
             return energy, force, force_cons
 
         start = time.time()
-        self.retrain_idx.append(self.curr_step)
 
         atoms_copy = atoms.copy()
         atoms_copy.set_calculator(self.parent_calc)
