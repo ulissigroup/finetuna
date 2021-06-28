@@ -152,13 +152,13 @@ if __name__ == "__main__":
             "parent_dataset": "/home/jovyan/al_mlp_repo/images.traj",
             "filename": filename,
             "init_structure_path": "/home/jovyan/al_mlp_repo/structures/ad_slab.traj",
-            "task_name": f"OAL_IrCH3_maxstep_{host_id}",
+            "task_name": f"OAL_IrCH3_{stat_uncertain_tol}_{host_id}",
             "scheduler_file": '/tmp/my-scheduler.json',
             "_add_launchpad_and_fw_id": True,
-            "_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
+            #"_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
             },
 
-        name=f"OAL_CH3Ir_{maxstep}_maxstep",
+        name=f"OAL_CH3Ir_{stat_uncertain_tol}_unc_tol",
     )]
 
     # Let's try and screen through a hyperparameter like n_ensembles through Fireworks. We will start might just add a set of FWs to the WF and run them
