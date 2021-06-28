@@ -28,6 +28,7 @@ class OnlineLearner(Calculator):
         ml_potential,
         parent_calc,
         base_calc=None,
+        refs=None,
         mongo_db=None,
     ):
         Calculator.__init__(self)
@@ -50,11 +51,11 @@ class OnlineLearner(Calculator):
 
         self.base_calc = base_calc
         if self.base_calc is not None:
-            self.delta_calc = DeltaCalc(
-                [self.ml_potential, self.base_calc],
-                "add",
-                self.parent_calc.refs,
-            )
+            if refs is None:
+                self.outer_refs = self.parent_calc.refs
+            else:
+                self.outer_refs = refs
+            
 
         # Don't bother training with only one data point,
         # as the uncertainty is meaningless
@@ -113,7 +114,7 @@ class OnlineLearner(Calculator):
             new_delta = DeltaCalc(
                 [atoms_ML.calc, self.base_calc],
                 "add",
-                self.parent_calc.refs,
+                self.outer_refs,
             )
             atoms_copy.set_calculator(new_delta)
             (atoms_delta,) = convert_to_singlepoint([atoms_copy])
@@ -243,7 +244,7 @@ class OnlineLearner(Calculator):
             new_delta = DeltaCalc(
                 [new_data.calc, self.base_calc],
                 "add",
-                self.parent_calc.refs,
+                self.outer_refs,
             )
             atoms_copy.set_calculator(new_delta)
             (new_data,) = convert_to_singlepoint([atoms_copy])
