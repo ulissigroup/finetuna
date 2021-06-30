@@ -37,12 +37,16 @@ EXPOSE 8888
 
 RUN sudo apt update && sudo apt-get install htop
 
+# Install flare_pp 
+# FIXME
+#RUN BLA_VENDOR=OpenBLAS pip install flare_pp
+
 #RUN wget https://raw.githubusercontent.com/hackingmaterials/automatminer/master/requirements.txt
 #RUN sed -i '/sci/d' ./infile
 #RUN pip install git+https://github.com/hackingmaterials/automatminer.git
 
 # Install Vasp Interactive in the image
-RUN pip install git+https://github.com/ulissigroup/vasp-interactive.git
+RUN pip install git+https://github.com/ulissigroup/vasp-interactive.git && pip install deepdiff
 
 # Getting issues running mo-wulff-worklow because PPs not compatible with pymatgen
 RUN pmg config --add PMG_VASP_PSP_DIR $HOME/atomate/POTCARs/ && \
