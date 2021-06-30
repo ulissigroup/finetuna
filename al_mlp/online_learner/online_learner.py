@@ -8,7 +8,8 @@ from atomate.vasp.database import VaspCalcDb
 import datetime
 from al_mlp.mongo import make_doc_from_atoms
 from pymongo.errors import InvalidDocument
-import hashlib
+from deepdiff import DeepHash
+from copy import deepcopy
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -239,9 +240,14 @@ class OnlineLearner(Calculator):
     def insert_atoms_object(self, atoms, db):
         # insert the Atoms object into another collection
         doc = make_doc_from_atoms(atoms)
+        # Make a copy of the doc in which we pop the 'user', 'mtime','ctime' keys to exclude from hash
+        doc_copy = deepcopy(doc)
+        for key in ('user', 'mtime', 'ctime'):
+            doc_copy.pop(key)
         # check if the doc already exists in the collection using hash field
-        string = str(doc)
-        hash_ = hashlib.md5(string.encode('utf-8')).hexdigest()
+        hash_ = DeepHash(doc_copy, number_format_notation="e", significant_digits=3)[doc_copy] # Use scientific notation and only look
+        del doc_copy # Dispose of the doc_copy
+        # upto three digits after the decimal to see if float should map to the same hash
         if db["atoms_objects"].find_one({'hash_': hash_}) is None:
             doc['hash_'] = hash_
             self.insert_row(db["atoms_objects"], **doc)
