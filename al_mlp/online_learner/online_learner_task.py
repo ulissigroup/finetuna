@@ -30,6 +30,8 @@ class OnlineLearnerTask(FiretaskBase):
             "init_structure_path"
         )  # This has to be a full path
         db_path = fw_spec.get("db_path", None)  # This is the path to a db config
+        # Get the fw_id
+        fw_id = self.fw_id
         # Get the latest launch_id for this FW
         launch_id = self.launchpad.launches.find({"fw_id": self.fw_id}).sort([('launch_id',-1)]).limit(1)[0]['launch_id']
         # Decode the str back to objects to conduct the OAL
@@ -58,7 +60,9 @@ class OnlineLearnerTask(FiretaskBase):
                                            learner_params['n_ensembles']),
                                            parent_calc,
                                            task_name,
-                                           launch_id
+                                           launch_id,
+                                           fw_id
+
         )
 
         # Set up the Relaxer

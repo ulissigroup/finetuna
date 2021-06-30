@@ -25,7 +25,8 @@ class OnlineLearner(Calculator):
         ml_potential,
         parent_calc,
         task_name,
-        launch_id
+        launch_id,
+        fw_id
     ):
         Calculator.__init__(self)
 
@@ -37,6 +38,7 @@ class OnlineLearner(Calculator):
         self.ml_potential = ml_potential
         self.task_name = task_name
         self.launch_id = launch_id
+        self.fw_id = fw_id
 
         # Don't bother training with only one data point,
         # as the uncertainty is meaningless
@@ -250,6 +252,8 @@ class OnlineLearner(Calculator):
         # upto three digits after the decimal to see if float should map to the same hash
         if db["atoms_objects"].find_one({'hash_': hash_}) is None:
             doc['hash_'] = hash_
+            doc['launch_id'] = self.launch_id
+            doc['fw_id'] = self.fw_id
             self.insert_row(db["atoms_objects"], **doc)
         else:
             print('Duplicate found, not adding to DB...')
