@@ -9,6 +9,7 @@ import numpy as np
 from al_mlp.atomistic_methods import Relaxation
 from amptorch.trainer import AtomsTrainer
 from ase.io import Trajectory
+from ase.io.trajectory import TrajectoryWriter
 from al_mlp.online_learner.online_learner import OnlineLearner
 from ase.optimize import BFGS
 import torch
@@ -16,11 +17,20 @@ import os
 import copy
 import jsonpickle
 from utilities import extract_job_parameters
-from vasp_interactive import VaspInteractive
+#from vasp_interactive import VaspInteractive
 
 
 if __name__ == "__main__":
 
+
+    structures = [Trajectory('structures/ad_slab.traj')[0].copy() for i in range(10)]
+    for i, structure in enumerate(structures):
+        structure.rattle(0.5, seed=np.random.randint(0,high=100000))
+        writer = TrajectoryWriter(filename=f"structures/ad_slab_{i}.traj", mode='w', atoms=structure)
+        writer.write()
+
+
+    breakpoint()
     job_id = int(os.environ['JOB_ID']) # should be unique ID
     host_id = os.environ['HOSTNAME']
 
@@ -135,53 +145,26 @@ if __name__ == "__main__":
 
     trainer_config_encoded = jsonpickle.encode(config)
     learner_params_encoded = jsonpickle.encode(learner_params)
-    filename = "CH3_Ir_relaxation"
-    #
-    #    # Instantiate the Firework made up of one firetask
-    # Let's try and tune the uncertain_tol by launching parallel FireWorks
 
-    #learner_params_set = [dict(learner_params, uncertain_tol=tol) for tol in [uncertain_tol]]
-    #learner_params_set_encoded = [jsonpickle.encode(lps) for lps in learner_params_set]
+    for i in enumerate(structures):
+         
+        filename = f"CH3_Ir_relaxation_{i}"
+        fireworks = [Firework(
+            OnlineLearnerTask(),
+            spec={
+                "learner_params": learner_params_encoded,
+                "trainer_config": trainer_config_encoded,
+                "parent_dataset": "/home/jovyan/al_mlp_repo/images.traj",
+                "filename": filename,
+                "init_structure_path": f"/home/jovyan/al_mlp_repo/structures/ad_slab_{i}.traj",
+                "task_name": f"OAL_IrCH3_{stat_uncertain_tol}_{host_id}",
+                "scheduler_file": '/tmp/my-scheduler.json',
+                "_add_launchpad_and_fw_id": True,
+                #"_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
+                },
 
+            name=f"OAL_CH3Ir_{stat_uncertain_tol}_unc_tol",
+        )]
 
-    fireworks = [Firework(
-        OnlineLearnerTask(),
-        spec={
-            "learner_params": learner_params_encoded,
-            "trainer_config": trainer_config_encoded,
-            "parent_dataset": "/home/jovyan/al_mlp_repo/images.traj",
-            "filename": filename,
-            "init_structure_path": "/home/jovyan/al_mlp_repo/structures/ad_slab.traj",
-            "task_name": f"OAL_IrCH3_{stat_uncertain_tol}_{host_id}",
-            "scheduler_file": '/tmp/my-scheduler.json',
-            "_add_launchpad_and_fw_id": True,
-            #"_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
-            },
-
-        name=f"OAL_CH3Ir_{stat_uncertain_tol}_unc_tol",
-    )]
-
-    # Let's try and screen through a hyperparameter like n_ensembles through Fireworks. We will start might just add a set of FWs to the WF and run them
-    # "all at once"
-    #    learner_params_set = [dict(learner_params,n_ensembles=i) for i in range(5,7)]
-
-    #    fireworks = [Firework(OnlineLearnerTask(),
-    #        spec={'learner_params': jsonpickle.encode(learner_params),
-    #            'trainer_config': trainer_config_encoded,
-    #            'parent_dataset': os.path.join(os.getcwd(), 'images.traj'),
-    #            'filename': filename,
-    #            'init_structure_path': os.path.join(os.getcwd(), init_struct_filename),# absolute path of the .traj file containing the initial structure
-    #            'db_path':'/home/jovyan/atomate/config/db.json'}
-    #            ,name=f"OAL_FW_{i+1}") for i,learner_params in enumerate(learner_params_set)]
-    #
-    wf = Workflow(fireworks)
-    launchpad.add_wf(wf)
-#    launch_multiprocess(launchpad,
-#                         FWorker(),
-#                         'DEBUG',
-#                         nlaunches=0,
-#                         num_jobs=1,
-#                         sleep_time=0.5,
-#                         ppn=20)
-    #os.chdir('../')
-    #rapidfire(launchpad, FWorker(name="test_kubernetes"))
+        wf = Workflow(fireworks)
+        launchpad.add_wf(wf)
