@@ -146,7 +146,7 @@ if __name__ == "__main__":
     trainer_config_encoded = jsonpickle.encode(config)
     learner_params_encoded = jsonpickle.encode(learner_params)
 
-    for i in enumerate(structures):
+    for i, structure in enumerate(structures):
          
         filename = f"CH3_Ir_relaxation_{i}"
         fireworks = [Firework(
