@@ -6,7 +6,7 @@ from ase.calculators.singlepoint import SinglePointCalculator
 import pymongo
 from atomate.vasp.database import VaspCalcDb
 import datetime
-from al_mlp.mongo import make_doc_from_atoms
+from al_mlp.mongo import make_doc_from_atoms, make_atoms_from_doc
 from pymongo.errors import InvalidDocument
 from deepdiff import DeepHash
 from copy import deepcopy
@@ -219,7 +219,12 @@ class OnlineLearner(Calculator):
         force_actual = new_data.get_forces(apply_constraint=False)
         force_cons = new_data.get_forces()
 
-        self.parent_dataset += [new_data]
+        conn = self.mongodb_conn()
+
+        if conn is not None:
+            db = conn.db
+        parent_data = [make_atoms_from_doc(doc) for doc in db['atoms_objects'].find({})]
+        self.parent_dataset = parent_data
 
         # Don't bother training if we have less than two datapoints
 
