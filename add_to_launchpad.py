@@ -23,10 +23,10 @@ from utilities import extract_job_parameters
 if __name__ == "__main__":
 
 
-    structures = [Trajectory('structures/ad_slab.traj')[0].copy() for i in range(10)]
+    structures = [Trajectory('structures/MgO_init_structure.traj')[0].copy() for i in range(10)]
     for i, structure in enumerate(structures):
         structure.rattle(0.1, seed=np.random.randint(0,high=100000))
-        writer = TrajectoryWriter(filename=f"structures/ad_slab_{i}.traj", mode='w', atoms=structure)
+        writer = TrajectoryWriter(filename=f"structures/MgO_init_structure_{i}.traj", mode='w', atoms=structure)
         writer.write()
 
 
@@ -43,23 +43,14 @@ if __name__ == "__main__":
     dyn_uncertain_tol = params['dyn_uncertain_tol']
     maxstep = params['maxstep']
 #    cores = params['cores']
+
+    elements = np.unique(np.array(structures[0].get_chemical_symbols())).tolist()
     # Point the launchpad to the remote database on NERSC 
     launchpad = LaunchPad(host='mongodb07.nersc.gov',
                           name='fw_oal',
                           password='gfde223223222rft3',
                           port=27017,
                           username='fw_oal_admin')
-#    launchpad.reset('', require_password=False)
-    # import make_ensemble and dask for setting parallelization
-#    from dask.distributed import Client, LocalCluster
-#
-#    cluster = LocalCluster(processes=True, n_workers=10, threads_per_worker=1)
-#    client = Client(cluster)
-#    AmptorchEnsembleCalc.set_executor(client)
-#    elements = ["Cu"]
-#    elements = ["Mg", "O"]
-    elements = ['Ir', 'C', 'H']
-
     Gs = {
         "default": {
             "G2": {
@@ -148,7 +139,7 @@ if __name__ == "__main__":
 
     for i, structure in enumerate(structures):
          
-        filename = f"CH3_Ir_relaxation_{i}"
+        filename = f"MgO_relaxation_{i}"
         fireworks = [Firework(
             OnlineLearnerTask(),
             spec={
@@ -156,14 +147,14 @@ if __name__ == "__main__":
                 "trainer_config": trainer_config_encoded,
                 "parent_dataset": "/home/jovyan/al_mlp_repo/images.traj",
                 "filename": filename,
-                "init_structure_path": f"/home/jovyan/al_mlp_repo/structures/ad_slab_{i}.traj",
-                "task_name": f"OAL_IrCH3_{stat_uncertain_tol}_{host_id}",
+                "init_structure_path": f"/home/jovyan/al_mlp_repo/structures/MgO_init_structure_{i}.traj",
+                "task_name": f"OAL_MgO_{stat_uncertain_tol}_{host_id}",
                 "scheduler_file": '/tmp/my-scheduler.json',
                 "_add_launchpad_and_fw_id": True,
                 #"_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
                 },
 
-            name=f"OAL_CH3Ir_{stat_uncertain_tol}_unc_tol",
+            name=f"OAL_MgO_{stat_uncertain_tol}_unc_tol",
         )]
 
         wf = Workflow(fireworks)
