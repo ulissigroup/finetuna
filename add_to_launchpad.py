@@ -25,7 +25,11 @@ if __name__ == "__main__":
 
     structures = [Trajectory('structures/MgO_init_structure.traj')[0].copy() for i in range(10)]
     for i, structure in enumerate(structures):
-        structure.rattle(0.007, seed=np.random.randint(0,high=100000))
+        if i == 0:
+            stdev = 0
+        else:
+            stdev = 0.001
+        structure.rattle(stdev, seed=np.random.randint(0,high=100000))
         writer = TrajectoryWriter(filename=f"structures/MgO_init_structure_{i}.traj", mode='w', atoms=structure)
         writer.write()
 
@@ -73,7 +77,7 @@ if __name__ == "__main__":
         command=f"mpirun -np {cores} /opt/vasp.6.1.2_pgi_mkl_beef/bin/vasp_std",
         ediffg=-0.03,
         xc="rpbe",
-        encut=400,  # planewave cutoff
+        encut=520,  # planewave cutoff
         lreal=True,  # for slabs lreal is True for bulk False
         nsw=0,  # number of ionic steps in the relaxation
         #                isym=-1,
