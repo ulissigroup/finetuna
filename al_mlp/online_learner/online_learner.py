@@ -55,7 +55,6 @@ class OnlineLearner(Calculator):
                 "add",
                 self.parent_calc.refs,
             )
-            
 
         # Don't bother training with only one data point,
         # as the uncertainty is meaningless
