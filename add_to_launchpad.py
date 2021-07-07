@@ -7,6 +7,7 @@ from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
 from ase.calculators.vasp import Vasp
 import numpy as np
 from al_mlp.atomistic_methods import Relaxation
+from al_mlp.ml_potentials.flare_pp_calc import FlarePPCalc
 from amptorch.trainer import AtomsTrainer
 from ase.io import Trajectory
 from ase.io.trajectory import TrajectoryWriter
@@ -85,24 +86,6 @@ if __name__ == "__main__":
         kpts=(5, 5, 1),
     )
 
-    learner_params = {
-        "max_iterations": 10,
-        "samples_to_retrain": 1,
-        "filename": "relax_example",
-        "file_dir": "./",
-        "stat_uncertain_tol": stat_uncertain_tol, # eV/A
-        "dyn_uncertain_tol": dyn_uncertain_tol, # Just a multiplier
-        "fmax_verify_threshold": 0.05,  # eV/AA
-        "relative_variance": True,
-        "n_ensembles": 10,
-        "use_dask": False,
-        "parent_calc": parent_calc,
-        "optim_relaxer": BFGS,
-        "f_max": 0.05,
-        "steps": 100,
-        "maxstep": maxstep, # Might need larger time step
-        "ml_potential": AmptorchEnsembleCalc,
-    }
 
     config = {
         "model": {"get_forces": True, "num_layers": num_layers, "num_nodes": num_nodes},
@@ -134,24 +117,62 @@ if __name__ == "__main__":
         },
     }
 
+    trainer_config_encoded = jsonpickle.encode(config)
+    flare_params = {
+        "sigma": 2,
+        "power": 2,
+        "cutoff_function": "quadratic",
+        "cutoff": 5.0,
+        "radial_basis": "chebyshev",
+        "cutoff_hyps": [],
+        "sigma_e": 0.002,
+        "sigma_f": 0.05,
+        "sigma_s": 0.0006,
+        "max_iterations": 50,
+        # "update_gp_mode": "uncertain",
+        # "update_gp_range": [5],
+        "freeze_hyps": 10,
+    } 
+
+    trainer = AtomsTrainer(config)
+
     # We need to encode all the configs before passing them as fw_spec. This is because fireworks
     # only handles serialization for primitives and not for custom class objects, which we currently
     # define as part of our configs
 
-    trainer_config_encoded = jsonpickle.encode(config)
-    learner_params_encoded = jsonpickle.encode(learner_params)
 
     for i, structure in enumerate(structures):
+        learner_params = {
+            "max_iterations": 10,
+            "samples_to_retrain": 1,
+            "filename": "relax_example",
+            "file_dir": "./",
+            "stat_uncertain_tol": stat_uncertain_tol, # eV/A
+            "dyn_uncertain_tol": dyn_uncertain_tol, # Just a multiplier
+            "fmax_verify_threshold": 0.05,  # eV/AA
+            "relative_variance": True,
+            "n_ensembles": 10,
+            "use_dask": False,
+            "parent_calc": parent_calc,
+            "optim_relaxer": BFGS,
+            "f_max": 0.05,
+            "steps": 100,
+            "maxstep": maxstep, # Might need larger time step
+#            "ml_potential": AmptorchEnsembleCalc(trainer, learner_params['n_ensembles']),
+            "ml_potential": FlarePPCalc(flare_params, [structure])
+        }
+
+        learner_params_encoded = jsonpickle.encode(learner_params)
          
         filename = f"MgO_relaxation_{i}"
         fireworks = [Firework(
             OnlineLearnerTask(),
             spec={
                 "learner_params": learner_params_encoded,
-                "trainer_config": trainer_config_encoded,
+        #        "trainer_config": trainer_config_encoded,
                 "parent_dataset": "/home/jovyan/al_mlp_repo/images.traj",
                 "filename": filename,
-                "init_structure_path": f"/home/jovyan/al_mlp_repo/structures/MgO_init_structure_{i}.traj",
+        #        "init_structure_path": f"/home/jovyan/al_mlp_repo/structures/MgO_init_structure_{i}.traj",
                 "task_name": f"OAL_MgO_{stat_uncertain_tol}_{host_id}",
                 "scheduler_file": '/tmp/my-scheduler.json',
                 "_add_launchpad_and_fw_id": True,
