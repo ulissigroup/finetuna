@@ -41,8 +41,8 @@ EXPOSE 8888
 RUN sudo apt update && sudo apt-get install htop
 
 # Install flare_pp 
-# FIXME
 RUN BLA_VENDOR=OpenBLAS pip install flare_pp
+ENV LD_LIBRARY_PATH "/opt/conda/lib:$LD_LIBRARY_PATH"
 
 #RUN wget https://raw.githubusercontent.com/hackingmaterials/automatminer/master/requirements.txt
 #RUN sed -i '/sci/d' ./infile
