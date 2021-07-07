@@ -22,6 +22,9 @@ RUN conda install --quiet --yes \
     'matplotlib' \
     'plotly' \
     'tqdm' \
+    'cmake' \
+    'openblas' \
+    'liblapacke' \
     'ipykernel' \
     'jupyterlab' &&\
     conda install --quiet --yes \
@@ -39,7 +42,7 @@ RUN sudo apt update && sudo apt-get install htop
 
 # Install flare_pp 
 # FIXME
-#RUN BLA_VENDOR=OpenBLAS pip install flare_pp
+RUN BLA_VENDOR=OpenBLAS pip install flare_pp
 
 #RUN wget https://raw.githubusercontent.com/hackingmaterials/automatminer/master/requirements.txt
 #RUN sed -i '/sci/d' ./infile
