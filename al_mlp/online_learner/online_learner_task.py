@@ -22,7 +22,6 @@ class OnlineLearnerTask(FiretaskBase):
 
         # learner params for the meat of the OnlineLearner
         learner_params_str = fw_spec.get("learner_params")
-        trainer_config_str = fw_spec.get("trainer_config")
         images_str = fw_spec.get("parent_dataset")  # This has to be a full path
         filename = fw_spec.get("filename")
         task_name = fw_spec.get("task_name")
@@ -36,7 +35,6 @@ class OnlineLearnerTask(FiretaskBase):
         launch_id = self.launchpad.launches.find({"fw_id": self.fw_id}).sort([('launch_id',-1)]).limit(1)[0]['launch_id']
         # Decode the str back to objects to conduct the OAL
         learner_params = jsonpickle.decode(learner_params_str)
-        trainer_config = jsonpickle.decode(trainer_config_str)
         # Load the parent dataset if any
         images = [atoms for atoms in Trajectory(images_str)]
 
@@ -51,7 +49,6 @@ class OnlineLearnerTask(FiretaskBase):
         ]  # right now this needs to be a full path
 
         # Set up the trainer for the online learner
-        trainer = AtomsTrainer(trainer_config)
         parent_calc = learner_params['parent_calc']
         # Set up the online calc
         online_calc = OnlineLearner(

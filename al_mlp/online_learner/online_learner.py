@@ -35,31 +35,11 @@ class OnlineLearner(Calculator):
         Calculator.__init__(self)
         self.parent_calc = parent_calc
         self.learner_params = learner_params
-        self.parent_dataset = convert_to_singlepoint(parent_dataset)
-        ase.db.connect("oal_queried_images.db", append=False)
-        self.queried_db = ase.db.connect("oal_queried_images.db")
-        if mongo_db is not None:
-            self.mongo_wrapper = MongoWrapper(
-                mongo_db["online_learner"],
-                learner_params,
-                ml_potential,
-                parent_calc,
-                base_calc,
-            )
-        else:
-            self.mongo_wrapper = None
+        self.parent_dataset = parent_dataset
         self.ml_potential = ml_potential
         self.task_name = task_name
         self.launch_id = launch_id
         self.fw_id = fw_id
-
-        self.base_calc = base_calc
-        if self.base_calc is not None:
-            self.delta_calc = DeltaCalc(
-                [self.ml_potential, self.base_calc],
-                "add",
-                self.parent_calc.refs,
-            )
 
         # Don't bother training with only one data point,
         # as the uncertainty is meaningless
