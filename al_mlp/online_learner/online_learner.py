@@ -2,17 +2,18 @@ import copy
 from ase.calculators.singlepoint import SinglePointCalculator
 import numpy as np
 from ase.calculators.calculator import Calculator
-from al_mlp.utils import convert_to_singlepoint, write_to_db, write_to_db_online
-import time
-import math
-import ase.db
-import random
-from al_mlp.calcs import DeltaCalc
-from al_mlp.mongo import MongoWrapper
+from al_mlp.utils import convert_to_singlepoint
+from ase.calculators.singlepoint import SinglePointCalculator
+import pymongo
+from atomate.vasp.database import VaspCalcDb
+import datetime
+from al_mlp.mongo import make_doc_from_atoms, make_atoms_from_doc
+from pymongo.errors import InvalidDocument
+from deepdiff import DeepHash
+from copy import deepcopy
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
-
 
 class OnlineLearner(Calculator):
     """
@@ -27,8 +28,9 @@ class OnlineLearner(Calculator):
         parent_dataset,
         ml_potential,
         parent_calc,
-        base_calc=None,
-        mongo_db=None,
+        task_name,
+        launch_id,
+        fw_id
     ):
         Calculator.__init__(self)
         self.parent_calc = parent_calc
@@ -47,6 +49,9 @@ class OnlineLearner(Calculator):
         else:
             self.mongo_wrapper = None
         self.ml_potential = ml_potential
+        self.task_name = task_name
+        self.launch_id = launch_id
+        self.fw_id = fw_id
 
         self.base_calc = base_calc
         if self.base_calc is not None:
@@ -58,6 +63,7 @@ class OnlineLearner(Calculator):
 
         # Don't bother training with only one data point,
         # as the uncertainty is meaningless
+
         if len(self.parent_dataset) > 1:
             ml_potential.train(self.parent_dataset)
 
@@ -66,139 +72,159 @@ class OnlineLearner(Calculator):
         else:
             self.fmax_verify_threshold = np.nan  # always False
 
-        if "max_parent_calls" in self.learner_params:
-            self.max_parent_calls = self.learner_params["max_parent_calls"]
-        else:
-            self.max_parent_calls = None
-
         self.stat_uncertain_tol = learner_params["stat_uncertain_tol"]
         self.dyn_uncertain_tol = learner_params["dyn_uncertain_tol"]
         self.parent_calls = 0
-        self.curr_step = 0
+        self.iteration = 0
 
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
 
+        # breakpoint()
+        # If can make a connection to MongoDB then create a database to house the OAL outputs
+        conn = self.mongodb_conn()
+
+        if conn is not None:
+            # Look to see if the oal_metadata collection exists and if not create it
+            db = conn.db
+
+            if "oal_metadata" not in db.collection_names():
+                db.create_collection("oal_metadata")
+            if "atoms_objects" not in db.collection_names():
+                db.create_collection("atoms_objects")
+
+            collection = db.get_collection("oal_metadata")
+
         # If we have less than two data points, uncertainty is not
         # well calibrated so just use DFT
+
         if len(self.parent_dataset) < 2:
-            energy, force, force_cons = self.add_data_and_retrain(atoms)
-            parent_fmax = np.sqrt((force_cons ** 2).sum(axis=1).max())
+            energy, force, atoms_sp, force_cons = self.add_data_and_retrain(atoms)
             self.results["energy"] = energy
             self.results["forces"] = force
-            self.curr_step += 1
-            random.seed(self.curr_step)
-            info = {
-                "check": True,
-                "parentE": energy,
-                "parentMaxForce": parent_fmax,
-                "parentF": str(force),
-            }
-            write_to_db_online(
-                self.queried_db,
-                [atoms],
-                info,
-            )
-            if self.mongo_wrapper is not None:
-                self.mongo_wrapper.write_to_mongo(atoms, info)
+
+            if conn is not None:
+                self.insert_row(
+                    collection,
+                    iteration=self.iteration,
+                    parent_call=True,
+                    energy=energy,
+                    force=force.tolist(),
+                    max_force_stds="NA",
+                    base_uncertainty="NA",
+                    uncertainty_tol="NA",
+                    max_force=float(np.sqrt((force ** 2).sum(axis=1).max())),
+                    max_force_cons=float(np.sqrt((force_cons ** 2).sum(axis=1).max())),
+                    task_name=self.task_name,
+                    launch_id=self.launch_id,
+                    time_stamp=datetime.datetime.utcnow(),
+                )
+                self.insert_atoms_object(atoms_sp, db)
+                
+
+            self.iteration += 1
+
             return
 
         # Make a copy of the atoms with ensemble energies as a SP
-        atoms_copy = atoms.copy()
-        atoms_copy.set_calculator(self.ml_potential)
-        (atoms_ML,) = convert_to_singlepoint([atoms_copy])
-        self.curr_step += 1
+        atoms_ML = atoms.copy()
+        atoms_ML.set_calculator(self.ml_potential)
+        atoms_ML.get_forces(apply_constraint=False)
 
-        if self.base_calc is not None:
-            new_delta = DeltaCalc(
-                [atoms_ML.calc, self.base_calc],
-                "add",
-                self.parent_calc.refs,
-            )
-            atoms_copy.set_calculator(new_delta)
-            (atoms_delta,) = convert_to_singlepoint([atoms_copy])
-            for key, value in atoms_ML.info.items():
-                atoms_delta.info[key] = value
-            atoms_ML = atoms_delta
+        #(atoms_ML_sp,) = convert_to_singlepoint([atoms_ML])
 
         # Check if we are extrapolating too far, and if so add/retrain
+
+        # Initialize the parent_call boolean variable
+        parent_call = False
+
         if self.unsafe_prediction(atoms_ML) or self.parent_verify(atoms_ML):
+            parent_call = True
             # We ran DFT, so just use that energy/force
-            energy, force, force_cons = self.add_data_and_retrain(atoms)
-            parent_fmax = np.sqrt((force_cons ** 2).sum(axis=1).max())
-            random.seed(self.curr_step)
-            info = {
-                "check": True,
-                "uncertainty": atoms_ML.info["max_force_stds"],
-                "tolerance": atoms_ML.info["uncertain_tol"],
-                "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
-                "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
-                "parentE": energy,
-                "parentMaxForce": parent_fmax,
-                "parentF": str(force),
-                "oalF": str(atoms_ML.get_forces()),
-            }
-            write_to_db_online(
-                self.queried_db,
-                [atoms_ML],
-                info,
-            )
-            if self.mongo_wrapper is not None:
-                self.mongo_wrapper.write_to_mongo(atoms_ML, info)
+            energy, force, atoms_sp, force_cons = self.add_data_and_retrain(atoms)
+            if conn is not None:
+                self.insert_row(
+                    collection,
+                    iteration=self.iteration,
+                    parent_call=parent_call,
+                    energy=energy,
+                    force=force.tolist(),
+                    max_force_stds=float(self.uncertainty),
+                    base_uncertainty=float(self.base_uncertainty),
+                    uncertainty_tol=float(self.uncertainty_tol),
+                    max_force=float(np.sqrt((force ** 2).sum(axis=1).max())),
+                    max_force_cons=float(np.sqrt((force_cons ** 2).sum(axis=1).max())),
+                    max_force_oal_cons=float(np.sqrt((atoms_ML.get_forces() ** 2).sum(axis=1).max())),
+                    task_name=self.task_name,
+                    launch_id=self.launch_id,
+                    time_stamp=datetime.datetime.utcnow(),
+                )
+                self.insert_atoms_object(atoms_sp, db)
         else:
             energy = atoms_ML.get_potential_energy(apply_constraint=False)
             force = atoms_ML.get_forces(apply_constraint=False)
-            random.seed(self.curr_step)
-            info = {
-                "check": False,
-                "uncertainty": atoms_ML.info["max_force_stds"],
-                "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
-                "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
-                "tolerance": atoms_ML.info["uncertain_tol"],
-                "oalF": str(force),
-            }
-            write_to_db_online(
-                self.queried_db,
-                [atoms_ML],
-                info,
-            )
-            if self.mongo_wrapper is not None:
-                self.mongo_wrapper.write_to_mongo(atoms_ML, info)
+            atoms_ML_copy = atoms_ML.copy()
+            calc = SinglePointCalculator(energy=energy,
+                                         forces=force,
+                                         atoms=atoms_ML_copy)
+            atoms_ML_copy.set_calculator(calc)
+            force_cons = atoms_ML.get_forces()
+            if conn is not None:
+                try:
+                    self.insert_row(
+                        collection,
+                        iteration=self.iteration,
+                        parent_call=parent_call,
+                        energy=energy,
+                        force=force.tolist(),
+                        max_force_stds=float(self.uncertainty),
+                        base_uncertainty=float(self.base_uncertainty),
+                        uncertainty_tol=float(self.uncertainty_tol),
+                        max_force=float(np.sqrt((force ** 2).sum(axis=1).max())),
+                        max_force_cons=float(np.sqrt((force_cons ** 2).sum(axis=1).max())),
+                        task_name=self.task_name,
+                        launch_id=self.launch_id,
+                        time_stamp=datetime.datetime.utcnow(),
+                    )
+                    self.insert_atoms_object(atoms_ML_copy, db)
+                except InvalidDocument as e:
+                    print(f"Failed to insert Atoms object because of {e}")
+                    pass
 
+        # Log to the database the metadata for the step
+
+
+        self.iteration += 1
         # Return the energy/force
         self.results["energy"] = energy
         self.results["forces"] = force
 
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force
-        uncertainty = atoms.info["max_force_stds"]
-        if math.isnan(uncertainty):
-            raise ValueError("Input is not a positive integer")
+        self.uncertainty = atoms.calc.results["max_force_stds"]
         forces = atoms.get_forces(apply_constraint=False)
-        base_uncertainty = np.sqrt((forces ** 2).sum(axis=1).max())
-        uncertainty_tol = max(
-            [self.dyn_uncertain_tol * base_uncertainty, self.stat_uncertain_tol]
+        self.base_uncertainty = np.sqrt((forces ** 2).sum(axis=1).max())
+        self.uncertainty_tol = max(
+            [self.dyn_uncertain_tol * self.base_uncertainty, self.stat_uncertain_tol]
         )
-        atoms.info["dyn_uncertain_tol"] = self.dyn_uncertain_tol * base_uncertainty
-        atoms.info["stat_uncertain_tol"] = self.stat_uncertain_tol
-        atoms.info["uncertain_tol"] = uncertainty_tol
-        # print(
-        #     "Max Force Std: %1.3f eV/A, Max Force Threshold: %1.3f eV/A"
-        #     % (uncertainty, uncertainty_tol)
-        # )
 
-        # print(
-        #     "static tol: %1.3f eV/A, dynamic tol: %1.3f eV/A"
-        #     % (self.stat_uncertain_tol, self.dyn_uncertain_tol * base_uncertainty)
-        # )
-        return uncertainty > uncertainty_tol
+        print(
+            "Max Force Std: %1.3f eV/A, Max Force Threshold: %1.3f eV/A"
+            % (self.uncertainty, self.uncertainty_tol)
+        )
+
+        print(
+            "static tol: %1.3f eV/A, dynamic tol: %1.3f eV/A"
+            % (self.stat_uncertain_tol, self.dyn_uncertain_tol * self.base_uncertainty)
+        )
+        if self.uncertainty > self.uncertainty_tol:
+            return True
+        else:
+            return False
 
     def parent_verify(self, atoms):
         forces = atoms.get_forces()
         fmax = np.sqrt((forces ** 2).sum(axis=1).max())
-
-        if fmax <= self.fmax_verify_threshold:
-            print("Force below threshold: check with parent")
         return fmax <= self.fmax_verify_threshold
 
     def add_data_and_retrain(self, atoms):
@@ -216,12 +242,21 @@ class OnlineLearner(Calculator):
 
         start = time.time()
 
-        atoms_copy = atoms.copy()
+        atoms_copy = atoms.copy() # YURI Let the atoms get mutated so that we can store it with all the attributes in the DB
         atoms_copy.set_calculator(self.parent_calc)
         print(atoms_copy)
-        (new_data,) = convert_to_singlepoint([atoms_copy])
+        (new_data,) = convert_to_singlepoint([atoms_copy]) # Where DFT happens
 
-        self.parent_dataset += [new_data]
+        energy_actual = new_data.get_potential_energy(apply_constraint=False)
+        force_actual = new_data.get_forces(apply_constraint=False)
+        force_cons = new_data.get_forces()
+
+        conn = self.mongodb_conn()
+
+        if conn is not None:
+            db = conn.db
+        parent_data = [make_atoms_from_doc(doc) for doc in db['atoms_objects'].find({})]
+        self.parent_dataset = parent_data
 
         self.parent_calls += 1
 
@@ -234,6 +269,7 @@ class OnlineLearner(Calculator):
         )
 
         # Don't bother training if we have less than two datapoints
+
         if len(self.parent_dataset) >= 2:
             self.ml_potential.train(self.parent_dataset, [new_data])
         else:
@@ -248,7 +284,38 @@ class OnlineLearner(Calculator):
             atoms_copy.set_calculator(new_delta)
             (new_data,) = convert_to_singlepoint([atoms_copy])
 
-        energy_actual = new_data.get_potential_energy(apply_constraint=False)
-        force_actual = new_data.get_forces(apply_constraint=False)
-        force_cons = new_data.get_forces()
-        return energy_actual, force_actual, force_cons
+        return energy_actual, force_actual, new_data, force_cons
+
+    @classmethod
+    def mongodb_conn(cls):
+        """Checks if we can make a connection to a database and if yes returns the connection"""
+        db = VaspCalcDb.from_db_file('/home/jovyan/atomate/config/db.json') # hardcoded to the nersc DB for now
+        return db
+
+    def insert_row(self, collection, **kw_args):
+        collection.insert_one(kw_args)
+
+    def insert_atoms_object(self, atoms, db):
+        # insert the Atoms object into another collection
+        doc = make_doc_from_atoms(atoms)
+        # Make a copy of the doc in which we pop the 'user', 'mtime','ctime' keys to exclude from hash
+        doc_copy = deepcopy(doc)
+        for key in ('user', 'mtime', 'ctime'):
+            doc_copy.pop(key)
+        # check if the doc already exists in the collection using hash field
+        hash_ = DeepHash(doc_copy, number_format_notation="e", significant_digits=3)[doc_copy] # Use scientific notation and only look
+        del doc_copy # Dispose of the doc_copy
+        # upto three digits after the decimal to see if float should map to the same hash
+        if db["atoms_objects"].find_one({'hash_': hash_}) is None:
+            doc['hash_'] = hash_
+            doc['launch_id'] = self.launch_id
+            doc['fw_id'] = self.fw_id
+            self.insert_row(db["atoms_objects"], **doc)
+        else:
+            print('Duplicate found, not adding to DB...')
+
+
+
+
+
+

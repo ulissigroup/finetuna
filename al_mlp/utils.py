@@ -16,7 +16,6 @@ def convert_to_singlepoint(images):
     images: list
         List of ase atoms images with attached calculators for forces and energies.
     """
-
     images = copy_images(images)
     singlepoint_images = []
     # cwd = os.getcwd()
@@ -24,35 +23,16 @@ def convert_to_singlepoint(images):
         if isinstance(image.get_calculator(), sp):
             singlepoint_images.append(image)
             continue
-        # os.makedirs("./vasp_temp", exist_ok=True)
-        # os.chdir("./vasp_temp")
+        os.makedirs("./temp", exist_ok=True)
+        os.chdir("./temp")
         sample_energy = image.get_potential_energy(apply_constraint=False)
         sample_forces = image.get_forces(apply_constraint=False)
-        if isinstance(image.get_calculator(), DeltaCalc):
-            image.info["parent energy"] = image.get_calculator().parent_results[
-                "energy"
-            ]
-            image.info["base energy"] = image.get_calculator().base_results["energy"]
-            image.info["parent fmax"] = np.max(
-                np.abs(image.get_calculator().parent_results["forces"])
-            )
-
         sp_calc = sp(atoms=image, energy=float(sample_energy), forces=sample_forces)
         sp_calc.implemented_properties = ["energy", "forces"]
         image.set_calculator(sp_calc)
-        # image.get_potential_energy()
-        # image.get_forces()
-
-        # image.calc.results["energy"] = float(image.calc.results["energy"])
-
-        # sp_calc = sp(atoms=image, **image.calc.results)
-        # sp_calc.implemented_properties = list(image.calc.results.keys())
-
-        # image.set_calculator(sp_calc)
         singlepoint_images.append(image)
-        # os.chdir(cwd)
-        # os.system("rm -rf ./vasp_temp")
-
+        os.chdir(cwd)
+        os.system("rm -rf ./temp")
     return singlepoint_images
 
 

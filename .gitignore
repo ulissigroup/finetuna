@@ -4,6 +4,10 @@ __pycache__/
 myvenv/
 al_mlp.egg-info
 
+
+# Launcher directories
+launcher*
+
 #output files
 *.ampdb
 *.db
