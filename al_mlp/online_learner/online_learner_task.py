@@ -55,14 +55,13 @@ class OnlineLearnerTask(FiretaskBase):
         parent_calc = learner_params['parent_calc']
         # Set up the online calc
         online_calc = OnlineLearner(
-            learner_params, trainer, images,
-            learner_params['ml_potential'](trainer,
-                                           learner_params['n_ensembles']),
-                                           parent_calc,
-                                           task_name,
-                                           launch_id,
-                                           fw_id
-
+            learner_params, 
+            images,
+            learner_params['ml_potential'],
+            parent_calc,
+            task_name,
+            launch_id,
+            fw_id
         )
 
         # Set up the Relaxer
