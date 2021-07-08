@@ -64,6 +64,7 @@ class OnlineLearner(Calculator):
         # breakpoint()
         # If can make a connection to MongoDB then create a database to house the OAL outputs
         conn = self.mongodb_conn()
+        print(f"Called calculate {conn}")
 
         if conn is not None:
             # Look to see if the oal_metadata collection exists and if not create it
@@ -244,15 +245,6 @@ class OnlineLearner(Calculator):
             self.ml_potential.train(self.parent_dataset, [new_data])
         else:
             self.ml_potential.train(self.parent_dataset)
-
-        if self.base_calc is not None:
-            new_delta = DeltaCalc(
-                [new_data.calc, self.base_calc],
-                "add",
-                self.parent_calc.refs,
-            )
-            atoms_copy.set_calculator(new_delta)
-            (new_data,) = convert_to_singlepoint([atoms_copy])
 
         return energy_actual, force_actual, new_data, force_cons
 
