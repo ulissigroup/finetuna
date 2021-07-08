@@ -11,6 +11,7 @@ from al_mlp.mongo import make_doc_from_atoms, make_atoms_from_doc
 from pymongo.errors import InvalidDocument
 from deepdiff import DeepHash
 from copy import deepcopy
+import time
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -209,17 +210,6 @@ class OnlineLearner(Calculator):
 
     def add_data_and_retrain(self, atoms):
         print("OnlineLearner: Parent calculation required")
-        if (
-            self.max_parent_calls is not None
-            and self.parent_calls >= self.max_parent_calls
-        ):
-            print("Parent call failed: max parent calls reached")
-            atoms.set_calculator(self.ml_potential)
-            energy = atoms.get_potential_energy(apply_constraint=False)
-            force = atoms.get_forces(apply_constraint=False)
-            force_cons = atoms.get_forces()
-            return energy, force, force_cons
-
         start = time.time()
 
         atoms_copy = atoms.copy() # YURI Let the atoms get mutated so that we can store it with all the attributes in the DB
