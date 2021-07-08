@@ -38,11 +38,6 @@ class OnlineLearnerTask(FiretaskBase):
         # Load the parent dataset if any
         images = [atoms for atoms in Trajectory(images_str)]
 
-        # Make sure each NN in the ensemble gets the same initial parent_dataset
-        trainer_config["dataset"][
-            "rawdata"
-        ] = images  # for onlinelearner this will often be empty
-
         # Load the initial structure to be relaxed
         OAL_initial_structure = Trajectory(init_struct_filename)[
             0
@@ -50,11 +45,19 @@ class OnlineLearnerTask(FiretaskBase):
 
         # Set up the trainer for the online learner
         parent_calc = learner_params['parent_calc']
+        # Instantiate the FlarePP constructor object
+        if learner_params['ml_potential'].__name__ == 'FlarePPCalc':
+            # Retrieve the flare params from spec
+            flare_params = fw_spec.get("flare_params")
+            ml_potential = learner_params['ml_potential'](flare_params,
+                                                         [OAL_initial_structure])
+
+
         # Set up the online calc
         online_calc = OnlineLearner(
             learner_params, 
             images,
-            learner_params['ml_potential'],
+            ml_potential,
             parent_calc,
             task_name,
             launch_id,

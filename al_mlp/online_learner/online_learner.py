@@ -181,7 +181,7 @@ class OnlineLearner(Calculator):
 
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force
-        self.uncertainty = atoms.calc.results["max_force_stds"]
+        self.uncertainty = atoms.info["max_force_stds"]
         forces = atoms.get_forces(apply_constraint=False)
         self.base_uncertainty = np.sqrt((forces ** 2).sum(axis=1).max())
         self.uncertainty_tol = max(
