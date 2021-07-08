@@ -61,7 +61,6 @@ class OnlineLearner(Calculator):
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
 
-        # breakpoint()
         # If can make a connection to MongoDB then create a database to house the OAL outputs
         conn = self.mongodb_conn()
         print(f"Called calculate {conn}")
@@ -227,8 +226,9 @@ class OnlineLearner(Calculator):
         if conn is not None:
             db = conn.db
         parent_data = [make_atoms_from_doc(doc) for doc in db['atoms_objects'].find({})]
+        parent_data.extend([new_data])
         self.parent_dataset = parent_data
-
+        #breakpoint()
         self.parent_calls += 1
 
         end = time.time()
