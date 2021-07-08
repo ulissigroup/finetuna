@@ -15,10 +15,10 @@ class OnlineLearnerTask(FiretaskBase):
     def run_task(self, fw_spec):
 
         # Tell the client how to connect to the Dask LocalCluster
-        from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
-        from dask.distributed import Client
-        client = Client(scheduler_file=fw_spec.get("scheduler_file"))
-        AmptorchEnsembleCalc.set_executor(client)
+#        from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
+#        from dask.distributed import Client
+#        client = Client(scheduler_file=fw_spec.get("scheduler_file"))
+#        AmptorchEnsembleCalc.set_executor(client)
 
         # learner params for the meat of the OnlineLearner
         learner_params_str = fw_spec.get("learner_params")
