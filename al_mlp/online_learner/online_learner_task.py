@@ -45,6 +45,7 @@ class OnlineLearnerTask(FiretaskBase):
 
         # Set up the trainer for the online learner
         parent_calc = learner_params['parent_calc']
+        print(parent_calc, "DID IT!")
         # Instantiate the FlarePP constructor object
         if learner_params['ml_potential'].__name__ == 'FlarePPCalc':
             # Retrieve the flare params from spec
