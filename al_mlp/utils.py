@@ -18,7 +18,7 @@ def convert_to_singlepoint(images):
     """
     images = copy_images(images)
     singlepoint_images = []
-    # cwd = os.getcwd()
+    cwd = os.getcwd()
     for image in images:
         if isinstance(image.get_calculator(), sp):
             singlepoint_images.append(image)
