@@ -24,18 +24,18 @@ from utilities import extract_job_parameters
 if __name__ == "__main__":
 
 
-    structures = [Trajectory('structures/MgO_init_structure.traj')[0].copy() for i in range(10)]
-    for i, structure in enumerate(structures):
-        if i == 0:
-            stdev = 0
-        else:
-            stdev = 0.001
-        structure.rattle(stdev, seed=np.random.randint(0,high=100000))
-        writer = TrajectoryWriter(filename=f"structures/MgO_init_structure_{i}.traj", mode='w', atoms=structure)
-        writer.write()
+    #structures = [Trajectory('structures/MgO_init_structure.traj')[0].copy() for i in range(10)]
+#    for i, structure in enumerate(structures):
+#        if i == 0:
+#            stdev = 0
+#        else:
+#            stdev = 0.001
+#        structure.rattle(stdev, seed=np.random.randint(0,high=100000))
+#        writer = TrajectoryWriter(filename=f"structures/MgO_init_structure_{i}.traj", mode='w', atoms=structure)
+#        writer.write()
 
 
-    breakpoint()
+#    breakpoint()
     job_id = int(os.environ['JOB_ID']) # should be unique ID
     host_id = os.environ['HOSTNAME']
 
@@ -141,46 +141,46 @@ if __name__ == "__main__":
     # define as part of our configs
 
 
-    for i, structure in enumerate(structures):
-        learner_params = {
-            "max_iterations": 10,
-            "samples_to_retrain": 1,
-            "filename": "relax_example",
-            "file_dir": "./",
-            "stat_uncertain_tol": stat_uncertain_tol, # eV/A
-            "dyn_uncertain_tol": dyn_uncertain_tol, # Just a multiplier
-            "fmax_verify_threshold": 0.05,  # eV/AA
-            "relative_variance": True,
-            "n_ensembles": 10,
-            "use_dask": False,
-            "parent_calc": parent_calc,
-            "optim_relaxer": BFGS,
-            "f_max": 0.05,
-            "steps": 200,
-            "maxstep": maxstep, # Might need larger time step
-#            "ml_potential": AmptorchEnsembleCalc(trainer, learner_params['n_ensembles']),
-            "ml_potential": FlarePPCalc(flare_params, [structure])
-        }
+    #for i, structure in enumerate(structures):
+    learner_params = {
+        "max_iterations": 10,
+        "samples_to_retrain": 1,
+        "filename": "relax_example",
+        "file_dir": "./",
+        "stat_uncertain_tol": stat_uncertain_tol, # eV/A
+        "dyn_uncertain_tol": dyn_uncertain_tol, # Just a multiplier
+        "fmax_verify_threshold": 0.05,  # eV/AA
+        "relative_variance": True,
+        "n_ensembles": 10,
+        "use_dask": False,
+        "parent_calc": parent_calc,
+        "optim_relaxer": BFGS,
+        "f_max": 0.05,
+        "steps": 200,
+        "maxstep": maxstep, # Might need larger time step
+#        "ml_potential": AmptorchEnsembleCalc(trainer, learner_params['n_ensembles']),
+        "ml_potential": FlarePPCalc
+    }
 
-        learner_params_encoded = jsonpickle.encode(learner_params)
-         
-        filename = f"MgO_relaxation_{i}"
-        fireworks = [Firework(
-            OnlineLearnerTask(),
-            spec={
-                "learner_params": learner_params_encoded,
-        #        "trainer_config": trainer_config_encoded,
-                "parent_dataset": "/home/jovyan/al_mlp_repo/images.traj",
-                "filename": filename,
-        #        "init_structure_path": f"/home/jovyan/al_mlp_repo/structures/MgO_init_structure_{i}.traj",
-                "task_name": f"OAL_MgO_{stat_uncertain_tol}_{host_id}",
-                "scheduler_file": '/tmp/my-scheduler.json',
-                "_add_launchpad_and_fw_id": True,
-                #"_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
-                },
+    learner_params_encoded = jsonpickle.encode(learner_params)
+     
+    filename = f"CH3_Ir_relaxation_{0}"
+    fireworks = [Firework(
+        OnlineLearnerTask(),
+        spec={
+            "learner_params": learner_params_encoded,
+    #        "trainer_config": trainer_config_encoded,
+            "parent_dataset": "/home/jovyan/al_mlp_repo/images.traj",
+            "filename": filename,
+            "init_structure_path": f"/home/jovyan/al_mlp_repo/structures/ad_slab_0.traj",
+            "task_name": f"OAL_CH3Ir_{stat_uncertain_tol}_{host_id}",
+            "scheduler_file": '/tmp/my-scheduler.json',
+            "_add_launchpad_and_fw_id": True,
+            #"_dupefinder": DupeFinderExact() # to prevent re-running jobs with duplicate specs!
+            },
 
-            name=f"OAL_MgO_{stat_uncertain_tol}_unc_tol",
-        )]
+        name=f"OAL_CH3Ir_{stat_uncertain_tol}_unc_tol",
+    )]
 
-        wf = Workflow(fireworks)
-        launchpad.add_wf(wf)
+    wf = Workflow(fireworks)
+    launchpad.add_wf(wf)
