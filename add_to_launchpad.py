@@ -24,7 +24,7 @@ from utilities import extract_job_parameters
 if __name__ == "__main__":
 
 
-    #structures = [Trajectory('structures/MgO_init_structure.traj')[0].copy() for i in range(10)]
+    structures = [Trajectory('structures/ad_slab.traj')[0].copy() for i in range(10)]
 #    for i, structure in enumerate(structures):
 #        if i == 0:
 #            stdev = 0
