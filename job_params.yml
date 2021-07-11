@@ -15,7 +15,7 @@
     maxstep: 0.2
     num_layers: 5
     num_nodes: 50
-    stat_uncertain_tol: 0.15555555555555556
+    stat_uncertain_tol: 0.1
 - param_set:
     dyn_uncertain_tol: 0.0
     maxstep: 0.2

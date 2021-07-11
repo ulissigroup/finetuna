@@ -78,7 +78,7 @@ if __name__ == "__main__":
         command=f"mpirun -np {cores} /opt/vasp.6.1.2_pgi_mkl_beef/bin/vasp_std",
         ediffg=-0.03,
         xc="rpbe",
-        encut=520,  # planewave cutoff
+        encut=420,  # planewave cutoff
         lreal=True,  # for slabs lreal is True for bulk False
         nsw=0,  # number of ionic steps in the relaxation
         #                isym=-1,
@@ -156,7 +156,7 @@ if __name__ == "__main__":
             "parent_calc": parent_calc,
             "optim_relaxer": BFGS,
             "f_max": 0.05,
-            "steps": 100,
+            "steps": 200,
             "maxstep": maxstep, # Might need larger time step
 #            "ml_potential": AmptorchEnsembleCalc(trainer, learner_params['n_ensembles']),
             "ml_potential": FlarePPCalc(flare_params, [structure])
