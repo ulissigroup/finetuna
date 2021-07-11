@@ -172,6 +172,7 @@ if __name__ == "__main__":
     #        "trainer_config": trainer_config_encoded,
             "parent_dataset": "/home/jovyan/al_mlp_repo/images.traj",
             "filename": filename,
+            "flare_params": flare_params,
             "init_structure_path": f"/home/jovyan/al_mlp_repo/structures/ad_slab_0.traj",
             "task_name": f"OAL_CH3Ir_{stat_uncertain_tol}_{host_id}",
             "scheduler_file": '/tmp/my-scheduler.json',
