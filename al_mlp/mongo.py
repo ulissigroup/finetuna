@@ -296,11 +296,15 @@ class MongoWrapper:
         if self.commit_id is not None:
             self.params["commit"] = self.commit_id
 
+        self.previous = None
+
     def write_to_mongo(self, atoms, info):
         atoms_doc = make_doc_from_atoms(atoms)
         atoms_doc.update(self.params)
         atoms_doc.update({"material": str(atoms.symbols), "first": self.first})
+        if self.previous is not None:
+            atoms_doc.update({"previous": self.previous})
         if self.first is True:
             self.first = False
         atoms_doc.update(info)
-        self.mongo_collection.insert_one(atoms_doc)
+        self.previous = self.mongo_collection.insert_one(atoms_doc)
