@@ -2,6 +2,8 @@ import random
 from al_mlp.calcs import DeltaCalc
 from al_mlp.utils import convert_to_singlepoint, compute_with_calc, write_to_db
 import ase
+from al_mlp.mongo import MongoWrapper
+import numpy as np
 
 
 class OfflineActiveLearner:
@@ -30,7 +32,13 @@ class OfflineActiveLearner:
     """
 
     def __init__(
-        self, learner_params, ml_potential, training_data, parent_calc, base_calc
+        self,
+        learner_params,
+        ml_potential,
+        training_data,
+        parent_calc,
+        base_calc,
+        mongo_db=None,
     ):
         self.learner_params = learner_params
         self.ml_potential = ml_potential
@@ -40,6 +48,16 @@ class OfflineActiveLearner:
         self.calcs = [parent_calc, base_calc]
         self.init_learner()
         self.init_training_data()
+        if mongo_db is not None:
+            self.mongo_wrapper = MongoWrapper(
+                mongo_db["offline_learner"],
+                learner_params,
+                ml_potential,
+                parent_calc,
+                base_calc,
+            )
+        else:
+            self.mongo_wrapper = None
 
     def init_learner(self):
         """
@@ -131,6 +149,9 @@ class OfflineActiveLearner:
         self.sample_candidates = list(
             self.atomistic_method.get_trajectory(filename=self.fn_label)
         )
+        if self.mongo_wrapper is not None:
+            self.mongo_wrapper.first = True
+        self.write_to_mongo(check=False, list_of_atoms=self.new_dataset)
 
         self.terminate = self.check_terminate()
         self.iterations += 1
@@ -158,6 +179,7 @@ class OfflineActiveLearner:
             parent_E = image.info["parent energy"]
             base_E = image.info["base energy"]
             write_to_db(queries_db, [image], "queried", parent_E, base_E)
+        self.write_to_mongo(check=False, list_of_atoms=self.new_dataset)
 
     def check_terminate(self):
         """
@@ -187,3 +209,15 @@ class OfflineActiveLearner:
         if ml_potential is not None:
             return ml_potential.get_calc()
         return self.ml_potential.get_calc()
+
+    def write_to_mongo(self, check, list_of_atoms):
+        if self.mongo_wrapper is not None:
+            for image in list_of_atoms:
+                info = {
+                    "check": check,
+                    "uncertainty": image.info["max_force_stds"],
+                    "energy": image.get_potential_energy(),
+                    "maxForce": np.sqrt((image.get_forces() ** 2).sum(axis=1).max()),
+                    "forces": str(image.get_forces(apply_constraint=False)),
+                }
+                self.mongo_wrapper.write_to_mongo(image, info)
