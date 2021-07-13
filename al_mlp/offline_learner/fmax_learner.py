@@ -1,9 +1,8 @@
 from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
-from al_mlp.utils import compute_with_calc, write_to_db, subtract_deltas
+from al_mlp.utils import compute_with_calc, write_to_db
 import numpy as np
 import ase
 import random
-from al_mlp.calcs import DeltaCalc
 from ase.io.trajectory import TrajectoryWriter
 
 
@@ -22,8 +21,22 @@ class FmaxLearner(OfflineActiveLearner):
 
     def check_terminate(self):
         """
-        Default termination function.
+        Termination function.
         """
+        final_point_image = [self.sample_candidates[-1]]
+        final_point_evA = compute_with_calc(final_point_image, self.delta_sub_calc)
+        self.final_point_force = final_point_evA[0].info["parent fmax"]
+        self.training_data += final_point_evA
+        self.parent_calls += 1
+        random.seed(self.query_seeds[self.iterations - 1] + 1)
+
+        if self.iterations == 0:
+            writer = TrajectoryWriter("final_images.traj", mode="w")
+            writer.write(final_point_image[0])
+        else:
+            writer = TrajectoryWriter("final_images.traj", mode="a")
+            writer.write(final_point_image[0])
+
         if self.iterations >= self.max_iterations:
             return True
         else:
@@ -33,7 +46,7 @@ class FmaxLearner(OfflineActiveLearner):
 
     def query_func(self):
         """
-        Default random query strategy.
+        Random query strategy.
         """
         # queries_db = ase.db.connect("queried_images.db")
         if len(self.sample_candidates) <= self.samples_to_retrain:
@@ -66,48 +79,6 @@ class FmaxLearner(OfflineActiveLearner):
         self.parent_calls += len(queried_images)
         return queried_images
 
-    def query_data(self):
-        """
-        Queries data from a list of images. Calculates the properties
-        and adds them to the training data.
-        """
-        random.seed(self.query_seeds[self.iterations - 1])
-        queried_images = self.query_func()
-        self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
-
-    def do_after_train(self):
-        """
-        Executes after training the ml_potential in every active learning loop.
-        """
-
-        trainer_calc = self.make_trainer_calc()
-        self.trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
-
-        self.atomistic_method.run(calc=self.trained_calc, filename=self.fn_label)
-        self.sample_candidates = list(
-            self.atomistic_method.get_trajectory(filename=self.fn_label)
-        )
-
-        final_point_image = [self.sample_candidates[-1]]
-        # print(final_point_image[0].get_positions())
-        final_point_evA = compute_with_calc(final_point_image, self.delta_sub_calc)
-        self.final_point_force = final_point_evA[0].info["parent fmax"]
-        self.training_data += final_point_evA
-        self.parent_calls += 1
-        # final_queries_db = ase.db.connect("final_queried_images.db")
-        random.seed(self.query_seeds[self.iterations - 1] + 1)
-        # write_to_db(final_queries_db, final_point_image)
-
-        if self.iterations == 0:
-            writer = TrajectoryWriter("final_images.traj", mode="w")
-            writer.write(final_point_image[0])
-        else:
-            writer = TrajectoryWriter("final_images.traj", mode="a")
-            writer.write(final_point_image[0])
-
-        self.terminate = self.check_terminate()
-        self.iterations += 1
-
 
 class ForceQueryLearner(FmaxLearner):
     """
@@ -130,24 +101,8 @@ class ForceQueryLearner(FmaxLearner):
         query_idx = random.sample(idxs, self.samples_to_retrain - 1)
         queried_images = [self.sample_candidates[idx] for idx in query_idx]
         min_force_image = self.sample_candidates[min_index]
-        write_to_db(queries_db, queried_images)
-        write_to_db(queries_db, [min_force_image])
-        self.parent_calls += len(queried_images) + 1
-        return queried_images, min_force_image
-
-    def query_data(self):
-        """
-        Queries data from a list of images. Calculates the properties
-        and adds them to the training data.
-        """
-
-        random.seed(self.query_seeds[self.iterations - 1])
-        random_queried_images, min_force_image = self.query_func()
-        self.training_data += compute_with_calc(
-            random_queried_images, self.delta_sub_calc
-        )
+        queried_images += min_force_image
         min_image_parent = compute_with_calc([min_force_image], self.parent_calc)[0]
-        self.final_point_force = np.max(np.abs(min_image_parent.get_forces()))
-        self.training_data += subtract_deltas(
-            [min_image_parent], self.base_calc, self.refs
-        )
+        self.final_point_force = np.sqrt((min_image_parent.get_forces() ** 2).sum(axis=1).max())
+        write_to_db(queries_db, queried_images)
+        return queried_images

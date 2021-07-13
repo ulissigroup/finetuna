@@ -1,13 +1,7 @@
 import numpy as np
 import torch
-from al_mlp.utils import (
-    compute_with_calc,
-    write_to_db,
-)
 
-from al_mlp.calcs import DeltaCalc
 import random
-import ase
 
 
 # from al_mlp.utils import write_to_db
@@ -58,36 +52,6 @@ class UncertaintyLearner(OfflineActiveLearner):
         self.ml_potential = ml_potential
         self.ensemble = learner_params.get("n_ensembles")
         self.parent_calls = 0
-
-    def do_before_train(self):
-        if self.iterations > 0:
-            queried_images = self.query_func()
-            self.new_dataset = compute_with_calc(queried_images, self.delta_sub_calc)
-            queries_db = ase.db.connect("queried_images.db")
-            for image in self.new_dataset:
-                parent_E = image.info["parent energy"]
-                base_E = image.info["base energy"]
-                write_to_db(queries_db, [image], "queried", parent_E, base_E)
-            self.training_data += self.new_dataset
-            self.parent_calls += len(self.new_dataset)
-        self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
-
-    def do_train(self):
-        if self.iterations > 0:
-            self.ml_potential.train(self.training_data, self.new_dataset)
-        else:
-            self.ml_potential.train(self.training_data)
-        self.trained_calc = DeltaCalc(
-            [self.ml_potential, self.base_calc], "add", self.refs
-        )
-
-    def do_after_train(self):
-        self.atomistic_method.run(calc=self.trained_calc, filename=self.fn_label)
-        self.sample_candidates = list(
-            self.atomistic_method.get_trajectory(filename=self.fn_label)
-        )
-        self.terminate = self.check_terminate()
-        self.iterations += 1
 
     def query_func(self):
         if self.iterations > 1:

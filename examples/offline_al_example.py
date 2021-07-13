@@ -13,7 +13,6 @@ import torch
 import ase
 
 from ase.db import connect
-from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
 from al_mlp.base_calcs.morse import MultiMorse
 from al_mlp.atomistic_methods import Relaxation
 

@@ -14,8 +14,8 @@ class OfflineActiveLearner:
     learner_params: dict
         Dictionary of learner parameters and settings.
 
-    ml_potential: object
-        An isntance of a ml_potential that has a train and predict method.
+    ml_potential: ase Calculator object
+        An instance of an ml_potential calculator that has a train and predict method.
 
     training_data: list
         A list of ase.Atoms objects that have attached calculators.
@@ -123,8 +123,7 @@ class OfflineActiveLearner:
         Executes after training the ml_potential in every active learning loop.
         """
 
-        trainer_calc = self.make_trainer_calc()
-        self.trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
+        self.trained_calc = DeltaCalc([self.ml_potential, self.base_calc], "add", self.refs)
 
         self.atomistic_method.run(calc=self.trained_calc, filename=self.fn_label)
         self.sample_candidates = list(
@@ -148,7 +147,15 @@ class OfflineActiveLearner:
 
         random.seed(self.query_seeds[self.iterations - 1])
         queried_images = self.query_func()
-        self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
+        self.new_dataset = compute_with_calc(queried_images, self.delta_sub_calc)
+        self.training_data += self.new_dataset
+        self.parent_calls += len(self.new_dataset)
+
+        queries_db = ase.db.connect("queried_images.db")
+        for image in self.new_dataset:
+            parent_E = image.info["parent energy"]
+            base_E = image.info["base energy"]
+            write_to_db(queries_db, [image], "queried", parent_E, base_E)
 
     def check_terminate(self):
         """
@@ -162,14 +169,11 @@ class OfflineActiveLearner:
         """
         Default random query strategy.
         """
-        queries_db = ase.db.connect("queried_images.db")
         query_idx = random.sample(
             range(1, len(self.sample_candidates)),
             self.samples_to_retrain,
         )
         queried_images = [self.sample_candidates[idx] for idx in query_idx]
-        write_to_db(queries_db, queried_images)
-        self.parent_calls += len(queried_images)
         return queried_images
 
     def make_trainer_calc(self, ml_potential=None):
