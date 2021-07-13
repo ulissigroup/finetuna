@@ -1,8 +1,6 @@
-import copy
-from ase.calculators.singlepoint import SinglePointCalculator
 import numpy as np
 from ase.calculators.calculator import Calculator
-from al_mlp.utils import convert_to_singlepoint, write_to_db, write_to_db_online
+from al_mlp.utils import convert_to_singlepoint, write_to_db_online
 import time
 import math
 import ase.db
