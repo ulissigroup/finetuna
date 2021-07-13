@@ -163,6 +163,7 @@ class Relaxation:
         trajectory = ase.io.Trajectory(filename + ".traj")
         return trajectory
 
+
 class MaxParentRelaxation(Relaxation):
     def run(self, calc, filename, max_parent_calls):
         structure = self.initial_geometry.copy()
@@ -177,6 +178,7 @@ class MaxParentRelaxation(Relaxation):
         dyn.attach(max_parent_observer, 1, calc, dyn, max_parent_calls)
 
         dyn.run(fmax=self.fmax, steps=self.steps)
+
 
 def max_parent_observer(calc, optimizer, max_parent_calls):
     if calc.parent_calls >= max_parent_calls:
