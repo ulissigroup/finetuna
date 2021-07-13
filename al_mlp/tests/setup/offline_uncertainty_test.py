@@ -3,8 +3,9 @@ from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
 
 # from al_mlp.ensemble_calc import EnsembleCalc
 
-from al_mlp.offline_learner.uncertainty_learner import UncertaintyOffAL
-from al_mlp.offline_learner.ensemble_learner import EnsembleLearner
+from al_mlp.offline_learner.restricted_uncertainty_learner import (
+    RestrictedUncertaintyLearner,
+)
 
 from amptorch.trainer import AtomsTrainer
 import os
@@ -91,7 +92,7 @@ def run_offline_al(atomistic_method, images, dbname, parent_calc):
     base_calc = MultiMorse(images, cutoff, combo="mean")
 
     ml_potential = AmptorchEnsembleCalc(trainer, learner_params["n_ensembles"])
-    learner = UncertaintyOffAL(
+    learner = RestrictedUncertaintyLearner(
         learner_params,
         ml_potential,
         images,
