@@ -103,6 +103,8 @@ class ForceQueryLearner(FmaxLearner):
         min_force_image = self.sample_candidates[min_index]
         queried_images += min_force_image
         min_image_parent = compute_with_calc([min_force_image], self.parent_calc)[0]
-        self.final_point_force = np.sqrt((min_image_parent.get_forces() ** 2).sum(axis=1).max())
+        self.final_point_force = np.sqrt(
+            (min_image_parent.get_forces() ** 2).sum(axis=1).max()
+        )
         write_to_db(queries_db, queried_images)
         return queried_images

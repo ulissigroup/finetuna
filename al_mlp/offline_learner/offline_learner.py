@@ -123,7 +123,9 @@ class OfflineActiveLearner:
         Executes after training the ml_potential in every active learning loop.
         """
 
-        self.trained_calc = DeltaCalc([self.ml_potential, self.base_calc], "add", self.refs)
+        self.trained_calc = DeltaCalc(
+            [self.ml_potential, self.base_calc], "add", self.refs
+        )
 
         self.atomistic_method.run(calc=self.trained_calc, filename=self.fn_label)
         self.sample_candidates = list(
