@@ -131,8 +131,8 @@ base_calc = MultiMorse(images, cutoff, combo="mean")
 
 learner = FmaxLearner(
     learner_params,
-    trainer,
     images,
+    trainer,
     parent_calc,
     base_calc,
 )

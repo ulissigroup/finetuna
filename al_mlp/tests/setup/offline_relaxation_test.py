@@ -88,12 +88,10 @@ def run_offline_al(atomistic_method, images, dbname, parent_calc):
 
     learner = FmaxLearner(
         learner_params,
-        trainer,
         images,
+        trainer,
         parent_calc,
         base_calc,
-        # ncores="max",
-        # ensemble=5,
     )
 
     learner.learn()

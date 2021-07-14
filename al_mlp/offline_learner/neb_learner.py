@@ -7,16 +7,16 @@ class NEBLearner(OfflineActiveLearner):
     def __init__(
         self,
         learner_params,
-        trainer,
         training_data,
+        trainer,
         parent_calc,
         base_calc,
         mongo_db=None,
     ):
         super().__init__(
             learner_params,
-            trainer,
             training_data,
+            trainer,
             parent_calc,
             base_calc,
             mongo_db=mongo_db,

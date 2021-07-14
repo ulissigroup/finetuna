@@ -134,8 +134,8 @@ base_calc = MultiMorse(images, cutoff, combo="mean")
 ml_potential = AmptorchEnsembleCalc(trainer, learner_params["n_ensembles"])
 learner = EnsembleLearner(
     learner_params,
-    trainer,
     images,
+    trainer,
     parent_calc,
     base_calc,
     ml_potential,

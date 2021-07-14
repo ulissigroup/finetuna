@@ -88,6 +88,6 @@ def offline_neb(images, parent_calc, iter=4, intermediate_images=3):
         # "max_evA": 0.01,
     }
 
-    learner = NEBLearner(learner_params, trainer, images, parent_calc, base_calc)
+    learner = NEBLearner(learner_params, images, trainer, parent_calc, base_calc)
     learner.learn()
     return learner

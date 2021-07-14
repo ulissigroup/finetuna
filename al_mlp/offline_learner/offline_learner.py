@@ -35,8 +35,8 @@ class OfflineActiveLearner:
     def __init__(
         self,
         learner_params,
-        ml_potential,
         training_data,
+        ml_potential,
         parent_calc,
         base_calc,
         mongo_db=None,
