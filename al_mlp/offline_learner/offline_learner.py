@@ -4,6 +4,7 @@ from al_mlp.utils import convert_to_singlepoint, compute_with_calc, write_to_db
 import ase
 from al_mlp.mongo import MongoWrapper
 import numpy as np
+from ase.calculator import Calculator
 
 
 class OfflineActiveLearner:
@@ -140,10 +141,8 @@ class OfflineActiveLearner:
         """
         Executes after training the ml_potential in every active learning loop.
         """
-
-        self.trained_calc = DeltaCalc(
-            [self.ml_potential, self.base_calc], "add", self.refs
-        )
+        ml_potential = make_trainer_calc()
+        self.trained_calc = DeltaCalc([ml_potential, self.base_calc], "add", self.refs)
 
         self.atomistic_method.run(calc=self.trained_calc, filename=self.fn_label)
         self.sample_candidates = list(
@@ -207,8 +206,16 @@ class OfflineActiveLearner:
         If ml_potential is passed in, it will get its calculator instead
         """
         if ml_potential is not None:
-            return ml_potential.get_calc()
-        return self.ml_potential.get_calc()
+            if not isinstance(ml_potential, Calculator):
+                calc = ml_potential.get_calc()
+            else:
+                calc = ml_potential
+        else:
+            if not isinstance(self.ml_potential, Calculator):
+                calc = self.ml_potential.get_calc()
+            else:
+                calc = self.ml_potential
+        return calc
 
     def write_to_mongo(self, check, list_of_atoms):
         if self.mongo_wrapper is not None:
