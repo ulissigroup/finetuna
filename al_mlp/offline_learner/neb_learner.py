@@ -4,8 +4,23 @@ from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
 
 
 class NEBLearner(OfflineActiveLearner):
-    def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc):
-        super().__init__(learner_params, trainer, training_data, parent_calc, base_calc)
+    def __init__(
+        self,
+        learner_params,
+        trainer,
+        training_data,
+        parent_calc,
+        base_calc,
+        mongo_db=None,
+    ):
+        super().__init__(
+            learner_params,
+            trainer,
+            training_data,
+            parent_calc,
+            base_calc,
+            mongo_db=mongo_db,
+        )
         self.parent_calls = 0
 
     def check_terminate(self):

@@ -44,9 +44,15 @@ class UncertaintyLearner(OfflineActiveLearner):
         training_data,
         parent_calc,
         base_calc,
+        mongo_db=None,
     ):
         super().__init__(
-            learner_params, ml_potential, training_data, parent_calc, base_calc
+            learner_params,
+            ml_potential,
+            training_data,
+            parent_calc,
+            base_calc,
+            mongo_db=mongo_db,
         )
 
         self.ml_potential = ml_potential

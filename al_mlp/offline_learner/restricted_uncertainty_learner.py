@@ -43,6 +43,7 @@ class RestrictedUncertaintyLearner(UncertaintyLearner):
         training_data,
         parent_calc,
         base_calc,
+        mongo_db=None,
         uncertainty_tol=0.5,
     ):
         super().__init__(
@@ -51,6 +52,7 @@ class RestrictedUncertaintyLearner(UncertaintyLearner):
             training_data,
             parent_calc,
             base_calc,
+            mongo_db=mongo_db,
         )
         self.uncertainty_tol = uncertainty_tol
         self.max_evA = learner_params.get("max_evA", 0.05)
