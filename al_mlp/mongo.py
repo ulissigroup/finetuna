@@ -303,7 +303,7 @@ class MongoWrapper:
         atoms_doc.update(self.params)
         atoms_doc.update({"material": str(atoms.symbols), "first": self.first})
         if self.previous is not None:
-            atoms_doc.update({"previous": self.previous})
+            atoms_doc.update({"previous": self.previous.inserted_id})
         if self.first is True:
             self.first = False
         atoms_doc.update(info)
