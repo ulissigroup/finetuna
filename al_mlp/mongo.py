@@ -286,12 +286,13 @@ class MongoWrapper:
         }
         if base_calc is not None:
             self.params["base_calc"] = _make_calculator_dict(base_calc)
-            self.params["parent_calc"]["parent_calc"] = _make_calculator_dict(
-                parent_calc.calcs[0]
-            )
-            self.params["parent_calc"]["base_calc"] = _make_calculator_dict(
-                parent_calc.calcs[1]
-            )
+            if hasattr(parent_calc, calcs):
+                self.params["parent_calc"]["parent_calc"] = _make_calculator_dict(
+                    parent_calc.calcs[0]
+                )
+                self.params["parent_calc"]["base_calc"] = _make_calculator_dict(
+                    parent_calc.calcs[1]
+                )
 
         if self.commit_id is not None:
             self.params["commit"] = self.commit_id
