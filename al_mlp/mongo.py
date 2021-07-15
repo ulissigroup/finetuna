@@ -308,4 +308,13 @@ class MongoWrapper:
         if self.first is True:
             self.first = False
         atoms_doc.update(info)
+        stringify(atoms_doc)
         self.previous = self.mongo_collection.insert_one(atoms_doc)
+
+def stringify(current_dict):
+    for key in current_dict:
+        if isinstance(current_dict[key], dict):
+            stringify(current_dict[key])
+        else:
+            if not isinstance(current_dict[key], int) and not isinstance(current_dict[key], float):
+                current_dict[key] = str(current_dict[key])
