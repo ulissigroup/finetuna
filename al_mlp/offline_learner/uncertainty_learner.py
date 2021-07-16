@@ -75,3 +75,15 @@ class UncertaintyLearner(OfflineActiveLearner):
             queried_images = [self.sample_candidates[idx] for idx in query_idx]
 
         return queried_images
+
+    def check_terminate(self):
+        """
+        Default termination function.
+        """
+        if self.iterations >= self.max_iterations:
+            return True
+        final_image = self.add_data([self.sample_candidates[-1]])[0]
+        max_force = np.sqrt((final_image.get_forces() ** 2).sum(axis=1).max())
+        if max_force <= self.learner_params["atomistic_method"].fmax:
+            return True
+        return False
