@@ -286,7 +286,7 @@ class MongoWrapper:
         }
         if base_calc is not None:
             self.params["base_calc"] = _make_calculator_dict(base_calc)
-            if hasattr(parent_calc, 'calcs'):
+            if hasattr(parent_calc, "calcs"):
                 self.params["parent_calc"]["parent_calc"] = _make_calculator_dict(
                     parent_calc.calcs[0]
                 )
@@ -311,10 +311,13 @@ class MongoWrapper:
         stringify(atoms_doc)
         self.previous = self.mongo_collection.insert_one(atoms_doc)
 
+
 def stringify(current_dict):
     for key in current_dict:
         if isinstance(current_dict[key], dict):
             stringify(current_dict[key])
         else:
-            if not isinstance(current_dict[key], int) and not isinstance(current_dict[key], float):
+            if not isinstance(current_dict[key], int) and not isinstance(
+                current_dict[key], float
+            ):
                 current_dict[key] = str(current_dict[key])
