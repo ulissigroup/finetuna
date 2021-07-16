@@ -164,6 +164,9 @@ class OfflineActiveLearner:
 
         random.seed(self.query_seeds[self.iterations - 1])
         queried_images = self.query_func()
+        self.add_data(queried_images)
+
+    def add_data(self, queried_images):
         self.new_dataset = compute_with_calc(queried_images, self.delta_sub_calc)
         self.training_data += self.new_dataset
         self.parent_calls += len(self.new_dataset)
@@ -174,6 +177,7 @@ class OfflineActiveLearner:
             base_E = image.info["base energy"]
             write_to_db(queries_db, [image], "queried", parent_E, base_E)
         self.write_to_mongo(check=False, list_of_atoms=self.new_dataset)
+        return self.new_dataset
 
     def check_terminate(self):
         """
