@@ -82,7 +82,9 @@ class UncertaintyLearner(OfflineActiveLearner):
         """
         if self.iterations >= self.max_iterations:
             return True
-        final_image = compute_with_calc([self.sample_candidates[-1]], self.delta_sub_calc)[0]
+        final_image = compute_with_calc(
+            [self.sample_candidates[-1]], self.delta_sub_calc
+        )[0]
         max_force = np.sqrt((final_image.get_forces() ** 2).sum(axis=1).max())
         if max_force <= self.learner_params["atomistic_method"].fmax:
             return True
