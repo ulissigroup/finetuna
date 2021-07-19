@@ -22,7 +22,7 @@ from ase.calculators.singlepoint import SinglePointCalculator
 from ase.io.jsonio import encode, decode
 from ase.constraints import dict2constraint
 import subprocess
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 
 def make_doc_from_atoms(atoms, **kwargs):
@@ -320,7 +320,7 @@ def stringify(current_dict):
         else:
             if isinstance(current_dict[key], int) or isinstance(
                 current_dict[key], float
-            ):
+            ) or isinstance(current_dict[key], UUID):
                 new_dict[key] = current_dict[key]
             else:
                 new_dict[key] = str(current_dict[key])
