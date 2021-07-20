@@ -176,7 +176,7 @@ class OfflineActiveLearner:
             parent_E = image.info["parent energy"]
             base_E = image.info["base energy"]
             write_to_db(queries_db, [image], "queried", parent_E, base_E)
-        self.write_to_mongo(check=False, list_of_atoms=self.new_dataset)
+        self.write_to_mongo(check=True, list_of_atoms=self.new_dataset)
         return self.new_dataset
 
     def check_terminate(self):

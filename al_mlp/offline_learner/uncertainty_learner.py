@@ -85,6 +85,7 @@ class UncertaintyLearner(OfflineActiveLearner):
         final_image = compute_with_calc(
             [self.sample_candidates[-1]], self.delta_sub_calc
         )[0]
+        self.write_to_mongo(check=True, list_of_atoms=[final_image])
         max_force = np.sqrt((final_image.get_forces() ** 2).sum(axis=1).max())
         if max_force <= self.learner_params["atomistic_method"].fmax:
             return True
