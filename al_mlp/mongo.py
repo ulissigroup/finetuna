@@ -320,9 +320,7 @@ def stringify(current_dict):
         if isinstance(current_dict[key], dict):
             new_dict[key] = stringify(current_dict[key])
         else:
-            if (
-                isinstance(current_dict[key], Relaxation)
-            ):
+            if isinstance(current_dict[key], Relaxation):
                 new_dict[key] = str(current_dict[key])
             else:
                 new_dict[key] = current_dict[key]
