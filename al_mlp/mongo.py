@@ -24,6 +24,8 @@ from ase.constraints import dict2constraint
 import subprocess
 from uuid import UUID, uuid4
 
+from al_mlp.atomistic_methods import Relaxation
+
 
 def make_doc_from_atoms(atoms, **kwargs):
     """
@@ -319,11 +321,9 @@ def stringify(current_dict):
             new_dict[key] = stringify(current_dict[key])
         else:
             if (
-                isinstance(current_dict[key], int)
-                or isinstance(current_dict[key], float)
-                or isinstance(current_dict[key], UUID)
+                isinstance(current_dict[key], Relaxation)
             ):
-                new_dict[key] = current_dict[key]
-            else:
                 new_dict[key] = str(current_dict[key])
+            else:
+                new_dict[key] = current_dict[key]
     return new_dict
