@@ -59,21 +59,21 @@ class UncertaintyLearner(OfflineActiveLearner):
         self.ensemble = learner_params.get("n_ensembles")
         self.parent_calls = 0
 
-    # def query_func(self):
-    #     if self.iterations > 1:
-    #         uncertainty = np.array(
-    #             [atoms.info["max_force_stds"] for atoms in self.sample_candidates]
-    #         )
-    #         n_retrain = self.samples_to_retrain
-    #         query_idx = np.argpartition(uncertainty, -1 * n_retrain)[-n_retrain:]
-    #         queried_images = [self.sample_candidates[idx] for idx in query_idx]
-    #     else:
-    #         query_idx = random.sample(
-    #             range(1, len(self.sample_candidates)),
-    #             self.samples_to_retrain,
-    #         )
-    #         queried_images = [self.sample_candidates[idx] for idx in query_idx]
-    #     return queried_images
+    def query_func(self):
+        if self.iterations > 1:
+            uncertainty = np.array(
+                [atoms.info["max_force_stds"] for atoms in self.sample_candidates]
+            )
+            n_retrain = self.samples_to_retrain
+            query_idx = np.argpartition(uncertainty, -1 * n_retrain)[-n_retrain:]
+            queried_images = [self.sample_candidates[idx] for idx in query_idx]
+        else:
+            query_idx = random.sample(
+                range(1, len(self.sample_candidates)),
+                self.samples_to_retrain,
+            )
+            queried_images = [self.sample_candidates[idx] for idx in query_idx]
+        return queried_images
 
     def check_terminate(self):
         """
