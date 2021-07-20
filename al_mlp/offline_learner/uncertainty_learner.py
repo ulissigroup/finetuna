@@ -37,28 +37,6 @@ class UncertaintyLearner(OfflineActiveLearner):
         The number of models in ensemble
     """
 
-    def __init__(
-        self,
-        learner_params,
-        training_data,
-        ml_potential,
-        parent_calc,
-        base_calc,
-        mongo_db=None,
-    ):
-        super().__init__(
-            learner_params,
-            training_data,
-            ml_potential,
-            parent_calc,
-            base_calc,
-            mongo_db=mongo_db,
-        )
-
-        self.ml_potential = ml_potential
-        self.ensemble = learner_params.get("n_ensembles")
-        self.parent_calls = 0
-
     def query_func(self):
         if self.iterations > 1:
             uncertainty = np.array(
@@ -74,18 +52,3 @@ class UncertaintyLearner(OfflineActiveLearner):
             )
             queried_images = [self.sample_candidates[idx] for idx in query_idx]
         return queried_images
-
-    def check_terminate(self):
-        """
-        Default termination function.
-        """
-        if self.iterations >= self.max_iterations:
-            return True
-        final_image = compute_with_calc(
-            [self.sample_candidates[-1]], self.delta_sub_calc
-        )[0]
-        self.write_to_mongo(check=True, list_of_atoms=[final_image])
-        max_force = np.sqrt((final_image.get_forces() ** 2).sum(axis=1).max())
-        if max_force <= self.learner_params["atomistic_method"].fmax:
-            return True
-        return False
