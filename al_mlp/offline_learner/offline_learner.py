@@ -1,4 +1,7 @@
 import random
+
+from ase.calculators.singlepoint import SinglePointCalculator
+from al_mlp.base_calcs.dummy import Dummy
 from al_mlp.calcs import DeltaCalc
 from al_mlp.utils import convert_to_singlepoint, compute_with_calc, write_to_db
 import ase
@@ -86,15 +89,13 @@ class OfflineActiveLearner:
 
         raw_data = self.training_data
         sp_raw_data = convert_to_singlepoint(raw_data)
-        parent_ref_image = sp_raw_data[0]
+        parent_ref_image = self.atomistic_method.initial_geometry
         base_ref_image = compute_with_calc([parent_ref_image], self.base_calc)[0]
         self.refs = [parent_ref_image, base_ref_image]
         self.delta_sub_calc = DeltaCalc(self.calcs, "sub", self.refs)
         self.training_data = []
         queries_db = ase.db.connect("queried_images.db")
         for image in sp_raw_data:
-            # sp_calc = image.get_calculator()
-            # sp_delta_calc = DeltaCalc([sp_calc, self.base_calc], "sub", self.refs)
             sp_image = compute_with_calc([image], self.delta_sub_calc)
             self.training_data += sp_image
             parent_E = sp_image[0].info["parent energy"]
@@ -211,16 +212,14 @@ class OfflineActiveLearner:
         method.
         If ml_potential is passed in, it will get its calculator instead
         """
-        if ml_potential is not None:
-            if not isinstance(ml_potential, Calculator):
-                calc = ml_potential.get_calc()
-            else:
-                calc = ml_potential
+        if len(self.training_data) == 0:
+            return Dummy()
+        if ml_potential is None:
+            ml_potential = self.ml_potential
+        if not isinstance(ml_potential, Calculator):
+            calc = ml_potential.get_calc()
         else:
-            if not isinstance(self.ml_potential, Calculator):
-                calc = self.ml_potential.get_calc()
-            else:
-                calc = self.ml_potential
+            calc = ml_potential
         return calc
 
     def write_to_mongo(self, check, list_of_atoms):
