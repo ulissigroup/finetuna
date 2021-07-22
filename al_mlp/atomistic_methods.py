@@ -190,10 +190,8 @@ def max_parent_observer(calc, optimizer, max_parent_calls):
 
 def replay_trajectory(calc, optimizer):
     """Initialize hessian from parent dataset."""
-    print("check printed here", calc.check)
     if calc.check:
         parent_dataset = calc.parent_dataset
-        print("number of images in parent dataset", len(parent_dataset))
         optimizer.H = None
         atoms = parent_dataset[0]
         r0 = atoms.get_positions().ravel()
