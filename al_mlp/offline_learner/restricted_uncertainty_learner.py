@@ -109,8 +109,8 @@ class RestrictedUncertaintyLearner(UncertaintyLearner):
 
     def query_func(self):
         restricted_candidates = self.restrict_candidates()
-        query_idx = self.sub_query_func(restricted_candidates)
-        queried_images = [restricted_candidates[idx] for idx in query_idx]
+        self.query_idx = self.sub_query_func(restricted_candidates)
+        queried_images = [restricted_candidates[idx] for idx in self.query_idx]
         return queried_images
 
     def sub_query_func(self, candidates_list):

@@ -43,12 +43,12 @@ class UncertaintyLearner(OfflineActiveLearner):
                 [atoms.info["max_force_stds"] for atoms in self.sample_candidates]
             )
             n_retrain = self.samples_to_retrain
-            query_idx = np.argpartition(uncertainty, -1 * n_retrain)[-n_retrain:]
-            queried_images = [self.sample_candidates[idx] for idx in query_idx]
+            self.query_idx = np.argpartition(uncertainty, -1 * n_retrain)[-n_retrain:]
+            queried_images = [self.sample_candidates[idx] for idx in self.query_idx]
         else:
-            query_idx = random.sample(
+            self.query_idx = random.sample(
                 range(1, len(self.sample_candidates)),
                 self.samples_to_retrain,
             )
-            queried_images = [self.sample_candidates[idx] for idx in query_idx]
+            queried_images = [self.sample_candidates[idx] for idx in self.query_idx]
         return queried_images

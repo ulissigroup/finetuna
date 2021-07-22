@@ -109,8 +109,8 @@ class ForceQueryLearner(FmaxLearner):
         idxs.remove(min_index)
 
         queries_db = ase.db.connect("queried_images.db")
-        query_idx = random.sample(idxs, self.samples_to_retrain - 1)
-        queried_images = [self.sample_candidates[idx] for idx in query_idx]
+        self.query_idx = random.sample(idxs, self.samples_to_retrain - 1)
+        queried_images = [self.sample_candidates[idx] for idx in self.query_idx]
         min_force_image = self.sample_candidates[min_index]
         queried_images += min_force_image
         min_image_parent = compute_with_calc([min_force_image], self.parent_calc)[0]
