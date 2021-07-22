@@ -6,6 +6,7 @@ import numpy as np
 from ase.cluster.icosahedron import Icosahedron
 from ase.optimize import BFGS
 import unittest
+from al_mlp.utils import compute_with_calc
 
 FORCE_THRESHOLD = 0.05
 ENERGY_THRESHOLD = 0.03
@@ -29,8 +30,7 @@ class offline_uncertainty_CuNP(unittest.TestCase):
         )
         cls.EMT_structure_optim.run(cls.emt_counter, "CuNP_emt")
 
-        offline_initial_structure = initial_structure.copy()
-        offline_initial_structure.set_calculator(parent_calc)
+        offline_initial_structure = compute_with_calc([initial_structure.copy()], parent_calc)[0]
         Offline_relaxation = Relaxation(
             offline_initial_structure, BFGS, fmax=0.01, steps=30, maxstep=0.05
         )
