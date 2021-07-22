@@ -147,7 +147,7 @@ class Relaxation:
         self.steps = steps
         self.maxstep = maxstep
 
-    def run(self, calc, filename):
+    def run(self, calc, filename, replay_traj=False):
         structure = self.initial_geometry.copy()
         structure.set_calculator(calc)
         if self.maxstep is not None:
@@ -156,6 +156,9 @@ class Relaxation:
             )
         else:
             dyn = self.optimizer(structure, trajectory="{}.traj".format(filename))
+
+        if replay_traj:
+            dyn.attach(replay_trajectory, 1, calc, dyn)
 
         dyn.run(fmax=self.fmax, steps=self.steps)
 
@@ -183,3 +186,24 @@ class MaxParentRelaxation(Relaxation):
 def max_parent_observer(calc, optimizer, max_parent_calls):
     if calc.parent_calls >= max_parent_calls:
         optimizer.nsteps = optimizer.max_steps
+
+
+def replay_trajectory(calc, optimizer):
+    """Initialize hessian from parent dataset."""
+    print("check printed here", calc.check)
+    if calc.check:
+        parent_dataset = calc.parent_dataset
+        print("number of images in parent dataset", len(parent_dataset))
+        optimizer.H = None
+        atoms = parent_dataset[0]
+        r0 = atoms.get_positions().ravel()
+        f0 = atoms.get_forces().ravel()
+        for atoms in parent_dataset:
+            r = atoms.get_positions().ravel()
+            f = atoms.get_forces().ravel()
+            optimizer.update(r, f, r0, f0)
+            r0 = r
+            f0 = f
+
+        optimizer.r0 = r0
+        optimizer.f0 = f0

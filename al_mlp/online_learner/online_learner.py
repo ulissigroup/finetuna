@@ -74,7 +74,9 @@ class OnlineLearner(Calculator):
 
         # If we have less than two data points, uncertainty is not
         # well calibrated so just use DFT
+        self.check = False
         if len(self.parent_dataset) < 2:
+            self.check = True
             energy, force, force_cons = self.add_data_and_retrain(atoms)
             parent_fmax = np.sqrt((force_cons ** 2).sum(axis=1).max())
             self.results["energy"] = energy
@@ -117,6 +119,7 @@ class OnlineLearner(Calculator):
         # Check if we are extrapolating too far, and if so add/retrain
         if self.unsafe_prediction(atoms_ML) or self.parent_verify(atoms_ML):
             # We ran DFT, so just use that energy/force
+            self.check = True
             energy, force, force_cons = self.add_data_and_retrain(atoms)
             parent_fmax = np.sqrt((force_cons ** 2).sum(axis=1).max())
             random.seed(self.curr_step)
