@@ -1,6 +1,4 @@
 import random
-
-from ase.calculators.singlepoint import SinglePointCalculator
 from al_mlp.base_calcs.dummy import Dummy
 from al_mlp.calcs import DeltaCalc
 from al_mlp.utils import convert_to_singlepoint, compute_with_calc, write_to_db
@@ -199,6 +197,11 @@ class OfflineActiveLearner:
         """
         Default random query strategy.
         """
+        if self.samples_to_retrain < 2 and self.training_data == 0:
+            query_idx = random.sample(
+                range(1, len(self.sample_candidates)),
+                2,
+            )
         query_idx = random.sample(
             range(1, len(self.sample_candidates)),
             self.samples_to_retrain,
