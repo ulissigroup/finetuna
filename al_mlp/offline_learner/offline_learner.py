@@ -175,7 +175,12 @@ class OfflineActiveLearner:
             parent_E = image.info["parent energy"]
             base_E = image.info["base energy"]
             write_to_db(queries_db, [image], "queried", parent_E, base_E)
-        self.write_to_mongo(check=True, list_of_atoms=self.new_dataset)
+        self.write_to_mongo(
+            check=True,
+            list_of_atoms=self.new_dataset,
+            queried_idx=self.query_idx,
+            trained_on=True,
+        )
         return self.new_dataset
 
     def check_terminate(self):
@@ -187,7 +192,12 @@ class OfflineActiveLearner:
         final_image = compute_with_calc(
             [self.sample_candidates[-1]], self.delta_sub_calc
         )[0]
-        self.write_to_mongo(check=True, list_of_atoms=[final_image])
+        self.write_to_mongo(
+            check=True,
+            list_of_atoms=[final_image],
+            queried_idx=[len(self.sample_candidates - 1)],
+            trained_on=False,
+        )
         max_force = np.sqrt((final_image.get_forces() ** 2).sum(axis=1).max())
         if max_force <= self.learner_params["atomistic_method"].fmax:
             return True
@@ -198,15 +208,15 @@ class OfflineActiveLearner:
         Default random query strategy.
         """
         if self.samples_to_retrain < 2 and self.training_data == 0:
-            query_idx = random.sample(
+            self.query_idx = random.sample(
                 range(1, len(self.sample_candidates)),
                 2,
             )
-        query_idx = random.sample(
+        self.query_idx = random.sample(
             range(1, len(self.sample_candidates)),
             self.samples_to_retrain,
         )
-        queried_images = [self.sample_candidates[idx] for idx in query_idx]
+        queried_images = [self.sample_candidates[idx] for idx in self.query_idx]
         return queried_images
 
     def make_trainer_calc(self, ml_potential=None):
@@ -225,14 +235,19 @@ class OfflineActiveLearner:
             calc = ml_potential
         return calc
 
-    def write_to_mongo(self, check, list_of_atoms):
+    def write_to_mongo(self, check, list_of_atoms, query_idx=None, trained_on=False):
         if self.mongo_wrapper is not None:
-            for image in list_of_atoms:
+            for i in range(len(list_of_atoms)):
+                image = list_of_atoms[i]
                 info = {
                     "check": check,
                     "uncertainty": image.info["max_force_stds"],
                     "energy": image.get_potential_energy(),
                     "maxForce": np.sqrt((image.get_forces() ** 2).sum(axis=1).max()),
                     "forces": str(image.get_forces(apply_constraint=False)),
+                    "query_idx": None,
+                    "trained_on": trained_on,
                 }
+                if query_idx is not None or check is True:
+                    info["query_idx"] = query_idx[i]
                 self.mongo_wrapper.write_to_mongo(image, info)
