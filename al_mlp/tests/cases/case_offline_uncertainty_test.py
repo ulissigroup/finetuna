@@ -30,7 +30,9 @@ class offline_uncertainty_CuNP(unittest.TestCase):
         )
         cls.EMT_structure_optim.run(cls.emt_counter, "CuNP_emt")
 
-        offline_initial_structure = compute_with_calc([initial_structure.copy()], parent_calc)[0]
+        offline_initial_structure = compute_with_calc(
+            [initial_structure.copy()], parent_calc
+        )[0]
         Offline_relaxation = Relaxation(
             offline_initial_structure, BFGS, fmax=0.01, steps=30, maxstep=0.05
         )
