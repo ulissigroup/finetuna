@@ -178,7 +178,7 @@ class OfflineActiveLearner:
         self.write_to_mongo(
             check=True,
             list_of_atoms=self.new_dataset,
-            queried_idx=self.query_idx,
+            query_idx=self.query_idx,
             trained_on=True,
         )
         return self.new_dataset
@@ -195,7 +195,7 @@ class OfflineActiveLearner:
         self.write_to_mongo(
             check=True,
             list_of_atoms=[final_image],
-            queried_idx=[len(self.sample_candidates - 1)],
+            query_idx=[len(self.sample_candidates) - 1],
             trained_on=False,
         )
         max_force = np.sqrt((final_image.get_forces() ** 2).sum(axis=1).max())
