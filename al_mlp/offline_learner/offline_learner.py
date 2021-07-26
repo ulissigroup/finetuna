@@ -199,9 +199,18 @@ class OfflineActiveLearner:
             trained_on=False,
         )
         max_force = np.sqrt((final_image.get_forces() ** 2).sum(axis=1).max())
+        terminate = False
         if max_force <= self.learner_params["atomistic_method"].fmax:
-            return True
-        return False
+            terminate = True
+        print(
+            "Final image check with parent calc: "
+            + str(terminate)
+            + ", energy: "
+            + str(final_image.get_potential_energy())
+            + ", max force: "
+            + str(max_force)
+        )
+        return terminate
 
     def query_func(self):
         """
