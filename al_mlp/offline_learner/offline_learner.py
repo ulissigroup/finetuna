@@ -250,4 +250,6 @@ class OfflineActiveLearner:
                 }
                 if query_idx is not None or check is True:
                     info["query_idx"] = query_idx[i]
+                if "force_stds" in image.calc.results:
+                    info["force_stds"] = image.calc.results["force_stds"]
                 self.mongo_wrapper.write_to_mongo(image, info)
