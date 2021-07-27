@@ -38,7 +38,7 @@ class FlarePPCalc(Calculator):
             self.species_map[a_numbers[i]] = i
 
     def init_flare(self):
-        if self.kernel_type == "NomalizedDotProduct":
+        if self.kernel_type == "NormalizedDotProduct":
             self.kernel = NormalizedDotProduct(
                 self.flare_params["sigma"], self.flare_params["power"]
             )
