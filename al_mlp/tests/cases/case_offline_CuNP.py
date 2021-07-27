@@ -92,10 +92,10 @@ class offline_CuNP(unittest.TestCase):
 
     def test_offline_CuNP_calls(self):
         assert (
-            self.offline_learner.parent_calls <= 0.6 * self.emt_counter.force_calls
+            self.offline_learner.parent_calls <= 0.5 * self.emt_counter.force_calls
         ), str(
             "total calls:"
             + str(self.offline_learner.parent_calls)
             + " not less than: "
-            + str(self.emt_counter.force_calls * 0.6)
+            + str(self.emt_counter.force_calls * 0.5)
         )
