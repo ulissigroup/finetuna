@@ -37,7 +37,7 @@ def pca(traj_dict, fig_title=None):
             traj = Trajectory(value[0])
             db = connect(value[1])
             dft_call = [i.id - 1 for i in db.select(check=True)]
-            dft_traj = [traj[i] for i in db_dft_call]
+            dft_traj = [traj[i] for i in dft_call]
             trajs.append(dft_traj)
         else:
             trajs.append(value)
