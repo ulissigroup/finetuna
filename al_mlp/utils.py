@@ -3,7 +3,11 @@ import copy
 from ase.calculators.singlepoint import SinglePointCalculator as sp
 from ase.db.core import check
 from al_mlp.calcs import DeltaCalc
+from ase.io import write
 import numpy as np
+import subprocess
+import re
+import tempfile
 
 
 def convert_to_singlepoint(images):
@@ -152,3 +156,34 @@ def write_to_db_online(
                 "oalF": info.get("oalF", "-"),
             },
         )
+
+
+def calculate_rmsd(img1, img2):
+    """
+    Calculate rmsd between two images.
+    (https://github.com/charnley/rmsd)
+
+    Parameters
+    ----------
+
+    img1, img2: String or ase.Atoms
+        Paths to the xyz files of the two images,
+        or, ase.Atoms object, write them as xyz files.
+    assuming img1 and img2 are the same type of objects.
+    """
+    if isinstance(img1, str):
+        rmsd = subprocess.check_output(
+            f"calculate_rmsd --reorder {img1} {img2}", shell=True
+        )
+
+    else:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path1 = tempdir + "/img1.xyz"
+            path2 = tempdir + "/img2.xyz"
+            write(path1, img1)
+            write(path2, img2)
+            rmsd = subprocess.check_output(
+                f"calculate_rmsd --reorder {path1} {path2}", shell=True
+            )
+    rmsd_float = re.findall("-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?", str(rmsd))[0]
+    return np.round(float(rmsd_float), 4)
