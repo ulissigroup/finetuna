@@ -28,7 +28,7 @@ class FlarePPCalc(Calculator):
         self.variance_type = self.flare_params.get("variance_type", "SOR")
         self.opt_method = self.flare_params.get("opt_method", "BFGS")
         self.kernel_type = self.flare_params.get("kernel_type", "NormalizedDotProduct")
-        self.fit_limit = self.flare_param.get("fit_limit", None)
+        self.fit_limit = self.flare_params.get("fit_limit", None)
         self.iteration = 0
 
     def init_species_map(self):
