@@ -210,12 +210,14 @@ class OfflineActiveLearner:
         final_image = compute_with_calc([self.sample_candidates[-1]], self.parent_calc)[
             0
         ]
-        self.write_to_mongo(
-            check=True,
-            list_of_atoms=[final_image],
-            query_idx=[len(self.sample_candidates) - 1],
-            trained_on=False,
-        )
+        # self.write_to_mongo(
+        #     check=True,
+        #     list_of_atoms=[final_image],
+        #     query_idx=[len(self.sample_candidates) - 1],
+        #     trained_on=False,
+        # )
+        self.query_idx = [len(self.sample_candidates) - 1]
+        self.add_data([final_image])
         max_force = np.sqrt((final_image.get_forces() ** 2).sum(axis=1).max())
         terminate = False
         if max_force <= self.learner_params["atomistic_method"].fmax:
