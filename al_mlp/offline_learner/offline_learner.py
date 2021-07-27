@@ -91,10 +91,6 @@ class OfflineActiveLearner:
         self.refs = [parent_ref_image, base_ref_image]
         self.delta_sub_calc = DeltaCalc(self.calcs, "sub", self.refs)
 
-        # run a trajectory with just the base model to sample from
-        self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
-        self.do_after_train()
-
         # sort initial training data into precalculated (singlepoints) and raw
         raw_data = []
         precalculated_data = []
@@ -103,7 +99,12 @@ class OfflineActiveLearner:
                 precalculated_data.append(image)
             else:
                 raw_data.append(image)
+
+        # run a trajectory with no training data: just the base model to sample from
         self.training_data = []
+        self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
+        self.do_train()
+        self.do_after_train()
 
         # add initial data to training dataset
         sp_raw_data = convert_to_singlepoint(raw_data)
