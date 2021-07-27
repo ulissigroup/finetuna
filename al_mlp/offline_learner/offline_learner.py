@@ -6,6 +6,7 @@ import ase
 from al_mlp.mongo import MongoWrapper
 import numpy as np
 from ase.calculators.calculator import Calculator
+from ase.calculators.singlepoint import SinglePointCalculator as sp
 
 
 class OfflineActiveLearner:
@@ -84,14 +85,27 @@ class OfflineActiveLearner:
         """
         Prepare the training data by attaching delta values for training.
         """
-
-        raw_data = self.training_data
-        sp_raw_data = convert_to_singlepoint(raw_data)
+        # setup delta sub calc as defacto parent calc for all queries
         parent_ref_image = self.atomistic_method.initial_geometry
         base_ref_image = compute_with_calc([parent_ref_image], self.base_calc)[0]
         self.refs = [parent_ref_image, base_ref_image]
         self.delta_sub_calc = DeltaCalc(self.calcs, "sub", self.refs)
+
+        # run a trajectory with just the base model to sample from
+        self.do_after_train()
+
+        # sort initial training data into precalculated (singlepoints) and raw
+        raw_data = []
+        precalculated_data = []
+        for image in self.training_data:
+            if isinstance(image.get_calculator(), sp):
+                precalculated_data.append(image)
+            else:
+                raw_data.append(image)
         self.training_data = []
+
+        # add initial data to training dataset
+        sp_raw_data = convert_to_singlepoint(raw_data)
         queries_db = ase.db.connect("queried_images.db")
         for image in sp_raw_data:
             sp_image = compute_with_calc([image], self.delta_sub_calc)
@@ -99,6 +113,9 @@ class OfflineActiveLearner:
             parent_E = sp_image[0].info["parent energy"]
             base_E = sp_image[0].info["base energy"]
             write_to_db(queries_db, sp_image, "initial", parent_E, base_E)
+            self.write_to_mongo(
+                check=True, list_of_atoms=self.training_data, trained_on=True
+            )
         self.initial_image_energy = self.refs[0].get_potential_energy()
 
     def learn(self):
@@ -121,8 +138,7 @@ class OfflineActiveLearner:
         """
         Executes before training the ml_potential in every active learning loop.
         """
-        if self.iterations > 0:
-            self.query_data()
+        self.query_data()
         self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
 
     def do_train(self):
@@ -189,9 +205,9 @@ class OfflineActiveLearner:
         """
         if self.iterations >= self.max_iterations:
             return True
-        final_image = compute_with_calc(
-            [self.sample_candidates[-1]], self.parent_calc
-        )[0]
+        final_image = compute_with_calc([self.sample_candidates[-1]], self.parent_calc)[
+            0
+        ]
         self.write_to_mongo(
             check=True,
             list_of_atoms=[final_image],
@@ -221,10 +237,11 @@ class OfflineActiveLearner:
                 range(1, len(self.sample_candidates)),
                 2,
             )
-        self.query_idx = random.sample(
-            range(1, len(self.sample_candidates)),
-            self.samples_to_retrain,
-        )
+        else:
+            self.query_idx = random.sample(
+                range(1, len(self.sample_candidates)),
+                self.samples_to_retrain,
+            )
         queried_images = [self.sample_candidates[idx] for idx in self.query_idx]
         return queried_images
 
@@ -257,7 +274,9 @@ class OfflineActiveLearner:
                     "query_idx": None,
                     "trained_on": trained_on,
                 }
-                if query_idx is not None or check is True:
+                if check is True:
+                    info["query_idx"] = None
+                if query_idx is not None:
                     info["query_idx"] = query_idx[i]
                 if "force_stds" in image.calc.results:
                     info["force_stds"] = image.calc.results["force_stds"]
