@@ -49,8 +49,6 @@ class OfflineActiveLearner:
         self.parent_calc = parent_calc
         self.base_calc = base_calc
         self.calcs = [parent_calc, base_calc]
-        self.init_learner()
-        self.init_training_data()
         if mongo_db is not None:
             self.mongo_wrapper = MongoWrapper(
                 mongo_db["offline_learner"],
@@ -61,6 +59,9 @@ class OfflineActiveLearner:
             )
         else:
             self.mongo_wrapper = None
+
+        self.init_learner()
+        self.init_training_data()
 
     def init_learner(self):
         """
@@ -103,7 +104,6 @@ class OfflineActiveLearner:
         # run a trajectory with no training data: just the base model to sample from
         self.training_data = []
         self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
-        self.do_train()
         self.do_after_train()
 
         # add initial data to training dataset
