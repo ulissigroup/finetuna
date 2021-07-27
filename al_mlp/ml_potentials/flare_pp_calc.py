@@ -191,12 +191,11 @@ class FlarePPCalc(Calculator):
 
     def train(self, parent_dataset, new_dataset=None):
         # # Create sparse GP model.
-        if not self.fit_limit:
-            if not self.gp_model or not new_dataset:
-                self.init_flare()
-                self.fit(parent_dataset)
-            else:
-                self.partial_fit(new_dataset)
+        if not self.gp_model or not new_dataset:
+            self.init_flare()
+            self.fit(parent_dataset)
+        elif not self.fit_limit:
+            self.partial_fit(new_dataset)
         elif isinstance(self.fit_limit, int):
             self.limit_fit(parent_dataset)
         else:
