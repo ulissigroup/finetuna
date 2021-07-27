@@ -1,5 +1,5 @@
 # import flare_pp._C_flare as flare_pp
-from flare_pp._C_flare import Structure, NormalizedDotProduct, B2
+from flare_pp._C_flare import Structure, NormalizedDotProduct, B2, SquaredExponential
 
 # from flare_pp.sparse_gp_calculator import SGP_Calculator
 from flare_pp.sparse_gp import SGP_Wrapper
@@ -27,7 +27,8 @@ class FlarePPCalc(Calculator):
         self.freeze_hyps = self.flare_params.get("freeze_hyps", None)
         self.variance_type = self.flare_params.get("variance_type", "SOR")
         self.opt_method = self.flare_params.get("opt_method", "BFGS")
-
+        self.kernel_type = self.flare_params.get("kernel_type", "NormalizedDotProduct")
+        self.fit_limit = self.flare_param.get("fit_limit", None)
         self.iteration = 0
 
     def init_species_map(self):
@@ -37,9 +38,14 @@ class FlarePPCalc(Calculator):
             self.species_map[a_numbers[i]] = i
 
     def init_flare(self):
-        self.kernel = NormalizedDotProduct(
-            self.flare_params["sigma"], self.flare_params["power"]
-        )
+        if self.kernel_type == "NomalizedDotProduct":
+            self.kernel = NormalizedDotProduct(
+                self.flare_params["sigma"], self.flare_params["power"]
+            )
+        elif self.kernel_type == "SquaredExponential":
+            self.kernel = SquaredExponential(
+                self.flare_params["sigma"], self.flare_params["ls"]
+            )
         radial_hyps = [0.0, self.flare_params["cutoff"]]
         settings = [len(self.species_map), 12, 3]
         self.B2calc = B2(
@@ -185,26 +191,17 @@ class FlarePPCalc(Calculator):
 
     def train(self, parent_dataset, new_dataset=None):
         # # Create sparse GP model.
-        # sigma = 1.0
-        # power = 2
-        # kernel = NormalizedDotProduct(sigma, power)
-        # cutoff_function = "quadratic"
-        # cutoff = 3.0
-        # radial_basis = "chebyshev"
-        # radial_hyps = [0.0, cutoff]
-        # cutoff_hyps = []
-        # settings = [len(self.species_map), 12, 3]
-        # calc = B2(radial_basis, cutoff_function, radial_hyps, cutoff_hyps, settings)
-        # sigma_e = 1.0
-        # sigma_f = 0.1
-        # sigma_s = 0.0
-        # max_iterations = 20
-        # bounds = [(None, None), (sigma_e, None), (None, None), (None, None)]
-        if not self.gp_model or not new_dataset:
-            self.init_flare()
-            self.fit(parent_dataset)
+        if not self.fit_limit:
+            if not self.gp_model or not new_dataset:
+                self.init_flare()
+                self.fit(parent_dataset)
+            else:
+                self.partial_fit(new_dataset)
+        elif isinstance(self.fit_limit, int):
+            self.limit_fit(parent_dataset)
         else:
-            self.partial_fit(new_dataset)
+            raise NotImplementedError("flare_param['fit_limit'] needs to be a integer.")
+
         # start_time = time.time()
         if isinstance(self.freeze_hyps, int) and self.iteration < self.freeze_hyps:
             # print("freeze_hyps = ", self.freeze_hyps)
@@ -248,4 +245,24 @@ class FlarePPCalc(Calculator):
 
             self.gp_model.update_db(
                 train_structure, forces, [], energy, mode="all", update_qr=True
+            )
+
+    def limit_fit(self, parent_data):
+        if len(parent_data) <= self.fit_limit:
+            dataset = parent_data
+        else:
+            dataset = parent_data[-self.fit_limit :]
+        for image in dataset:
+            train_structure = struc.Structure(
+                image.get_cell(), image.get_atomic_numbers(), image.get_positions()
+            )
+            forces = image.get_forces(apply_constraint=False)
+            energy = image.get_potential_energy(apply_constraint=False)
+            self.gp_model.update_db(
+                train_structure,
+                forces,
+                self.update_gp_range,
+                energy,
+                mode=self.update_gp_mode,
+                update_qr=True,
             )
