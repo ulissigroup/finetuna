@@ -221,10 +221,11 @@ class OfflineActiveLearner:
                 range(1, len(self.sample_candidates)),
                 2,
             )
-        self.query_idx = random.sample(
-            range(1, len(self.sample_candidates)),
-            self.samples_to_retrain,
-        )
+        else:
+            self.query_idx = random.sample(
+                range(1, len(self.sample_candidates)),
+                self.samples_to_retrain,
+            )
         queried_images = [self.sample_candidates[idx] for idx in self.query_idx]
         return queried_images
 
