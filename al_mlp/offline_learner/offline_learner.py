@@ -103,7 +103,6 @@ class OfflineActiveLearner:
         # run a trajectory with no training data: just the base model to sample from
         self.training_data = []
         self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
-        self.do_train()
         self.do_after_train()
 
         # add initial data to training dataset
