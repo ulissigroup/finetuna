@@ -190,7 +190,7 @@ class OfflineActiveLearner:
         if self.iterations >= self.max_iterations:
             return True
         final_image = compute_with_calc(
-            [self.sample_candidates[-1]], self.delta_sub_calc
+            [self.sample_candidates[-1]], self.parent_calc
         )[0]
         self.write_to_mongo(
             check=True,

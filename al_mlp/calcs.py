@@ -103,9 +103,13 @@ class DeltaCalc(LinearCombinationCalculator):
             self.calcs[1].system_changes = self.calcs[1].check_state(atoms)
             if self.calcs[1].system_changes:
                 self.calcs[1].reset()
-        return super().get_property(
+        result = super().get_property(
             name, atoms=atoms, allow_calculation=allow_calculation
         )
+        for calc in self.calcs:
+            if hasattr(calc, "system_changes"):
+                calc.system_changes = None
+        return result
 
     def reset(self):
         """
