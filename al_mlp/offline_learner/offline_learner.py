@@ -92,6 +92,7 @@ class OfflineActiveLearner:
         self.delta_sub_calc = DeltaCalc(self.calcs, "sub", self.refs)
 
         # run a trajectory with just the base model to sample from
+        self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
         self.do_after_train()
 
         # sort initial training data into precalculated (singlepoints) and raw
