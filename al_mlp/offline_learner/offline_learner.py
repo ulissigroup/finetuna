@@ -182,6 +182,8 @@ class OfflineActiveLearner:
 
         if query_idx is None:
             tag = "initial"
+            for image in un_delta_new_dataset:
+                image.info["max_force_stds"] = None
         else:
             tag = "queried"
         queries_db = ase.db.connect("queried_images.db")
