@@ -174,22 +174,28 @@ class OfflineActiveLearner:
         self.training_data += self.new_dataset
         self.parent_calls += len(self.new_dataset)
 
+        un_delta_new_dataset = []
+        for image in self.new_dataset:
+            add_delta_calc = DeltaCalc([image.calc, self.base_calc], "add", self.refs)
+            [un_delta_image] = compute_with_calc([image], add_delta_calc)
+            un_delta_new_dataset.append(un_delta_image)
+
         if query_idx is None:
             tag = "initial"
         else:
             tag = "queried"
         queries_db = ase.db.connect("queried_images.db")
-        for image in self.new_dataset:
+        for image in un_delta_new_dataset:
             parent_E = image.info["parent energy"]
             base_E = image.info["base energy"]
             write_to_db(queries_db, [image], tag, parent_E, base_E)
         self.write_to_mongo(
             check=True,
-            list_of_atoms=self.new_dataset,
+            list_of_atoms=un_delta_new_dataset,
             query_idx=query_idx,
             trained_on=True,
         )
-        return self.new_dataset
+        return un_delta_new_dataset
 
     def check_terminate(self):
         """
@@ -197,17 +203,9 @@ class OfflineActiveLearner:
         """
         if self.iterations >= self.max_iterations:
             return True
-        final_image = compute_with_calc([self.sample_candidates[-1]], self.parent_calc)[
-            0
-        ]
-        # self.write_to_mongo(
-        #     check=True,
-        #     list_of_atoms=[final_image],
-        #     query_idx=[len(self.sample_candidates) - 1],
-        #     trained_on=False,
-        # )
+        final_image = self.sample_candidates[-1]
         query_idx = [len(self.sample_candidates) - 1]
-        self.add_data([final_image], [query_idx])
+        final_image = self.add_data([final_image], [query_idx])[0]
         max_force = np.sqrt((final_image.get_forces() ** 2).sum(axis=1).max())
         terminate = False
         if max_force <= self.learner_params["atomistic_method"].fmax:
