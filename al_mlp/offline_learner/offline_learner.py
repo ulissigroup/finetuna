@@ -103,16 +103,7 @@ class OfflineActiveLearner:
         self.do_after_train()
 
         # add initial data to training dataset
-        queries_db = ase.db.connect("queried_images.db")
-        for image in raw_data:
-            sp_image = compute_with_calc([image], self.delta_sub_calc)
-            self.training_data += sp_image
-            parent_E = sp_image[0].info["parent energy"]
-            base_E = sp_image[0].info["base energy"]
-            write_to_db(queries_db, sp_image, "initial", parent_E, base_E)
-            self.write_to_mongo(
-                check=True, list_of_atoms=self.training_data, trained_on=True
-            )
+        self.add_data(raw_data, None)
         self.initial_image_energy = self.refs[0].get_potential_energy()
 
     def learn(self):
@@ -175,23 +166,27 @@ class OfflineActiveLearner:
         """
 
         random.seed(self.query_seeds[self.iterations - 1])
-        queried_images = self.query_func()
-        self.add_data(queried_images)
+        queried_images, query_idx = self.query_func()
+        self.add_data(queried_images, query_idx)
 
-    def add_data(self, queried_images):
+    def add_data(self, queried_images, query_idx):
         self.new_dataset = compute_with_calc(queried_images, self.delta_sub_calc)
         self.training_data += self.new_dataset
         self.parent_calls += len(self.new_dataset)
 
+        if query_idx is None: 
+            tag = "initial"
+        else:
+            tag = "queried"
         queries_db = ase.db.connect("queried_images.db")
         for image in self.new_dataset:
             parent_E = image.info["parent energy"]
             base_E = image.info["base energy"]
-            write_to_db(queries_db, [image], "queried", parent_E, base_E)
+            write_to_db(queries_db, [image], tag, parent_E, base_E)
         self.write_to_mongo(
             check=True,
             list_of_atoms=self.new_dataset,
-            query_idx=self.query_idx,
+            query_idx=query_idx,
             trained_on=True,
         )
         return self.new_dataset
@@ -211,8 +206,8 @@ class OfflineActiveLearner:
         #     query_idx=[len(self.sample_candidates) - 1],
         #     trained_on=False,
         # )
-        self.query_idx = [len(self.sample_candidates) - 1]
-        self.add_data([final_image])
+        query_idx = [len(self.sample_candidates) - 1]
+        self.add_data([final_image], [query_idx])
         max_force = np.sqrt((final_image.get_forces() ** 2).sum(axis=1).max())
         terminate = False
         if max_force <= self.learner_params["atomistic_method"].fmax:
@@ -232,17 +227,17 @@ class OfflineActiveLearner:
         Default random query strategy.
         """
         if self.samples_to_retrain < 2 and self.training_data == 0:
-            self.query_idx = random.sample(
+            query_idx = random.sample(
                 range(1, len(self.sample_candidates)),
                 2,
             )
         else:
-            self.query_idx = random.sample(
+            query_idx = random.sample(
                 range(1, len(self.sample_candidates)),
                 self.samples_to_retrain,
             )
-        queried_images = [self.sample_candidates[idx] for idx in self.query_idx]
-        return queried_images
+        queried_images = [self.sample_candidates[idx] for idx in query_idx]
+        return queried_images, query_idx
 
     def make_trainer_calc(self, ml_potential=None):
         """
@@ -273,8 +268,7 @@ class OfflineActiveLearner:
                     "query_idx": None,
                     "trained_on": trained_on,
                 }
-                if check is True:
-                    info["query_idx"] = None
+
                 if query_idx is not None:
                     info["query_idx"] = query_idx[i]
                 if "force_stds" in image.calc.results:

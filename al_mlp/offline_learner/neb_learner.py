@@ -36,8 +36,8 @@ class NEBLearner(OfflineActiveLearner):
         NEB query strategy.
         """
         # queries_db = ase.db.connect("queried_images.db")
-        self.query_idx = [0, 2, 4]
-        queried_images = [self.sample_candidates[idx] for idx in self.query_idx]
+        query_idx = [0, 2, 4]
+        queried_images = [self.sample_candidates[idx] for idx in query_idx]
         self.parent_calls += len(queried_images)
         # write_to_db(queries_db,queried_images)
-        return queried_images
+        return queried_images, query_idx

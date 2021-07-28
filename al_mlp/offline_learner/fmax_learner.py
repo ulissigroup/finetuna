@@ -64,18 +64,18 @@ class FmaxLearner(OfflineActiveLearner):
             print(
                 "Number of sample candidates is less than or equal to the requested samples to retrain, defaulting to all samples but the initial and final"
             )
-            self.query_idx = [*range(1, len(self.sample_candidates) - 1)]
-            if self.query_idx == []:
-                self.query_idx = [
+            query_idx = [*range(1, len(self.sample_candidates) - 1)]
+            if query_idx == []:
+                query_idx = [
                     0
                 ]  # EDGE CASE WHEN samples = 2 (need a better way to do it)
 
         else:
-            self.query_idx = random.sample(
+            query_idx = random.sample(
                 range(1, len(self.sample_candidates) - 1),
                 self.samples_to_retrain - 1,
             )
-        queried_images = [self.sample_candidates[idx] for idx in self.query_idx]
+        queried_images = [self.sample_candidates[idx] for idx in query_idx]
         if self.iterations == 1:
             writer = TrajectoryWriter("queried_images.traj", mode="w")
             for i in queried_images:
@@ -86,7 +86,7 @@ class FmaxLearner(OfflineActiveLearner):
                 writer.write(i)
 
         self.parent_calls += len(queried_images)
-        return queried_images
+        return queried_images, query_idx
 
 
 class ForceQueryLearner(FmaxLearner):
@@ -107,8 +107,8 @@ class ForceQueryLearner(FmaxLearner):
         idxs.remove(min_index)
 
         queries_db = ase.db.connect("queried_images.db")
-        self.query_idx = random.sample(idxs, self.samples_to_retrain - 1)
-        queried_images = [self.sample_candidates[idx] for idx in self.query_idx]
+        query_idx = random.sample(idxs, self.samples_to_retrain - 1)
+        queried_images = [self.sample_candidates[idx] for idx in query_idx]
         min_force_image = self.sample_candidates[min_index]
         queried_images += min_force_image
         min_image_parent = compute_with_calc([min_force_image], self.parent_calc)[0]
@@ -116,4 +116,4 @@ class ForceQueryLearner(FmaxLearner):
             (min_image_parent.get_forces() ** 2).sum(axis=1).max()
         )
         write_to_db(queries_db, queried_images)
-        return queried_images
+        return queried_images, query_idx
