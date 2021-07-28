@@ -174,7 +174,7 @@ class OfflineActiveLearner:
         self.training_data += self.new_dataset
         self.parent_calls += len(self.new_dataset)
 
-        if query_idx is None: 
+        if query_idx is None:
             tag = "initial"
         else:
             tag = "queried"
