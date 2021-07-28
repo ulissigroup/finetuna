@@ -92,14 +92,10 @@ class OfflineActiveLearner:
         self.refs = [parent_ref_image, base_ref_image]
         self.delta_sub_calc = DeltaCalc(self.calcs, "sub", self.refs)
 
-        # sort initial training data into precalculated (singlepoints) and raw
+        # move training data into raw data for computing with delta calc
         raw_data = []
-        precalculated_data = []
         for image in self.training_data:
-            if isinstance(image.get_calculator(), sp):
-                precalculated_data.append(image)
-            else:
-                raw_data.append(image)
+            raw_data.append(image)
 
         # run a trajectory with no training data: just the base model to sample from
         self.training_data = []
@@ -107,9 +103,8 @@ class OfflineActiveLearner:
         self.do_after_train()
 
         # add initial data to training dataset
-        sp_raw_data = convert_to_singlepoint(raw_data)
         queries_db = ase.db.connect("queried_images.db")
-        for image in sp_raw_data:
+        for image in raw_data:
             sp_image = compute_with_calc([image], self.delta_sub_calc)
             self.training_data += sp_image
             parent_E = sp_image[0].info["parent energy"]
