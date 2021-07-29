@@ -147,7 +147,7 @@ class Relaxation:
         self.steps = steps
         self.maxstep = maxstep
 
-    def run(self, calc, filename, replay_traj=False):
+    def run(self, calc, filename, replay_traj=False, max_parent_calls=None):
         structure = self.initial_geometry.copy()
         structure.set_calculator(calc)
         if self.maxstep is not None:
@@ -160,27 +160,14 @@ class Relaxation:
         if replay_traj:
             dyn.attach(replay_trajectory, 1, calc, dyn)
 
+        if max_parent_calls is not None:
+            dyn.attach(max_parent_observer, 1, calc, dyn, max_parent_calls)
+
         dyn.run(fmax=self.fmax, steps=self.steps)
 
     def get_trajectory(self, filename):
         trajectory = ase.io.Trajectory(filename + ".traj")
         return trajectory
-
-
-class MaxParentRelaxation(Relaxation):
-    def run(self, calc, filename, max_parent_calls):
-        structure = self.initial_geometry.copy()
-        structure.set_calculator(calc)
-        if self.maxstep is not None:
-            dyn = self.optimizer(
-                structure, maxstep=self.maxstep, trajectory="{}.traj".format(filename)
-            )
-        else:
-            dyn = self.optimizer(structure, trajectory="{}.traj".format(filename))
-
-        dyn.attach(max_parent_observer, 1, calc, dyn, max_parent_calls)
-
-        dyn.run(fmax=self.fmax, steps=self.steps)
 
 
 def max_parent_observer(calc, optimizer, max_parent_calls):
