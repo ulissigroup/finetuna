@@ -206,7 +206,7 @@ class OfflineActiveLearner:
         if self.iterations >= self.max_iterations:
             return True
         final_image = self.sample_candidates[-1]
-        query_idx = [len(self.sample_candidates) - 1]
+        query_idx = len(self.sample_candidates) - 1
         final_image = self.add_data([final_image], [query_idx])[0]
         max_force = np.sqrt((final_image.get_forces() ** 2).sum(axis=1).max())
         terminate = False
