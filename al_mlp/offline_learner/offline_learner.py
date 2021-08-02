@@ -203,8 +203,6 @@ class OfflineActiveLearner:
         """
         Default termination function.
         """
-        if self.iterations >= self.max_iterations:
-            return True
         final_image = self.sample_candidates[-1]
         query_idx = len(self.sample_candidates) - 1
         final_image = self.add_data([final_image], [query_idx])[0]
@@ -220,6 +218,8 @@ class OfflineActiveLearner:
             + ", max force: "
             + str(max_force)
         )
+        if self.iterations >= self.max_iterations:
+            return True
         return terminate
 
     def query_func(self):
