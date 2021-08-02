@@ -85,7 +85,7 @@ def pca(traj_dict, fig_title=None):
         ax.set_title("Principal Component Analysis", fontsize=20)
     targets = types
     colors = energy
-    mark = ["v", "^", "<", ">", "o", "s", "D"]
+    mark = ["x", "o", "^", "v", "<", ">", "s", "D"]
     for target, color, mark in zip(targets, colors, mark):
         indicesToKeep = finalDf["label"] == target
         #     if target == 'oal':
