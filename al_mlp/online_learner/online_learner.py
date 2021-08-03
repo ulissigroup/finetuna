@@ -162,7 +162,12 @@ class OnlineLearner(Calculator):
                 self.mongo_wrapper.write_to_mongo(atoms_ML, info)
 
         # Return the energy/force
-        print("uncertainty: "+str(info["uncertainty"]) + ", tolerance: "+str(info["tolerance"]))
+        print(
+            "uncertainty: "
+            + str(info["uncertainty"])
+            + ", tolerance: "
+            + str(info["tolerance"])
+        )
         self.results["energy"] = energy
         self.results["forces"] = force
 
