@@ -1,3 +1,4 @@
+from ase.atoms import Atoms
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from ase.io import Trajectory, read, write
@@ -21,6 +22,7 @@ def pca_xyz(traj_dict, fig_title=None):
         object or the path to the trajectory.
         or {'oal': [path_to_oal_traj, path_to_oal_db]}, where path_to_oal_traj
         is the path to the trajectory and path_to_oal_db is the path to the ase Database.
+        or {'oal': [list_of_atoms]}, where the list of atoms serves as a trajectory to be read
 
     fig_title: str
         Title of the PCA plot.
@@ -33,6 +35,8 @@ def pca_xyz(traj_dict, fig_title=None):
         types.append(key)
         if isinstance(value, str):
             value = Trajectory(value)
+            trajs.append(value)
+        elif type(value) is list and type(value[0]) is Atoms:
             trajs.append(value)
         elif isinstance(value, list):
             traj = Trajectory(value[0])
