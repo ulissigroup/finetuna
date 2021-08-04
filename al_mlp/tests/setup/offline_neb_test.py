@@ -1,5 +1,5 @@
 import torch
-from al_mlp.preset_learners.neb_learner import NEBLearner
+from al_mlp.offline_learner.neb_learner import NEBLearner
 import numpy as np
 from al_mlp.atomistic_methods import NEBcalc
 from al_mlp.base_calcs.morse import MultiMorse
@@ -88,6 +88,6 @@ def offline_neb(images, parent_calc, iter=4, intermediate_images=3):
         # "max_evA": 0.01,
     }
 
-    learner = NEBLearner(learner_params, trainer, images, parent_calc, base_calc)
+    learner = NEBLearner(learner_params, images, trainer, parent_calc, base_calc)
     learner.learn()
     return learner

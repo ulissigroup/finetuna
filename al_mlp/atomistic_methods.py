@@ -138,21 +138,57 @@ class MDsimulate:
 
 
 class Relaxation:
-    def __init__(self, initial_geometry, optimizer, fmax=0.05, steps=None, maxstep=0.2):
+    def __init__(
+        self, initial_geometry, optimizer, fmax=0.05, steps=None, maxstep=None
+    ):
         self.initial_geometry = initial_geometry
         self.optimizer = optimizer
         self.fmax = fmax
         self.steps = steps
         self.maxstep = maxstep
 
-    def run(self, calc, filename):
+    def run(self, calc, filename, replay_traj=False, max_parent_calls=None):
         structure = self.initial_geometry.copy()
         structure.set_calculator(calc)
-        dyn = self.optimizer(
-            structure, maxstep=self.maxstep, trajectory="{}.traj".format(filename)
-        )
+        if self.maxstep is not None:
+            dyn = self.optimizer(
+                structure, maxstep=self.maxstep, trajectory="{}.traj".format(filename)
+            )
+        else:
+            dyn = self.optimizer(structure, trajectory="{}.traj".format(filename))
+
+        if replay_traj:
+            dyn.attach(replay_trajectory, 1, calc, dyn)
+
+        if max_parent_calls is not None:
+            dyn.attach(max_parent_observer, 1, calc, dyn, max_parent_calls)
+
         dyn.run(fmax=self.fmax, steps=self.steps)
 
     def get_trajectory(self, filename):
         trajectory = ase.io.Trajectory(filename + ".traj")
         return trajectory
+
+
+def max_parent_observer(calc, optimizer, max_parent_calls):
+    if calc.parent_calls >= max_parent_calls:
+        optimizer.nsteps = optimizer.max_steps
+
+
+def replay_trajectory(calc, optimizer):
+    """Initialize hessian from parent dataset."""
+    if calc.check:
+        parent_dataset = calc.parent_dataset
+        optimizer.H = None
+        atoms = parent_dataset[0]
+        r0 = atoms.get_positions().ravel()
+        f0 = atoms.get_forces().ravel()
+        for atoms in parent_dataset:
+            r = atoms.get_positions().ravel()
+            f = atoms.get_forces().ravel()
+            optimizer.update(r, f, r0, f0)
+            r0 = r
+            f0 = f
+
+        optimizer.r0 = r0
+        optimizer.f0 = f0

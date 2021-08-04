@@ -1,11 +1,26 @@
-from al_mlp.offline_learner import OfflineActiveLearner
+from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
 
 # Specific NEB querying strategy
 
 
 class NEBLearner(OfflineActiveLearner):
-    def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc):
-        super().__init__(learner_params, trainer, training_data, parent_calc, base_calc)
+    def __init__(
+        self,
+        learner_params,
+        training_data,
+        trainer,
+        parent_calc,
+        base_calc,
+        mongo_db=None,
+    ):
+        super().__init__(
+            learner_params,
+            training_data,
+            trainer,
+            parent_calc,
+            base_calc,
+            mongo_db=mongo_db,
+        )
         self.parent_calls = 0
 
     def check_terminate(self):
@@ -25,4 +40,4 @@ class NEBLearner(OfflineActiveLearner):
         queried_images = [self.sample_candidates[idx] for idx in query_idx]
         self.parent_calls += len(queried_images)
         # write_to_db(queries_db,queried_images)
-        return queried_images
+        return queried_images, query_idx

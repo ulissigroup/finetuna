@@ -42,18 +42,19 @@ jobs:
           key: v0.2-dependencies-{{ checksum "env_cpu.yml" }}
 
       - run:
-          name: Run tests
-          command: |
-            source /home/circleci/miniconda/etc/profile.d/conda.sh
-            conda activate al_mlp
-            pip install -e .
-            OMP_NUM_THREADS=1 pytest al_mlp/tests/suite_light_tests.py
-          no_output_timeout: 1.5h
-
-      - run:
           name: Run black
           command: |
             source /home/circleci/miniconda/etc/profile.d/conda.sh
             conda activate al_mlp
             pip install black
             black . --check
+
+      - run:
+          name: Run tests
+          command: |
+            source /home/circleci/miniconda/etc/profile.d/conda.sh
+            conda activate al_mlp
+            pip install -e .
+            pip install spglib
+            OMP_NUM_THREADS=1 pytest al_mlp/tests/suites/light_suite.py
+          no_output_timeout: 1.5h

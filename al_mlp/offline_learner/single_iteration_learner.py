@@ -1,4 +1,4 @@
-from al_mlp.offline_active_learner import OfflineActiveLearner
+from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
 
 
 class SingleIterationLearner(OfflineActiveLearner):
@@ -22,8 +22,23 @@ class SingleIterationLearner(OfflineActiveLearner):
         Calculator used to calculate delta data for training.
     """
 
-    def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc):
-        super().__init__(learner_params, trainer, training_data, parent_calc, base_calc)
+    def __init__(
+        self,
+        learner_params,
+        training_data,
+        trainer,
+        parent_calc,
+        base_calc,
+        mongo_db=None,
+    ):
+        super().__init__(
+            learner_params,
+            training_data,
+            trainer,
+            parent_calc,
+            base_calc,
+            mongo_db=mongo_db,
+        )
 
     def init_learner(self):
         """

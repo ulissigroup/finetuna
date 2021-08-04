@@ -1,3 +1,7 @@
+from ocpmodels.models import dimenet_plus_plus
+from al_mlp.utils import compute_with_calc
+from al_mlp.calcs import DeltaCalc
+from al_mlp.base_calcs.ocp_model import OCPModel
 from al_mlp.atomistic_methods import Relaxation
 from al_mlp.online_learner.online_learner import OnlineLearner
 from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
@@ -16,7 +20,7 @@ if __name__ == "__main__":
     from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
     from dask.distributed import Client, LocalCluster
 
-    cluster = LocalCluster(n_workers=5, processes=True, threads_per_worker=1)
+    cluster = LocalCluster(processes=True, threads_per_worker=1)
     client = Client(cluster)
     AmptorchEnsembleCalc.set_executor(client)
 
@@ -33,7 +37,7 @@ if __name__ == "__main__":
     OAL_initial_structure = initial_structure.copy()
     OAL_initial_structure.set_calculator(copy.deepcopy(parent_calc))
     OAL_relaxation = Relaxation(
-        OAL_initial_structure, BFGS, fmax=0.05, steps=60, maxstep=0.04
+        OAL_initial_structure, BFGS, fmax=0.05, steps=200, maxstep=0.04
     )
 
     Gs = {
@@ -52,8 +56,8 @@ if __name__ == "__main__":
         "samples_to_retrain": 1,
         "filename": "relax_example",
         "file_dir": "./",
-        "stat_uncertain_tol": 0.15,
-        "dyn_uncertain_tol": 1.5,
+        "stat_uncertain_tol": 0.1,
+        "dyn_uncertain_tol": 1.2,
         "fmax_verify_threshold": 0.05,  # eV/AA
         "relative_variance": True,
         "n_ensembles": 5,
@@ -65,7 +69,7 @@ if __name__ == "__main__":
         "optim": {
             "device": "cpu",
             "force_coefficient": 4.0,
-            "lr": 1e-2,
+            "lr": 1,
             "batch_size": 10,
             "epochs": 100,
             "optimizer": torch.optim.LBFGS,
@@ -93,17 +97,39 @@ if __name__ == "__main__":
     dbname = "CuNP_oal"
     trainer = AtomsTrainer(config)
 
+    checkpoint_path = "/home/jovyan/working/ocp/data/pretrained/s2ef/dimenetpp_2M.pt"
+    model_path = (
+        "/home/jovyan/working/ocp-dev/configs/s2ef/2M/dimenet_plus_plus/dpp.yml"
+    )
+    base_calc = OCPModel(model_path=model_path, checkpoint_path=checkpoint_path)
+    # base_initial_structure = initial_structure.copy()
+    base_initial_structure = compute_with_calc([initial_structure.copy()], base_calc)[0]
+    # base_initial_structure.set_calculator(base_calc)
+
+    delta_calc = DeltaCalc(
+        [parent_calc, base_calc],
+        "sub",
+        [OAL_initial_structure, base_initial_structure],
+    )
+
     ml_potential = AmptorchEnsembleCalc(trainer, learner_params["n_ensembles"])
-    onlinecalc = OnlineLearner(
+
+    online_calc = OnlineLearner(
         learner_params,
         images,
         ml_potential,
-        parent_calc,
+        delta_calc,
+    )
+
+    real_calc = DeltaCalc(
+        [online_calc, base_calc],
+        "add",
+        [OAL_initial_structure, base_initial_structure],
     )
 
     if os.path.exists("dft_calls.db"):
         os.remove("dft_calls.db")
-    OAL_relaxation.run(onlinecalc, filename=dbname)
+    OAL_relaxation.run(real_calc, filename=dbname)
 
     # Retain and print image of the final structure from the online relaxation
     OAL_image = OAL_relaxation.get_trajectory("CuNP_oal")[-1]

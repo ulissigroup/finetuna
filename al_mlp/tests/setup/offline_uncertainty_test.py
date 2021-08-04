@@ -1,8 +1,12 @@
 import numpy as np
+from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
 
 # from al_mlp.ensemble_calc import EnsembleCalc
 
-from al_mlp.preset_learners.fmax_learner import FmaxLearner
+from al_mlp.offline_learner.restricted_uncertainty_learner import (
+    RestrictedUncertaintyLearner,
+)
+
 from amptorch.trainer import AtomsTrainer
 import os
 
@@ -38,12 +42,13 @@ def run_offline_al(atomistic_method, images, dbname, parent_calc):
         "atomistic_method": atomistic_method,
         "max_iterations": 10,
         "force_tolerance": 0.01,
-        "samples_to_retrain": 2,
+        "samples_to_retrain": 1,
         "filename": "relax_example",
         "file_dir": "./",
         "query_method": "random",
         "use_dask": False,
         "max_evA": 0.05,
+        "n_ensembles": 3,
     }
 
     config = {
@@ -86,14 +91,13 @@ def run_offline_al(atomistic_method, images, dbname, parent_calc):
     cutoff = Gs["default"]["cutoff"]
     base_calc = MultiMorse(images, cutoff, combo="mean")
 
-    learner = FmaxLearner(
+    ml_potential = AmptorchEnsembleCalc(trainer, learner_params["n_ensembles"])
+    learner = RestrictedUncertaintyLearner(
         learner_params,
-        trainer,
         images,
+        ml_potential,
         parent_calc,
         base_calc,
-        # ncores="max",
-        # ensemble=5,
     )
 
     learner.learn()

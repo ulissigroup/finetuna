@@ -1,4 +1,4 @@
-from .test_setup.offline_relaxation_test import run_offline_al
+from al_mlp.tests.setup.offline_relaxation_test import run_offline_al
 from al_mlp.atomistic_methods import Relaxation
 from al_mlp.calcs import CounterCalc
 from ase.calculators.emt import EMT
@@ -6,6 +6,7 @@ import numpy as np
 from ase.cluster.icosahedron import Icosahedron
 from ase.optimize import BFGS
 import unittest
+from al_mlp.utils import compute_with_calc
 
 FORCE_THRESHOLD = 0.05
 ENERGY_THRESHOLD = 0.03
@@ -25,12 +26,13 @@ class offline_CuNP(unittest.TestCase):
         cls.emt_counter = CounterCalc(parent_calc)
         EMT_initial_structure.set_calculator(cls.emt_counter)
         cls.EMT_structure_optim = Relaxation(
-            EMT_initial_structure, BFGS, fmax=0.01, steps=30
+            EMT_initial_structure, BFGS, fmax=0.01, steps=30, maxstep=0.05
         )
         cls.EMT_structure_optim.run(cls.emt_counter, "CuNP_emt")
 
-        offline_initial_structure = initial_structure.copy()
-        offline_initial_structure.set_calculator(parent_calc)
+        offline_initial_structure = compute_with_calc(
+            [initial_structure.copy()], parent_calc
+        )[0]
         Offline_relaxation = Relaxation(
             offline_initial_structure, BFGS, fmax=0.01, steps=30, maxstep=0.05
         )
@@ -42,27 +44,43 @@ class offline_CuNP(unittest.TestCase):
         )
         cls.EMT_image = cls.EMT_structure_optim.get_trajectory("CuNP_emt")[-1]
         cls.EMT_image.set_calculator(parent_calc)
-        cls.offline_final_structure = cls.Offline_traj[-1]
-        cls.offline_final_structure.set_calculator(cls.trained_calc)
+        cls.offline_final_structure_AL = cls.Offline_traj[-1]
+        cls.offline_final_structure_AL.set_calculator(cls.trained_calc)
+        cls.offline_final_structure_EMT = cls.Offline_traj[-1]
+        cls.offline_final_structure_EMT.set_calculator(parent_calc)
         cls.description = "CuNP"
         return super().setUpClass()
 
-    def test_offline_CuNP_energy(self):
+    def test_energy_AL_EMT(self):
         assert np.allclose(
             self.EMT_image.get_potential_energy(),
-            self.offline_final_structure.get_potential_energy(),
+            self.offline_final_structure_AL.get_potential_energy(),
             atol=ENERGY_THRESHOLD,
         ), str(
             "Learner energy inconsistent:\n"
             + str(self.EMT_image.get_potential_energy())
             + "or Parent energy inconsistent:\n"
-            + str(self.offline_final_structure.get_potential_energy())
+            + str(self.offline_final_structure_AL.get_potential_energy())
+            + "\nwith Energy Threshold: "
+            + str(ENERGY_THRESHOLD)
+        )
+
+    def test_energy_EMT_EMT(self):
+        assert np.allclose(
+            self.EMT_image.get_potential_energy(),
+            self.offline_final_structure_EMT.get_potential_energy(),
+            atol=ENERGY_THRESHOLD,
+        ), str(
+            "Learner energy inconsistent:\n"
+            + str(self.EMT_image.get_potential_energy())
+            + "or Parent energy inconsistent:\n"
+            + str(self.offline_final_structure_EMT.get_potential_energy())
             + "\nwith Energy Threshold: "
             + str(ENERGY_THRESHOLD)
         )
 
     def test_offline_CuNP_forces(self):
-        forces = self.offline_final_structure.get_forces()
+        forces = self.offline_final_structure_AL.get_forces()
         fmax = np.sqrt((forces ** 2).sum(axis=1).max())
 
         assert fmax <= FORCE_THRESHOLD, str(
@@ -78,6 +96,6 @@ class offline_CuNP(unittest.TestCase):
         ), str(
             "total calls:"
             + str(self.offline_learner.parent_calls)
-            + "not less than: "
-            + str(self.emt_counter.force_calls)
+            + " not less than: "
+            + str(self.emt_counter.force_calls * 0.5)
         )

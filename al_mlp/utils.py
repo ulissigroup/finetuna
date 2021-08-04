@@ -1,7 +1,13 @@
 import os
 import copy
 from ase.calculators.singlepoint import SinglePointCalculator as sp
+from ase.db.core import check
 from al_mlp.calcs import DeltaCalc
+from ase.io import write
+import numpy as np
+import subprocess
+import re
+import tempfile
 
 
 def convert_to_singlepoint(images):
@@ -17,21 +23,39 @@ def convert_to_singlepoint(images):
 
     images = copy_images(images)
     singlepoint_images = []
-    cwd = os.getcwd()
+    # cwd = os.getcwd()
     for image in images:
         if isinstance(image.get_calculator(), sp):
             singlepoint_images.append(image)
             continue
-        os.makedirs("./vasp_temp")  # , exist_ok=True)
-        os.chdir("./vasp_temp")
+        # os.makedirs("./vasp_temp", exist_ok=True)
+        # os.chdir("./vasp_temp")
         sample_energy = image.get_potential_energy(apply_constraint=False)
         sample_forces = image.get_forces(apply_constraint=False)
+        if isinstance(image.get_calculator(), DeltaCalc):
+            image.info["parent energy"] = image.get_calculator().parent_results[
+                "energy"
+            ]
+            image.info["base energy"] = image.get_calculator().base_results["energy"]
+            image.info["parent fmax"] = np.max(
+                np.abs(image.get_calculator().parent_results["forces"])
+            )
+
         sp_calc = sp(atoms=image, energy=float(sample_energy), forces=sample_forces)
         sp_calc.implemented_properties = ["energy", "forces"]
         image.set_calculator(sp_calc)
+        # image.get_potential_energy()
+        # image.get_forces()
+
+        # image.calc.results["energy"] = float(image.calc.results["energy"])
+
+        # sp_calc = sp(atoms=image, **image.calc.results)
+        # sp_calc.implemented_properties = list(image.calc.results.keys())
+
+        # image.set_calculator(sp_calc)
         singlepoint_images.append(image)
-        os.chdir(cwd)
-        os.system("rm -rf ./vasp_temp")
+        # os.chdir(cwd)
+        # os.system("rm -rf ./vasp_temp")
 
     return singlepoint_images
 
@@ -52,7 +76,7 @@ def compute_with_calc(images, calculator):
 
     images = copy_images(images)
     for image in images:
-        image.set_calculator(copy.deepcopy(calculator))
+        image.set_calculator(calculator)
     return convert_to_singlepoint(images)
 
 
@@ -89,7 +113,7 @@ def subtract_deltas(images, base_calc, refs):
 def copy_images(images):
     """
     Copies images and returns the new instances.
-    The new images also have copied calculators.
+    The new images DO NOT have copied calculators.
 
     Parameters
     ----------
@@ -101,11 +125,65 @@ def copy_images(images):
     for image in images:
         calc = image.get_calculator()
         new_image = image.copy()
-        new_image.set_calculator(copy.deepcopy(calc))
+        new_image.set_calculator(calc)
         new_images.append(new_image)
     return new_images
 
 
-def write_to_db(database, queried_images):
+def write_to_db(database, queried_images, datatype="-", parentE="-", baseE="-"):
     for image in queried_images:
-        database.write(image)
+        database.write(
+            image,
+            key_value_pairs={"type": datatype, "parentE": parentE, "baseE": baseE},
+        )
+
+
+def write_to_db_online(
+    database,
+    queried_images,
+    info,
+):
+    for image in queried_images:
+        database.write(
+            image,
+            key_value_pairs={
+                "check": info.get("check"),
+                "uncertainty": info.get("uncertainty", "-"),
+                "tolerance": info.get("tolerance", "-"),
+                "parentE": info.get("parentE", "-"),
+                "parentMaxForce": info.get("parentMaxForce", "-"),
+                "parentF": info.get("parentF", "-"),
+                "oalF": info.get("oalF", "-"),
+            },
+        )
+
+
+def calculate_rmsd(img1, img2):
+    """
+    Calculate rmsd between two images.
+    (https://github.com/charnley/rmsd)
+
+    Parameters
+    ----------
+
+    img1, img2: String or ase.Atoms
+        Paths to the xyz files of the two images,
+        or, ase.Atoms object, write them as xyz files.
+    assuming img1 and img2 are the same type of objects.
+    """
+    if isinstance(img1, str):
+        rmsd = subprocess.check_output(
+            f"calculate_rmsd --reorder {img1} {img2}", shell=True
+        )
+
+    else:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path1 = tempdir + "/img1.xyz"
+            path2 = tempdir + "/img2.xyz"
+            write(path1, img1)
+            write(path2, img2)
+            rmsd = subprocess.check_output(
+                f"calculate_rmsd --reorder {path1} {path2}", shell=True
+            )
+    rmsd_float = re.findall("-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?", str(rmsd))[0]
+    return np.round(float(rmsd_float), 4)

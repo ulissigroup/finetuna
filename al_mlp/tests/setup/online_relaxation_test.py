@@ -1,11 +1,13 @@
 import numpy as np
-from al_mlp.online_learner import OnlineLearner
+from al_mlp.online_learner.online_learner import OnlineLearner
+from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
+
 from amptorch.trainer import AtomsTrainer
 import os
 import torch
 
 
-def run_oal(atomistic_method, images, elements, dbname, parent_calc):
+def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
 
     Gs = {
         "default": {
@@ -23,10 +25,11 @@ def run_oal(atomistic_method, images, elements, dbname, parent_calc):
         "samples_to_retrain": 1,
         "filename": "relax_example",
         "file_dir": "./",
-        "uncertain_tol": 5.0,
+        "stat_uncertain_tol": 0.15,
+        "dyn_uncertain_tol": 1.5,
         "fmax_verify_threshold": 0.05,  # eV/AA
         "relative_variance": True,
-        "n_ensembles": 10,
+        "n_ensembles": 5,
         "use_dask": True,
     }
 
@@ -35,7 +38,7 @@ def run_oal(atomistic_method, images, elements, dbname, parent_calc):
         "optim": {
             "device": "cpu",
             "force_coefficient": 4.0,
-            "lr": 1,
+            "lr": 1e-2,
             "batch_size": 10,
             "epochs": 100,
             "optimizer": torch.optim.LBFGS,
@@ -62,10 +65,11 @@ def run_oal(atomistic_method, images, elements, dbname, parent_calc):
 
     trainer = AtomsTrainer(config)
 
+    ml_potential = AmptorchEnsembleCalc(trainer, learner_params["n_ensembles"])
     onlinecalc = OnlineLearner(
         learner_params,
-        trainer,
         images,
+        ml_potential,
         parent_calc,
     )
 

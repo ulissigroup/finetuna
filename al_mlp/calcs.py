@@ -1,6 +1,7 @@
 from ase.calculators.calculator import all_changes
 from ase.calculators.mixing import LinearCombinationCalculator
 from ase.calculators.calculator import Calculator
+from ase.calculators.calculator import PropertyNotImplementedError
 import copy
 
 
@@ -49,9 +50,25 @@ class DeltaCalc(LinearCombinationCalculator):
         "add" mode: calculates the predicted value given the predicted delta
         calculator and the base calc.
         """
-        self.calcs[0].results = self.parent_results
-        self.calcs[1].results = self.base_results
+        if self.calcs[0] is self.refs[0].calc:
+            raise ValueError("calc[0] and refs[0] calc are the same")
+        if self.calcs[1] is self.refs[1].calc:
+            raise ValueError("calc[1] and refs[1] calc are the same")
+
         super().calculate(atoms, properties, system_changes)
+        self.parent_results = self.calcs[0].results
+        self.base_results = self.calcs[1].results
+
+        shared_properties = list(
+            set(self.parent_results).intersection(self.base_results)
+        )
+        for w, calc in zip(self.weights, self.calcs):
+            for k in shared_properties:
+                if k not in properties:
+                    if k not in self.results:
+                        self.results[k] = w * calc.results[k]
+                    else:
+                        self.results[k] += w * calc.results[k]
 
         if "energy" in self.results:
             if self.mode == "sub":
@@ -69,6 +86,38 @@ class DeltaCalc(LinearCombinationCalculator):
                     apply_constraint=False
                 )
         self.force_calls += 1
+
+    def get_property(self, name, atoms=None, allow_calculation=True):
+        if name not in self.implemented_properties:
+            raise PropertyNotImplementedError(
+                "{} property not implemented".format(name)
+            )
+
+        if atoms is None:
+            atoms = self.atoms
+            system_changes = []
+        else:
+            self.calcs[0].system_changes = self.calcs[0].check_state(atoms)
+            if self.calcs[0].system_changes:
+                self.calcs[0].reset()
+            self.calcs[1].system_changes = self.calcs[1].check_state(atoms)
+            if self.calcs[1].system_changes:
+                self.calcs[1].reset()
+        result = super().get_property(
+            name, atoms=atoms, allow_calculation=allow_calculation
+        )
+        for calc in self.calcs:
+            if hasattr(calc, "system_changes"):
+                calc.system_changes = None
+        return result
+
+    def reset(self):
+        """
+        Unlike linearcombinationcalc, this does not clear all previous results recursively from all of the calculators.
+        Instead it only clears delta calc and leaves the subcalcs untouched,
+        then get property manually calls reset on them if they have system changes
+        """
+        super(LinearCombinationCalculator, self).reset()
 
 
 class CounterCalc(Calculator):

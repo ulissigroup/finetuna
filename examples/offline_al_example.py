@@ -1,3 +1,4 @@
+from al_mlp.offline_learner.fmax_learner import FmaxLearner
 from ase.eos import EquationOfState
 from ase.build import bulk
 from ase.build import fcc100, add_adsorbate, molecule
@@ -12,7 +13,6 @@ import torch
 import ase
 
 from ase.db import connect
-from al_mlp.offline_learner import OfflineActiveLearner
 from al_mlp.base_calcs.morse import MultiMorse
 from al_mlp.atomistic_methods import Relaxation
 
@@ -85,7 +85,7 @@ learner_params = {
     "query_method": "random",
     "use_dask": False,
     "seed": 1,
-    # "max_evA": 0.05,
+    "max_evA": 0.05,
 }
 
 config = {
@@ -129,10 +129,10 @@ trainer = AtomsTrainer(config)
 cutoff = Gs["default"]["cutoff"]
 base_calc = MultiMorse(images, cutoff, combo="mean")
 
-learner = OfflineActiveLearner(
+learner = FmaxLearner(
     learner_params,
-    trainer,
     images,
+    trainer,
     parent_calc,
     base_calc,
 )
