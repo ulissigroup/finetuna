@@ -57,10 +57,13 @@ class FlarePPCalc(Calculator):
         )
 
         bounds = [
-            (None, None),
-            (self.flare_params["sigma_e"], None),
-            (None, None),
-            (None, None),
+            self.flare_params.get("bounds", {}).get("sigma", (None, None)),
+            self.flare_params.get("bounds", {}).get(
+                "ls", (self.flare_params["sigma_e"], None)
+            ),
+            self.flare_params.get("bounds", {}).get("sigma_e", (None, None)),
+            self.flare_params.get("bounds", {}).get("sigma_f", (None, None)),
+            self.flare_params.get("bounds", {}).get("sigma_s", (None, None)),
         ]
 
         self.gp_model = SGP_Wrapper(
