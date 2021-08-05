@@ -8,15 +8,15 @@ dependencies:
   - matplotlib=3.3*
   - pip
   - pre-commit=2.2*
-  - python=3.6.*
-  - pytorch=1.6.0
-  - tqdm=4.45.*
+  - python=3.8.*
+  - pytorch=1.8.*
+  - tqdm=4.58.*
   - h5py
   - cpuonly
   - pip:
     - cffi
     - wandb
-    - skorch==0.9.*
+    - skorch==0.10.*
     - torch-geometric
     - -f https://pytorch-geometric.com/whl/torch-1.6.0+cpu.html
     - torch-cluster
