@@ -25,6 +25,7 @@ class OCPModel(Calculator):
         a2g=None,
         task=None,
         identifier="active_learner_base_calc",
+        seed=0,
         **kwargs,
     ):
         Calculator.__init__(self, **kwargs)
@@ -36,6 +37,7 @@ class OCPModel(Calculator):
         self.task = task
         self.identifier = identifier
         self.kwargs = kwargs
+        self.seed = seed
 
         self.model_dict = {}
         with open(model_path) as model_yaml:
@@ -92,6 +94,7 @@ class OCPModel(Calculator):
         self.trainer.load_pretrained(checkpoint_path=checkpoint_path, ddp_to_dp=True)
 
     def calculate(self, atoms=None, properties=["forces"], system_changes=all_changes):
+        torch.manual_seed(self.seed)
         Calculator.calculate(
             self, atoms=atoms, properties=properties, system_changes=system_changes
         )
