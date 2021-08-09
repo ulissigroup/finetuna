@@ -90,7 +90,7 @@ def pca_xyz(traj_dict, fig_title=None):
         ax.set_title("Principal Component Analysis", fontsize=20)
     targets = types
     colors = energy
-    mark = ["x", "s", "o", "^", "v", "<", ">",  "D"]
+    mark = ["x", "s", "o", "^", "v", "<", ">", "D"]
     for target, color, mark in zip(targets, colors, mark):
         indicesToKeep = finalDf["label"] == target
         #     if target == 'oal':
@@ -109,7 +109,7 @@ def pca_xyz(traj_dict, fig_title=None):
         )
     sm = plt.cm.ScalarMappable(cmap="winter")
     colorbar = fig.colorbar(sm)
-    colorbar.set_label('-log(abs(energy))')
+    colorbar.set_label("-log(abs(energy))")
     ax.legend()
     plt.savefig("pca.png")
 
@@ -221,7 +221,7 @@ def des_pca(traj_dict, fig_title=None):
         ax.set_title("Principal Component Analysis", fontsize=20)
     targets = types
     colors = energy
-    mark = ["x", "s", "o", "^", "v", "<", ">",  "D"]
+    mark = ["x", "s", "o", "^", "v", "<", ">", "D"]
     for target, color, mark in zip(targets, colors, mark):
         indicesToKeep = finalDf["label"] == target
         #     if target == 'oal':
@@ -241,5 +241,5 @@ def des_pca(traj_dict, fig_title=None):
     sm = plt.cm.ScalarMappable(cmap="winter")
     ax.legend()
     colorbar = fig.colorbar(sm)
-    colorbar.set_label('-log(abs(energy))')
+    colorbar.set_label("-log(abs(energy))")
     plt.savefig("pca.png")
