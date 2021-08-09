@@ -137,6 +137,8 @@ class FlarePPCalc(Calculator):
             self.gp_model.variance_type == "DTC"
         ):
             variances = structure_descriptor.variance_efs[1:-6]
+            energy_var = structure_descriptor.variance_efs[0]
+            energy_std = np.sqrt(np.abs(var))
             stds = np.zeros(len(variances))
             for n in range(len(variances)):
                 var = variances[n]
@@ -145,6 +147,7 @@ class FlarePPCalc(Calculator):
                 else:
                     stds[n] = -np.sqrt(np.abs(var))
             self.results["force_stds"] = stds.reshape(-1, 3)
+            self.results["energy_stds"] = energy_std
         # The "local" variance type should be used only if the model has a
         # single atom-centered descriptor.
         # TODO: Generalize this variance type to multiple descriptors.
@@ -165,6 +168,7 @@ class FlarePPCalc(Calculator):
             self.results["force_stds"] = stds_full
 
         atoms.info["max_force_stds"] = np.nanmax(self.results["force_stds"])
+        atoms.info["energy_stds"] = energy_std
 
     def sort_variances(self, structure_descriptor, variances):
         # Check that the variance length matches the number of atoms.

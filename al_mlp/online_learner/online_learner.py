@@ -133,6 +133,7 @@ class OnlineLearner(Calculator):
                 "parentMaxForce": parent_fmax,
                 "parentF": str(force),
                 "oalF": str(atoms_ML.get_forces()),
+                "E_uncertainty": atoms_ML.info["energy_stds"],
             }
             write_to_db_online(
                 self.queried_db,
@@ -152,6 +153,7 @@ class OnlineLearner(Calculator):
                 "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
                 "tolerance": atoms_ML.info["uncertain_tol"],
                 "oalF": str(force),
+                "E_uncertainty": atoms_ML.info["energy_stds"],
             }
             write_to_db_online(
                 self.queried_db,
