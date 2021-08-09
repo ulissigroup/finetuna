@@ -31,7 +31,7 @@ class OnlineLearner(Calculator):
         Calculator.__init__(self)
         self.parent_calc = parent_calc
         self.learner_params = learner_params
-        self.parent_dataset = convert_to_singlepoint(parent_dataset)
+        self.parent_dataset = []
         ase.db.connect("oal_queried_images.db", append=False)
         self.queried_db = ase.db.connect("oal_queried_images.db")
         if mongo_db is not None:
@@ -54,11 +54,6 @@ class OnlineLearner(Calculator):
                 self.parent_calc.refs,
             )
 
-        # Don't bother training with only one data point,
-        # as the uncertainty is meaningless
-        if len(self.parent_dataset) > 1:
-            ml_potential.train(self.parent_dataset)
-
         if "fmax_verify_threshold" in self.learner_params:
             self.fmax_verify_threshold = self.learner_params["fmax_verify_threshold"]
         else:
@@ -68,6 +63,9 @@ class OnlineLearner(Calculator):
         self.dyn_uncertain_tol = learner_params["dyn_uncertain_tol"]
         self.parent_calls = 0
         self.curr_step = 0
+
+        for image in parent_dataset:
+            self.add_data_and_retrain(image)
 
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
