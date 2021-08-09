@@ -223,11 +223,7 @@ class OnlineLearner(Calculator):
             + str(end - start)
         )
 
-        # Don't bother training if we have less than two datapoints
-        if len(self.parent_dataset) >= 2:
-            self.ml_potential.train(self.parent_dataset, [new_data])
-        else:
-            self.ml_potential.train(self.parent_dataset)
+        self.ml_potential.train(self.parent_dataset)
 
         if self.base_calc is not None:
             new_delta = DeltaCalc(
