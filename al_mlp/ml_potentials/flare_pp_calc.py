@@ -138,7 +138,7 @@ class FlarePPCalc(Calculator):
         ):
             variances = structure_descriptor.variance_efs[1:-6]
             energy_var = structure_descriptor.variance_efs[0]
-            energy_std = np.sqrt(np.abs(var))
+            energy_std = np.sqrt(np.abs(energy_var))
             stds = np.zeros(len(variances))
             for n in range(len(variances)):
                 var = variances[n]
