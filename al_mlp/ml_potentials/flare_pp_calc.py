@@ -33,11 +33,10 @@ class FlarePPCalc(Calculator):
 
     def init_species_map(self):
         self.species_map = {}
-        a_numbers = np.unique(self.initial_images[0].numbers)
+        a_numbers = []
         for image in self.initial_images:
-            new_a_numbers = np.unique(image.numbers)
-            if len(new_a_numbers) > len(a_numbers):
-                a_numbers = new_a_numbers
+            a_numbers += np.unique(image.numbers).tolist()
+        a_numbers = np.unique(a_numbers)
         for i in range(len(a_numbers)):
             self.species_map[a_numbers[i]] = i
 
