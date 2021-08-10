@@ -99,7 +99,7 @@ def pca_xyz(traj_dict, fig_title=None):
             finalDf.loc[indicesToKeep, "principal component 2"],
             c=color,
             marker=mark,
-            cmap="winter",
+            cmap="viridis",
             s=50,
             label=target,
         )
@@ -107,7 +107,7 @@ def pca_xyz(traj_dict, fig_title=None):
             finalDf.loc[indicesToKeep, "principal component 1"],
             finalDf.loc[indicesToKeep, "principal component 2"],
         )
-    sm = plt.cm.ScalarMappable(cmap="winter")
+    sm = plt.cm.ScalarMappable(cmap="viridis")
     colorbar = fig.colorbar(sm)
     colorbar.set_label("-log(abs(energy))")
     ax.legend()
@@ -230,7 +230,7 @@ def des_pca(traj_dict, fig_title=None):
             finalDf.loc[indicesToKeep, "principal component 2"],
             c=color,
             marker=mark,
-            cmap="winter",
+            cmap="viridis",
             s=50,
             label=target,
         )
@@ -238,7 +238,7 @@ def des_pca(traj_dict, fig_title=None):
             finalDf.loc[indicesToKeep, "principal component 1"],
             finalDf.loc[indicesToKeep, "principal component 2"],
         )
-    sm = plt.cm.ScalarMappable(cmap="winter")
+    sm = plt.cm.ScalarMappable(cmap="viridis")
     ax.legend()
     colorbar = fig.colorbar(sm)
     colorbar.set_label("-log(abs(energy))")
