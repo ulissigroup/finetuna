@@ -13,14 +13,14 @@ class FlarePPCalc(Calculator):
 
     implemented_properties = ["energy", "forces", "stress", "stds"]
 
-    def __init__(self, flare_params, initial_image):
+    def __init__(self, flare_params, initial_images):
         super().__init__()
         self.gp_model = None
         self.results = {}
         self.use_mapping = False
         self.mgp_model = None
         self.flare_params = flare_params
-        self.initial_image = initial_image
+        self.initial_images = initial_images
         self.init_species_map()
         self.update_gp_mode = self.flare_params.get("update_gp_mode", "all")
         self.update_gp_range = self.flare_params.get("update_gp_range", [])
@@ -33,7 +33,11 @@ class FlarePPCalc(Calculator):
 
     def init_species_map(self):
         self.species_map = {}
-        a_numbers = np.unique(self.initial_image[0].numbers)
+        a_numbers = np.unique(self.initial_images[0].numbers)
+        for image in self.initial_images:
+            new_a_numbers = np.unique(image.numbers)
+            if len(new_a_numbers) > len(a_numbers):
+                a_numbers = new_a_numbers
         for i in range(len(a_numbers)):
             self.species_map[a_numbers[i]] = i
 
