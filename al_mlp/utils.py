@@ -154,7 +154,7 @@ def write_to_db_online(
                 "parentMaxForce": info.get("parentMaxForce", "-"),
                 "parentF": info.get("parentF", "-"),
                 "oalF": info.get("oalF", "-"),
-                "E_uncertainty": info.get("E_uncertainty", "-"),
+                "energy_uncertainty": info.get("energy_uncertainty", "-"),
             },
         )
 
