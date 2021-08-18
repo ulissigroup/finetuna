@@ -58,7 +58,7 @@ class FlarePPCalc(Calculator):
             self.flare_params["cutoff_hyps"],
             settings,
         )
-        if self.flare_params["kernel_type"] == "SquaredExponential":
+        if self.kernel_type == "SquaredExponential":
             bounds = [
                 self.flare_params.get("bounds", {}).get("sigma", (None, None)),
                 self.flare_params.get("bounds", {}).get(

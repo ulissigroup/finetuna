@@ -58,9 +58,13 @@ class OnlineLearner(Calculator):
             self.fmax_verify_threshold = self.learner_params["fmax_verify_threshold"]
         else:
             self.fmax_verify_threshold = np.nan  # always False
-
-        self.stat_uncertain_tol = learner_params["stat_uncertain_tol"]
-        self.dyn_uncertain_tol = learner_params["dyn_uncertain_tol"]
+        # uncertain_f: True if the uncertainty is based on forces, false if based on energies
+        self.uncertain_f = self.learner_params.get("uncertain_f", True)
+        if self.uncertain_f:
+            self.stat_uncertain_tol = self.learner_params["stat_uncertain_tol"]
+            self.dyn_uncertain_tol = self.learner_params["dyn_uncertain_tol"]
+        else:
+            self.e_uncertain_tol = self.learner_params["e_uncertain_tol"]
         self.parent_calls = 0
         self.curr_step = 0
 
@@ -125,8 +129,8 @@ class OnlineLearner(Calculator):
                 "check": True,
                 "uncertainty": atoms_ML.info["max_force_stds"],
                 "tolerance": atoms_ML.info["uncertain_tol"],
-                "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
-                "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
+                # "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
+                # "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
                 "parentE": energy,
                 "parentMaxForce": parent_fmax,
                 "parentF": str(force),
@@ -147,8 +151,8 @@ class OnlineLearner(Calculator):
             info = {
                 "check": False,
                 "uncertainty": atoms_ML.info["max_force_stds"],
-                "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
-                "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
+                # "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
+                # "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
                 "tolerance": atoms_ML.info["uncertain_tol"],
                 "oalF": str(force),
                 "energy_uncertainty": atoms_ML.info.get("energy_stds", None),
@@ -173,17 +177,22 @@ class OnlineLearner(Calculator):
 
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force
-        uncertainty = atoms.info["max_force_stds"]
-        if math.isnan(uncertainty):
-            raise ValueError("Input is not a positive integer")
-        forces = atoms.get_forces(apply_constraint=False)
-        base_uncertainty = np.sqrt((forces ** 2).sum(axis=1).max())
-        uncertainty_tol = max(
-            [self.dyn_uncertain_tol * base_uncertainty, self.stat_uncertain_tol]
-        )
-        atoms.info["dyn_uncertain_tol"] = self.dyn_uncertain_tol * base_uncertainty
-        atoms.info["stat_uncertain_tol"] = self.stat_uncertain_tol
-        atoms.info["uncertain_tol"] = uncertainty_tol
+        if self.uncertain_f:
+            uncertainty = atoms.info["max_force_stds"]
+            if math.isnan(uncertainty):
+                raise ValueError("Input is not a positive integer")
+            forces = atoms.get_forces(apply_constraint=False)
+            base_uncertainty = np.sqrt((forces ** 2).sum(axis=1).max())
+            uncertainty_tol = max(
+                [self.dyn_uncertain_tol * base_uncertainty, self.stat_uncertain_tol]
+            )
+            # atoms.info["dyn_uncertain_tol"] = self.dyn_uncertain_tol * base_uncertainty
+            # atoms.info["stat_uncertain_tol"] = self.stat_uncertain_tol
+            atoms.info["uncertain_tol"] = uncertainty_tol
+        else:
+            uncertainty = atoms.info["energy_stds"]
+            uncertainty_tol = self.e_uncertain_tol
+            atoms.info["uncertain_tol"] = uncertainty_tol
         # print(
         #     "Max Force Std: %1.3f eV/A, Max Force Threshold: %1.3f eV/A"
         #     % (uncertainty, uncertainty_tol)
