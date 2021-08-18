@@ -188,3 +188,17 @@ def calculate_rmsd(img1, img2):
             )
     rmsd_float = re.findall("-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?", str(rmsd))[0]
     return np.round(float(rmsd_float), 4)
+
+
+def calculate_surface_k_points(atoms):
+    cell = atoms.get_cell()
+    order = np.inf
+    a0 = np.linalg.norm(cell[0], ord=order)
+    b0 = np.linalg.norm(cell[1], ord=order)
+    multiplier = 40
+    k_pts = (
+        max(1, int(round(multiplier / a0))),
+        max(1, int(round(multiplier / b0))),
+        1,
+    )
+    return k_pts
