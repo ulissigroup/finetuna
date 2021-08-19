@@ -29,7 +29,7 @@ def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
         "sigma_e": 1.0,
         "sigma_f": 0.1,
         "sigma_s": 0.0,
-        "max_iterations": 50,
+        "hpo_max_iterations": 50,
     }
     ml_potential = FlarePPCalc(flare_params, images)
 

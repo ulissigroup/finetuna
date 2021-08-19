@@ -13,22 +13,22 @@ class FlarePPCalc(Calculator):
 
     implemented_properties = ["energy", "forces", "stress", "stds"]
 
-    def __init__(self, flare_params, initial_images):
+    def __init__(self, mlp_params, initial_images):
         super().__init__()
         self.gp_model = None
         self.results = {}
         self.use_mapping = False
         self.mgp_model = None
-        self.flare_params = flare_params
+        self.mlp_params = mlp_params
         self.initial_images = initial_images
         self.init_species_map()
-        self.update_gp_mode = self.flare_params.get("update_gp_mode", "all")
-        self.update_gp_range = self.flare_params.get("update_gp_range", [])
-        self.freeze_hyps = self.flare_params.get("freeze_hyps", None)
-        self.variance_type = self.flare_params.get("variance_type", "SOR")
-        self.opt_method = self.flare_params.get("opt_method", "BFGS")
-        self.kernel_type = self.flare_params.get("kernel_type", "NormalizedDotProduct")
-        self.fit_limit = self.flare_params.get("fit_limit", None)
+        self.update_gp_mode = self.mlp_params.get("update_gp_mode", "all")
+        self.update_gp_range = self.mlp_params.get("update_gp_range", [])
+        self.freeze_hyps = self.mlp_params.get("freeze_hyps", None)
+        self.variance_type = self.mlp_params.get("variance_type", "SOR")
+        self.opt_method = self.mlp_params.get("opt_method", "BFGS")
+        self.kernel_type = self.mlp_params.get("kernel_type", "NormalizedDotProduct")
+        self.fit_limit = self.mlp_params.get("fit_limit", None)
         self.iteration = 0
 
     def init_species_map(self):
@@ -43,50 +43,50 @@ class FlarePPCalc(Calculator):
     def init_flare(self):
         if self.kernel_type == "NormalizedDotProduct":
             self.kernel = NormalizedDotProduct(
-                self.flare_params["sigma"], self.flare_params["power"]
+                self.mlp_params["sigma"], self.mlp_params["power"]
             )
         elif self.kernel_type == "SquaredExponential":
             self.kernel = SquaredExponential(
-                self.flare_params["sigma"], self.flare_params["ls"]
+                self.mlp_params["sigma"], self.mlp_params["ls"]
             )
-        radial_hyps = [0.0, self.flare_params["cutoff"]]
+        radial_hyps = [0.0, self.mlp_params["cutoff"]]
         settings = [len(self.species_map), 12, 3]
         self.B2calc = B2(
-            self.flare_params["radial_basis"],
-            self.flare_params["cutoff_function"],
+            self.mlp_params["radial_basis"],
+            self.mlp_params["cutoff_function"],
             radial_hyps,
-            self.flare_params["cutoff_hyps"],
+            self.mlp_params["cutoff_hyps"],
             settings,
         )
         if self.kernel_type == "SquaredExponential":
             bounds = [
-                self.flare_params.get("bounds", {}).get("sigma", (None, None)),
-                self.flare_params.get("bounds", {}).get(
-                    "ls", (self.flare_params["sigma_e"], None)
+                self.mlp_params.get("bounds", {}).get("sigma", (None, None)),
+                self.mlp_params.get("bounds", {}).get(
+                    "ls", (self.mlp_params["sigma_e"], None)
                 ),
-                self.flare_params.get("bounds", {}).get("sigma_e", (None, None)),
-                self.flare_params.get("bounds", {}).get("sigma_f", (None, None)),
-                self.flare_params.get("bounds", {}).get("sigma_s", (None, None)),
+                self.mlp_params.get("bounds", {}).get("sigma_e", (None, None)),
+                self.mlp_params.get("bounds", {}).get("sigma_f", (None, None)),
+                self.mlp_params.get("bounds", {}).get("sigma_s", (None, None)),
             ]
         else:
             bounds = [
-                self.flare_params.get("bounds", {}).get("sigma", (None, None)),
-                self.flare_params.get("bounds", {}).get("sigma_e", (None, None)),
-                self.flare_params.get("bounds", {}).get("sigma_f", (None, None)),
-                self.flare_params.get("bounds", {}).get("sigma_s", (None, None)),
+                self.mlp_params.get("bounds", {}).get("sigma", (None, None)),
+                self.mlp_params.get("bounds", {}).get("sigma_e", (None, None)),
+                self.mlp_params.get("bounds", {}).get("sigma_f", (None, None)),
+                self.mlp_params.get("bounds", {}).get("sigma_s", (None, None)),
             ]
 
         self.gp_model = SGP_Wrapper(
             [self.kernel],
             [self.B2calc],
-            self.flare_params["cutoff"],
-            self.flare_params["sigma_e"],
-            self.flare_params["sigma_f"],
-            self.flare_params["sigma_s"],
+            self.mlp_params["cutoff"],
+            self.mlp_params["sigma_e"],
+            self.mlp_params["sigma_f"],
+            self.mlp_params["sigma_s"],
             self.species_map,
             variance_type=self.variance_type,
             stress_training=False,
-            max_iterations=self.flare_params["max_iterations"],
+            max_iterations=self.mlp_params["hpo_max_iterations"],
             opt_method=self.opt_method,
             bounds=bounds,
         )

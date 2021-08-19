@@ -7,6 +7,7 @@ import ase.db
 import random
 from al_mlp.calcs import DeltaCalc
 from al_mlp.mongo import MongoWrapper
+import wandb
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -27,6 +28,8 @@ class OnlineLearner(Calculator):
         parent_calc,
         base_calc=None,
         mongo_db=None,
+        wandb_log=False,
+        wandb_init={},
     ):
         Calculator.__init__(self)
         self.parent_calc = parent_calc
@@ -34,6 +37,7 @@ class OnlineLearner(Calculator):
         self.parent_dataset = []
         ase.db.connect("oal_queried_images.db", append=False)
         self.queried_db = ase.db.connect("oal_queried_images.db")
+
         if mongo_db is not None:
             self.mongo_wrapper = MongoWrapper(
                 mongo_db["online_learner"],
@@ -45,6 +49,17 @@ class OnlineLearner(Calculator):
         else:
             self.mongo_wrapper = None
         self.ml_potential = ml_potential
+        self.wandb_log = wandb_log
+        self.wandb_init = wandb_init
+        if self.wandb_log:
+            wandb.init(
+                project=self.wandb_init.get("project", "DefaultProject"),
+                name=self.wandb_init.get("name", "DefaultName"),
+                entity=self.wandb_init.get("entity", "ulissigroup"),
+                group=self.wandb_init.get("group", "DefaultGroup"),
+                notes=self.wandb_init.get("notes", ""),
+                config={**self.learner_params, **self.ml_potential.mlp_params},
+            )
 
         self.base_calc = base_calc
         if self.base_calc is not None:
@@ -174,6 +189,15 @@ class OnlineLearner(Calculator):
         )
         self.results["energy"] = energy
         self.results["forces"] = force
+        if self.wandb_log:
+            wandb.log(
+                {
+                    "energy": energy,
+                    "fmax": np.sqrt((force ** 2).sum(axis=1).max()),
+                    "uncertainty": info["uncertainty"],
+                    "tolerance": info["tolerance"],
+                }
+            )
 
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force
@@ -234,7 +258,11 @@ class OnlineLearner(Calculator):
             + str(end - start)
         )
 
-        self.ml_potential.train(self.parent_dataset)
+        # self.ml_potential.train(self.parent_dataset)
+        if len(self.parent_dataset) >= 2:
+            self.ml_potential.train(self.parent_dataset, [new_data])
+        else:
+            self.ml_potential.train(self.parent_dataset)
 
         if self.base_calc is not None:
             new_delta = DeltaCalc(
