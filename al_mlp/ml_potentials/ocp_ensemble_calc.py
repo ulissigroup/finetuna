@@ -31,6 +31,7 @@ class OCPEnsembleCalc(Calculator):
     def __init__(self, amptorch_trainer, n_ensembles):
         Calculator.__init__(self)
         self.amptorch_trainer = amptorch_trainer
+        self.mlp_params = self.amptorch_trainer.config
         self.n_ensembles = n_ensembles
 
     def calculate_stats(self, energies, forces):
