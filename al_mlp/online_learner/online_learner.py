@@ -258,8 +258,10 @@ class OnlineLearner(Calculator):
             + str(end - start)
         )
 
-        # self.ml_potential.train(self.parent_dataset)
-        if len(self.parent_dataset) >= 2:
+        if (
+            len(self.parent_dataset)
+            and self.learner_params.get("partial_fit", False) >= 2
+        ):
             self.ml_potential.train(self.parent_dataset, [new_data])
         else:
             self.ml_potential.train(self.parent_dataset)
