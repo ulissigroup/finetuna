@@ -28,7 +28,6 @@ class OnlineLearner(Calculator):
         parent_calc,
         base_calc=None,
         mongo_db=None,
-        wandb_log=False,
         wandb_init={},
     ):
         Calculator.__init__(self)
@@ -49,9 +48,9 @@ class OnlineLearner(Calculator):
         else:
             self.mongo_wrapper = None
         self.ml_potential = ml_potential
-        self.wandb_log = wandb_log
         self.wandb_init = wandb_init
-        if self.wandb_log:
+        self.wandb_log = self.wandb_init.get("wandb_log", False)
+        if self.wandb_log is True:
             wandb.init(
                 project=self.wandb_init.get("project", "DefaultProject"),
                 name=self.wandb_init.get("name", "DefaultName"),
@@ -113,82 +112,82 @@ class OnlineLearner(Calculator):
             )
             if self.mongo_wrapper is not None:
                 self.mongo_wrapper.write_to_mongo(atoms, info)
-            return
-
-        # Make a copy of the atoms with ensemble energies as a SP
-        atoms_copy = atoms.copy()
-        atoms_copy.set_calculator(self.ml_potential)
-        (atoms_ML,) = convert_to_singlepoint([atoms_copy])
-        self.curr_step += 1
-
-        if self.base_calc is not None:
-            new_delta = DeltaCalc(
-                [atoms_ML.calc, self.base_calc],
-                "add",
-                self.parent_calc.refs,
-            )
-            atoms_copy.set_calculator(new_delta)
-            (atoms_delta,) = convert_to_singlepoint([atoms_copy])
-            for key, value in atoms_ML.info.items():
-                atoms_delta.info[key] = value
-            atoms_ML = atoms_delta
-
-        # Check if we are extrapolating too far, and if so add/retrain
-        if self.unsafe_prediction(atoms_ML) or self.parent_verify(atoms_ML):
-            # We ran DFT, so just use that energy/force
-            self.check = True
-            energy, force, force_cons = self.add_data_and_retrain(atoms)
-            parent_fmax = np.sqrt((force_cons ** 2).sum(axis=1).max())
-            random.seed(self.curr_step)
-            info = {
-                "check": True,
-                "uncertainty": atoms_ML.info["max_force_stds"],
-                "tolerance": atoms_ML.info["uncertain_tol"],
-                # "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
-                # "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
-                "parentE": energy,
-                "parentMaxForce": parent_fmax,
-                "parentF": str(force),
-                "oalF": str(atoms_ML.get_forces()),
-                "energy_uncertainty": atoms_ML.info.get("energy_stds", None),
-            }
-            write_to_db_online(
-                self.queried_db,
-                [atoms_ML],
-                info,
-            )
-            if self.mongo_wrapper is not None:
-                self.mongo_wrapper.write_to_mongo(atoms_ML, info)
         else:
-            energy = atoms_ML.get_potential_energy(apply_constraint=False)
-            force = atoms_ML.get_forces(apply_constraint=False)
-            random.seed(self.curr_step)
-            info = {
-                "check": False,
-                "uncertainty": atoms_ML.info["max_force_stds"],
-                # "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
-                # "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
-                "tolerance": atoms_ML.info["uncertain_tol"],
-                "oalF": str(force),
-                "energy_uncertainty": atoms_ML.info.get("energy_stds", None),
-            }
-            write_to_db_online(
-                self.queried_db,
-                [atoms_ML],
-                info,
-            )
-            if self.mongo_wrapper is not None:
-                self.mongo_wrapper.write_to_mongo(atoms_ML, info)
 
-        # Return the energy/force
-        print(
-            "uncertainty: "
-            + str(info["uncertainty"])
-            + ", tolerance: "
-            + str(info["tolerance"])
-        )
-        self.results["energy"] = energy
-        self.results["forces"] = force
+            # Make a copy of the atoms with ensemble energies as a SP
+            atoms_copy = atoms.copy()
+            atoms_copy.set_calculator(self.ml_potential)
+            (atoms_ML,) = convert_to_singlepoint([atoms_copy])
+            self.curr_step += 1
+
+            if self.base_calc is not None:
+                new_delta = DeltaCalc(
+                    [atoms_ML.calc, self.base_calc],
+                    "add",
+                    self.parent_calc.refs,
+                )
+                atoms_copy.set_calculator(new_delta)
+                (atoms_delta,) = convert_to_singlepoint([atoms_copy])
+                for key, value in atoms_ML.info.items():
+                    atoms_delta.info[key] = value
+                atoms_ML = atoms_delta
+
+            # Check if we are extrapolating too far, and if so add/retrain
+            if self.unsafe_prediction(atoms_ML) or self.parent_verify(atoms_ML):
+                # We ran DFT, so just use that energy/force
+                self.check = True
+                energy, force, force_cons = self.add_data_and_retrain(atoms)
+                parent_fmax = np.sqrt((force_cons ** 2).sum(axis=1).max())
+                random.seed(self.curr_step)
+                info = {
+                    "check": True,
+                    "uncertainty": atoms_ML.info["max_force_stds"],
+                    "tolerance": atoms_ML.info["uncertain_tol"],
+                    # "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
+                    # "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
+                    "parentE": energy,
+                    "parentMaxForce": parent_fmax,
+                    "parentF": str(force),
+                    "oalF": str(atoms_ML.get_forces()),
+                    "energy_uncertainty": atoms_ML.info.get("energy_stds", None),
+                }
+                write_to_db_online(
+                    self.queried_db,
+                    [atoms_ML],
+                    info,
+                )
+                if self.mongo_wrapper is not None:
+                    self.mongo_wrapper.write_to_mongo(atoms_ML, info)
+            else:
+                energy = atoms_ML.get_potential_energy(apply_constraint=False)
+                force = atoms_ML.get_forces(apply_constraint=False)
+                random.seed(self.curr_step)
+                info = {
+                    "check": False,
+                    "uncertainty": atoms_ML.info["max_force_stds"],
+                    # "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
+                    # "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
+                    "tolerance": atoms_ML.info["uncertain_tol"],
+                    "oalF": str(force),
+                    "energy_uncertainty": atoms_ML.info.get("energy_stds", None),
+                }
+                write_to_db_online(
+                    self.queried_db,
+                    [atoms_ML],
+                    info,
+                )
+                if self.mongo_wrapper is not None:
+                    self.mongo_wrapper.write_to_mongo(atoms_ML, info)
+
+            # Return the energy/force
+            print(
+                "uncertainty: "
+                + str(info["uncertainty"])
+                + ", tolerance: "
+                + str(info["tolerance"])
+            )
+            self.results["energy"] = energy
+            self.results["forces"] = force
         if self.wandb_log:
             wandb.log(
                 {
@@ -196,6 +195,7 @@ class OnlineLearner(Calculator):
                     "fmax": np.sqrt((force ** 2).sum(axis=1).max()),
                     "uncertainty": info["uncertainty"],
                     "tolerance": info["tolerance"],
+                    "check": self.check,
                 }
             )
 
