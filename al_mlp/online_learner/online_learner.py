@@ -1,6 +1,8 @@
+from logging import warn
 import numpy as np
 from ase.calculators.calculator import Calculator
-from al_mlp.utils import convert_to_singlepoint, write_to_db_online
+from ase.calculators.singlepoint import SinglePointCalculator
+from al_mlp.utils import convert_to_singlepoint, subtract_deltas, write_to_db_online
 import time
 import math
 import ase.db
@@ -241,10 +243,29 @@ class OnlineLearner(Calculator):
 
         start = time.time()
 
-        atoms_copy = atoms.copy()
-        atoms_copy.set_calculator(self.parent_calc)
-        print(atoms_copy)
-        (new_data,) = convert_to_singlepoint([atoms_copy])
+        # don't redo singlepoints if not instructed to reverify and atoms have proper vasp singlepoints attached
+        if (
+            self.learner_params.get("reverify_with_parent", True) is False
+            and type(atoms.calc) is SinglePointCalculator
+            and atoms.calc.name == "vasp"
+        ):
+            warn(
+                "Warning: Assuming Atoms object Singlepoint labeled 'vasp' is precalculated (to turn this behavior off: set 'reverify_with_parent' to True)"
+            )
+            # check if parent calc is a delta, if so: turn the vasp singlepoint into a deltacalc singlepoint
+            if type(self.parent_calc) is DeltaCalc:
+                (new_data,) = subtract_deltas(
+                    [atoms], self.parent_calc.calcs[1], self.parent_calc.refs
+                )
+            # else just use the atoms as normal
+            else:
+                new_data = atoms
+        # if verifying (or reverifying) do the singlepoints
+        else:
+            atoms_copy = atoms.copy()
+            atoms_copy.set_calculator(self.parent_calc)
+            print(atoms_copy)
+            (new_data,) = convert_to_singlepoint([atoms_copy])
 
         self.parent_dataset += [new_data]
 
