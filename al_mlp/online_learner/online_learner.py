@@ -30,7 +30,6 @@ class OnlineLearner(Calculator):
         parent_calc,
         base_calc=None,
         mongo_db=None,
-        wandb_init={},
     ):
         Calculator.__init__(self)
         self.parent_calc = parent_calc
@@ -50,7 +49,7 @@ class OnlineLearner(Calculator):
         else:
             self.mongo_wrapper = None
         self.ml_potential = ml_potential
-        self.wandb_init = wandb_init
+        self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
         if self.wandb_log is True:
             wandb.init(
