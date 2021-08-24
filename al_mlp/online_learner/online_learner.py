@@ -100,9 +100,7 @@ class OnlineLearner(Calculator):
 
         # If we have less than two data points, uncertainty is not
         # well calibrated so just use DFT
-        self.check = False
         if len(self.parent_dataset) < 2:
-            self.check = True
             energy, force, force_cons = self.add_data_and_retrain(atoms)
             parent_fmax = np.sqrt((force_cons ** 2).sum(axis=1).max())
             self.results["energy"] = energy
@@ -152,7 +150,6 @@ class OnlineLearner(Calculator):
                 or self.check_final_point
             ):
                 # We ran DFT, so just use that energy/force
-                self.check = True
                 energy, force, force_cons = self.add_data_and_retrain(atoms)
                 parent_fmax = np.sqrt((force_cons ** 2).sum(axis=1).max())
                 random.seed(self.curr_step)
@@ -205,6 +202,7 @@ class OnlineLearner(Calculator):
             )
             self.results["energy"] = energy
             self.results["forces"] = force
+
         if self.wandb_log:
             log_dict = {
                 "energy": energy,
@@ -212,7 +210,7 @@ class OnlineLearner(Calculator):
                 "force_uncertainty": info["force_uncertainty"],
                 "energy_uncertainty": info["energy_uncertainty"],
                 "tolerance": info["tolerance"],
-                "check": self.check,
+                "check": info["check"],
             }
             if "dyn_uncertainty_tol" in info:
                 log_dict["dyn_uncertainty_tol"] = info["dyn_uncertain_tol"]
