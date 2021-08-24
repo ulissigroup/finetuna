@@ -1,7 +1,4 @@
-import os
-import copy
 from ase.calculators.singlepoint import SinglePointCalculator as sp
-from ase.db.core import check
 from al_mlp.calcs import DeltaCalc
 from ase.io import write
 import numpy as np
@@ -178,7 +175,7 @@ def calculate_rmsd(img1, img2):
         )
 
     else:
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory() as tempdir:
             path1 = tempdir + "/img1.xyz"
             path2 = tempdir + "/img2.xyz"
             write(path1, img1)
