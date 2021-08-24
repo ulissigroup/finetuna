@@ -226,7 +226,7 @@ class OnlineLearner(Calculator):
             uncertainty = atoms.info["max_force_stds"]
             if math.isnan(uncertainty):
                 raise ValueError("NaN uncertainty")
-            forces = atoms.get_forces(apply_constraint=False)
+            forces = atoms.get_forces()
             base_tolerance = np.sqrt((forces ** 2).sum(axis=1).max())
         elif self.uncertainty_metric == "energy":
             uncertainty = atoms.info["energy_stds"]
