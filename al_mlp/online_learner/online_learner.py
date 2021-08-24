@@ -116,6 +116,7 @@ class OnlineLearner(Calculator):
             "dyn_uncertainty_tol": None,
             "stat_uncertain_tol": None,
             "tolerance": None,
+            "parent_calls": None,
         }
 
         # If we have less than two data points, uncertainty is not
@@ -178,6 +179,7 @@ class OnlineLearner(Calculator):
                 # Otherwise use the ML predicted energies and forces
                 self.info["check"] = False
 
+        # Print a statement about the uncertainty
         uncertainty_statement = "uncertainty: "
         if self.uncertainty_metric == "forces":
             uncertainty_statement += str(self.info["force_uncertainty"])
@@ -186,11 +188,15 @@ class OnlineLearner(Calculator):
         uncertainty_statement += ", tolerance: " + str(self.info["tolerance"])
         print(uncertainty_statement)
 
+        # Record number of parent calls after this calculation
+        self.info["parent_calls"] = self.parent_calls
+
         # Return the energy/force
         self.results["energy"] = self.info["energy"] = energy
         self.results["forces"] = self.info["forces"] = forces
         self.info["fmax"] = fmax
 
+        # Write to asedb, mongodb, wandb
         write_to_db_online(
             self.queried_db,
             [atoms],
