@@ -206,16 +206,19 @@ class OnlineLearner(Calculator):
             self.results["energy"] = energy
             self.results["forces"] = force
         if self.wandb_log:
-            wandb.log(
-                {
-                    "energy": energy,
-                    "fmax": np.sqrt((force ** 2).sum(axis=1).max()),
-                    "force_uncertainty": info["force_uncertainty"],
-                    "energy_uncertainty": info["energy_uncertainty"],
-                    "tolerance": info["tolerance"],
-                    "check": self.check,
-                }
-            )
+            log_dict = {
+                "energy": energy,
+                "fmax": np.sqrt((force ** 2).sum(axis=1).max()),
+                "force_uncertainty": info["force_uncertainty"],
+                "energy_uncertainty": info["energy_uncertainty"],
+                "tolerance": info["tolerance"],
+                "check": self.check,
+            }
+            if "dyn_uncertainty_tol" in info:
+                log_dict["dyn_uncertainty_tol"] = info["dyn_uncertain_tol"]
+            if "stat_uncertainty_tol" in info:
+                log_dict["stat_uncertainty_tol"] = info["stat_uncertain_tol"]
+            wandb.log(log_dict)
 
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force or energy
