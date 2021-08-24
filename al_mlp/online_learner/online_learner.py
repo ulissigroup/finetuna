@@ -53,7 +53,7 @@ class OnlineLearner(Calculator):
         self.wandb_log = self.wandb_init.get("wandb_log", False)
         if self.wandb_log is True:
             wandb.init(
-                project=self.wandb_init.get("project", "DefaultProject"),
+                project=self.wandb_init.get("project", "almlp"),
                 name=self.wandb_init.get("name", "DefaultName"),
                 entity=self.wandb_init.get("entity", "ulissi-group"),
                 group=self.wandb_init.get("group", "DefaultGroup"),
@@ -209,7 +209,7 @@ class OnlineLearner(Calculator):
         if self.uncertain_f:
             uncertainty = atoms.info["max_force_stds"]
             if math.isnan(uncertainty):
-                raise ValueError("Input is not a positive integer")
+                raise ValueError("NaN uncertainty")
             forces = atoms.get_forces(apply_constraint=False)
             base_uncertainty = np.sqrt((forces ** 2).sum(axis=1).max())
             uncertainty_tol = max(
