@@ -105,6 +105,9 @@ class OnlineLearner(Calculator):
                 "parentE": energy,
                 "parentMaxForce": parent_fmax,
                 "parentF": str(force),
+                "force_uncertainty": 0,
+                "energy_uncertainty": 0,
+                "tolerance": 0,
             }
             write_to_db_online(
                 self.queried_db,
@@ -146,7 +149,7 @@ class OnlineLearner(Calculator):
                 random.seed(self.curr_step)
                 info = {
                     "check": True,
-                    "uncertainty": atoms_ML.info["max_force_stds"],
+                    "force_uncertainty": atoms_ML.info["max_force_stds"],
                     "tolerance": atoms_ML.info["uncertain_tol"],
                     # "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
                     # "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
@@ -169,7 +172,7 @@ class OnlineLearner(Calculator):
                 random.seed(self.curr_step)
                 info = {
                     "check": False,
-                    "uncertainty": atoms_ML.info["max_force_stds"],
+                    "force_uncertainty": atoms_ML.info["max_force_stds"],
                     # "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
                     # "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
                     "tolerance": atoms_ML.info["uncertain_tol"],
@@ -187,7 +190,7 @@ class OnlineLearner(Calculator):
             # Return the energy/force
             print(
                 "uncertainty: "
-                + str(info["uncertainty"])
+                + str(info["force_uncertainty"])
                 + ", tolerance: "
                 + str(info["tolerance"])
             )
@@ -198,7 +201,8 @@ class OnlineLearner(Calculator):
                 {
                     "energy": energy,
                     "fmax": np.sqrt((force ** 2).sum(axis=1).max()),
-                    "uncertainty": info["uncertainty"],
+                    "force_uncertainty": info["force_uncertainty"],
+                    "energy_uncertainty": info["energy_uncertainty"],
                     "tolerance": info["tolerance"],
                     "check": self.check,
                 }
