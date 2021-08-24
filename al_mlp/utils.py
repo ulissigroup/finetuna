@@ -142,15 +142,15 @@ def write_to_db_online(
 ):
     for image in queried_images:
         dict_to_write = {
-                "check": info.get("check"),
-                "force_uncertainty": info.get("force_uncertainty", "-"),
-                "tolerance": info.get("tolerance", "-"),
-                "parentE": info.get("parent_energy", "-"),
-                "parentMaxForce": info.get("parent_fmax", "-"),
-                "parentF": info.get("parent_forces", "-"),
-                "oalF": info.get("ml_forces", "-"),
-                "energy_uncertainty": info.get("energy_uncertainty", "-"),
-            }
+            "check": info.get("check"),
+            "force_uncertainty": info.get("force_uncertainty", "-"),
+            "tolerance": info.get("tolerance", "-"),
+            "parentE": info.get("parent_energy", "-"),
+            "parentMaxForce": info.get("parent_fmax", "-"),
+            "parentF": info.get("parent_forces", "-"),
+            "oalF": info.get("ml_forces", "-"),
+            "energy_uncertainty": info.get("energy_uncertainty", "-"),
+        }
         for key, value in dict_to_write.items():
             if value is None:
                 dict_to_write[key] = "-"
