@@ -52,13 +52,19 @@ class OnlineLearner(Calculator):
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
         if self.wandb_log is True:
+            wandb_config = {
+                "learner": self.learner_params,
+                "ml_potential": self.ml_potential.mlp_params,
+            }
+            if mongo_db is not None:
+                wandb_config["mongo"] = self.mongo_wrapper.params
             wandb.init(
                 project=self.wandb_init.get("project", "DefaultProject"),
                 name=self.wandb_init.get("name", "DefaultName"),
                 entity=self.wandb_init.get("entity", "ulissi-group"),
                 group=self.wandb_init.get("group", "DefaultGroup"),
                 notes=self.wandb_init.get("notes", ""),
-                config={**self.learner_params, **self.ml_potential.mlp_params},
+                config=wandb_config,
             )
 
         self.base_calc = base_calc
