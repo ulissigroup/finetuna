@@ -38,6 +38,7 @@ class OnlineLearner(Calculator):
         ase.db.connect("oal_queried_images.db", append=False)
         self.queried_db = ase.db.connect("oal_queried_images.db")
         self.check_final_point = False
+
         if mongo_db is not None:
             self.mongo_wrapper = MongoWrapper(
                 mongo_db["online_learner"],
@@ -49,6 +50,11 @@ class OnlineLearner(Calculator):
         else:
             self.mongo_wrapper = None
         self.ml_potential = ml_potential
+
+        if "uncertainty_metric" not in self.learner_params:
+            self.learner_params["uncertainty_metric"] = "forces"
+        self.uncertainty_metric = self.learner_params["uncertainty_metric"]
+
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
         if self.wandb_log is True:
@@ -79,13 +85,10 @@ class OnlineLearner(Calculator):
             self.fmax_verify_threshold = self.learner_params["fmax_verify_threshold"]
         else:
             self.fmax_verify_threshold = np.nan  # always False
-        # uncertain_f: True if the uncertainty is based on forces, false if based on energies
-        self.uncertain_f = self.learner_params.get("uncertain_f", True)
-        if self.uncertain_f:
-            self.stat_uncertain_tol = self.learner_params["stat_uncertain_tol"]
-            self.dyn_uncertain_tol = self.learner_params["dyn_uncertain_tol"]
-        else:
-            self.e_uncertain_tol = self.learner_params["e_uncertain_tol"]
+
+        self.stat_uncertain_tol = self.learner_params["stat_uncertain_tol"]
+        self.dyn_uncertain_tol = self.learner_params["dyn_uncertain_tol"]
+
         self.parent_calls = 0
         self.curr_step = 0
 
@@ -157,8 +160,8 @@ class OnlineLearner(Calculator):
                     "check": True,
                     "force_uncertainty": atoms_ML.info["max_force_stds"],
                     "tolerance": atoms_ML.info["uncertain_tol"],
-                    # "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
-                    # "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
+                    "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
+                    "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
                     "parentE": energy,
                     "parentMaxForce": parent_fmax,
                     "parentF": str(force),
@@ -179,8 +182,8 @@ class OnlineLearner(Calculator):
                 info = {
                     "check": False,
                     "force_uncertainty": atoms_ML.info["max_force_stds"],
-                    # "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
-                    # "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
+                    "dyn_uncertainty_tol": atoms_ML.info["dyn_uncertain_tol"],
+                    "stat_uncertain_tol": atoms_ML.info["stat_uncertain_tol"],
                     "tolerance": atoms_ML.info["uncertain_tol"],
                     "oalF": str(force),
                     "energy_uncertainty": atoms_ML.info.get("energy_stds", None),
@@ -215,23 +218,26 @@ class OnlineLearner(Calculator):
             )
 
     def unsafe_prediction(self, atoms):
-        # Set the desired tolerance based on the current max predcited force
-        if self.uncertain_f:
+        # Set the desired tolerance based on the current max predcited force or energy
+        if self.uncertainty_metric == "forces":
             uncertainty = atoms.info["max_force_stds"]
             if math.isnan(uncertainty):
                 raise ValueError("NaN uncertainty")
             forces = atoms.get_forces(apply_constraint=False)
-            base_uncertainty = np.sqrt((forces ** 2).sum(axis=1).max())
-            uncertainty_tol = max(
-                [self.dyn_uncertain_tol * base_uncertainty, self.stat_uncertain_tol]
-            )
-            # atoms.info["dyn_uncertain_tol"] = self.dyn_uncertain_tol * base_uncertainty
-            # atoms.info["stat_uncertain_tol"] = self.stat_uncertain_tol
-            atoms.info["uncertain_tol"] = uncertainty_tol
-        else:
+            base_tolerance = np.sqrt((forces ** 2).sum(axis=1).max())
+        elif self.uncertainty_metric == "energy":
             uncertainty = atoms.info["energy_stds"]
-            uncertainty_tol = self.e_uncertain_tol
-            atoms.info["uncertain_tol"] = uncertainty_tol
+            energy = atoms.get_potential_energy()
+            base_tolerance = energy
+        else:
+            raise ValueError("invalid uncertainty metric")
+
+        uncertainty_tol = max(
+            [self.dyn_uncertain_tol * base_tolerance, self.stat_uncertain_tol]
+        )
+        atoms.info["dyn_uncertain_tol"] = self.dyn_uncertain_tol * base_tolerance
+        atoms.info["stat_uncertain_tol"] = self.stat_uncertain_tol
+        atoms.info["uncertain_tol"] = uncertainty_tol
         # print(
         #     "Max Force Std: %1.3f eV/A, Max Force Threshold: %1.3f eV/A"
         #     % (uncertainty, uncertainty_tol)
@@ -239,7 +245,7 @@ class OnlineLearner(Calculator):
 
         # print(
         #     "static tol: %1.3f eV/A, dynamic tol: %1.3f eV/A"
-        #     % (self.stat_uncertain_tol, self.dyn_uncertain_tol * base_uncertainty)
+        #     % (self.stat_uncertain_tol, self.dyn_uncertain_tol * base_tolerance)
         # )
         return uncertainty > uncertainty_tol
 
