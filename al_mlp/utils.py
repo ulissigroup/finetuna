@@ -146,16 +146,7 @@ def write_to_db_online(
     for image in queried_images:
         database.write(
             image,
-            key_value_pairs={
-                "check": info.get("check"),
-                "force_uncertainty": info.get("force_uncertainty", "-"),
-                "tolerance": info.get("tolerance", "-"),
-                "parentE": info.get("parentE", "-"),
-                "parentMaxForce": info.get("parentMaxForce", "-"),
-                "parentF": info.get("parentF", "-"),
-                "oalF": info.get("oalF", "-"),
-                "energy_uncertainty": info.get("energy_uncertainty", "-"),
-            },
+            key_value_pairs=info,
         )
 
 
