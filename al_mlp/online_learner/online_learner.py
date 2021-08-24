@@ -56,7 +56,7 @@ class OnlineLearner(Calculator):
                 project=self.wandb_init.get("project", "DefaultProject"),
                 name=self.wandb_init.get("name", "DefaultName"),
                 entity=self.wandb_init.get("entity", "ulissi-group"),
-                group=self.wandb_init.get("group", "ulissi-group"),
+                group=self.wandb_init.get("group", "DefaultGroup"),
                 notes=self.wandb_init.get("notes", ""),
                 config={**self.learner_params, **self.ml_potential.mlp_params},
             )
