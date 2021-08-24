@@ -6,7 +6,6 @@ from al_mlp.utils import convert_to_singlepoint, subtract_deltas, write_to_db_on
 import time
 import math
 import ase.db
-import random
 from al_mlp.calcs import DeltaCalc
 from al_mlp.mongo import MongoWrapper
 import wandb
@@ -98,7 +97,6 @@ class OnlineLearner(Calculator):
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
         self.curr_step += 1
-        random.seed(self.curr_step)  # by Lory: fixes unique id error
 
         self.info = {
             "check": None,
@@ -201,6 +199,7 @@ class OnlineLearner(Calculator):
             self.queried_db,
             [atoms],
             self.info,
+            self.curr_step
         )
         if self.mongo_wrapper is not None:
             self.mongo_wrapper.write_to_mongo(atoms_ML, self.info)

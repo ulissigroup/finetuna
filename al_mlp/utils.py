@@ -5,7 +5,7 @@ import numpy as np
 import subprocess
 import re
 import tempfile
-
+import random
 
 def convert_to_singlepoint(images):
     """
@@ -139,7 +139,9 @@ def write_to_db_online(
     database,
     queried_images,
     info,
+    seed,
 ):
+    random.seed(seed)  # by Lory: fixes unique id error
     for image in queried_images:
         dict_to_write = {
             "check": info.get("check"),
