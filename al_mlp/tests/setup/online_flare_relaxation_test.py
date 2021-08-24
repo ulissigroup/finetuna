@@ -5,18 +5,19 @@ import os
 
 
 def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
-
+    wandb_init = {"wandb_log": False, "name": "unittest", "group": "unittest"}
     learner_params = {
         "max_iterations": 10,
         "samples_to_retrain": 1,
         "filename": "relax_example",
         "file_dir": "./",
         "stat_uncertain_tol": 0.1,
-        "dyn_uncertain_tol": 1.2,
+        "dyn_uncertain_tol": 0.1,
         "fmax_verify_threshold": 0.05,  # eV/AA
         "relative_variance": True,
         "n_ensembles": 10,
         "use_dask": True,
+        "wandb_init": wandb_init,
     }
 
     flare_params = {
@@ -26,7 +27,7 @@ def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
         "cutoff": 3.0,
         "radial_basis": "chebyshev",
         "cutoff_hyps": [],
-        "sigma_e": 1.0,
+        "sigma_e": 0.01,
         "sigma_f": 0.1,
         "sigma_s": 0.0,
         "hpo_max_iterations": 50,
