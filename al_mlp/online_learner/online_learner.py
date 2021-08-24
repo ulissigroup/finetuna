@@ -37,7 +37,7 @@ class OnlineLearner(Calculator):
         self.parent_dataset = []
         ase.db.connect("oal_queried_images.db", append=False)
         self.queried_db = ase.db.connect("oal_queried_images.db")
-
+        self.check_final_point = False
         if mongo_db is not None:
             self.mongo_wrapper = MongoWrapper(
                 mongo_db["online_learner"],
@@ -134,7 +134,11 @@ class OnlineLearner(Calculator):
                 atoms_ML = atoms_delta
 
             # Check if we are extrapolating too far, and if so add/retrain
-            if self.unsafe_prediction(atoms_ML) or self.parent_verify(atoms_ML):
+            if (
+                self.unsafe_prediction(atoms_ML)
+                or self.parent_verify(atoms_ML)
+                or self.check_final_point
+            ):
                 # We ran DFT, so just use that energy/force
                 self.check = True
                 energy, force, force_cons = self.add_data_and_retrain(atoms)
