@@ -147,7 +147,6 @@ class OnlineLearner(Calculator):
             if (
                 self.unsafe_prediction(atoms_ML)
                 or self.parent_verify(atoms_ML)
-                or self.check_final_point
             ):
                 # We ran DFT, so just use that energy/force
                 energy, force, force_cons = self.add_data_and_retrain(atoms)
@@ -256,7 +255,10 @@ class OnlineLearner(Calculator):
 
         if fmax <= self.fmax_verify_threshold:
             print("Force below threshold: check with parent")
-        return fmax <= self.fmax_verify_threshold
+        if self.check_final_point:
+            print("checking final point")
+        verify = (fmax <= self.fmax_verify_threshold) or self.check_final_point
+        return verify
 
     def add_data_and_retrain(self, atoms):
         print("OnlineLearner: Parent calculation required")
