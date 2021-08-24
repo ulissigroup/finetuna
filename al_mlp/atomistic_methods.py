@@ -179,11 +179,20 @@ def replay_trajectory(calc, optimizer):
     """Initialize hessian from parent dataset."""
     if calc.check:
         parent_dataset = calc.parent_dataset
+
+        # check the parent dataset and only use structures that match the final structure
+        dataset = []
+        final_atomic_numbers = parent_dataset[-1].get_atomic_numbers()
+        for atoms in parent_dataset:
+            match_array = atoms.get_atomic_numbers() == final_atomic_numbers
+            if type(match_array) is np.ndarray and match_array.all():
+                dataset.append(atoms)
+
         optimizer.H = None
-        atoms = parent_dataset[0]
+        atoms = dataset[0]
         r0 = atoms.get_positions().ravel()
         f0 = atoms.get_forces().ravel()
-        for atoms in parent_dataset:
+        for atoms in dataset:
             r = atoms.get_positions().ravel()
             f = atoms.get_forces().ravel()
             optimizer.update(r, f, r0, f0)
