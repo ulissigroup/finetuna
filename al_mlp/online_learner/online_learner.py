@@ -127,7 +127,6 @@ class OnlineLearner(Calculator):
             self.info["ml_energy"] = self.info["parent_energy"] = energy
             self.info["ml_forces"] = self.info["parent_forces"] = str(forces)
             self.info["ml_fmax"] = self.info["parent_fmax"] = fmax
-
         else:
             # Make a copy of the atoms with ensemble energies as a SP
             atoms_copy = atoms.copy()
@@ -147,13 +146,13 @@ class OnlineLearner(Calculator):
                 atoms_ML = atoms_delta
 
             # Get ML potential predicted energies and forces
-            ml_energy = atoms_ML.get_potential_energy(apply_constraint=False)
-            ml_forces = atoms_ML.get_forces(apply_constraint=False)
-            ml_constrained_forces = atoms_ML.get_forces()
-            ml_fmax = np.sqrt((ml_constrained_forces ** 2).sum(axis=1).max())
-            self.info["ml_energy"] = ml_energy
-            self.info["ml_forces"] = str(ml_forces)
-            self.info["ml_fmax"] = ml_fmax
+            energy = atoms_ML.get_potential_energy(apply_constraint=False)
+            forces = atoms_ML.get_forces(apply_constraint=False)
+            constrained_forces = atoms_ML.get_forces()
+            fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
+            self.info["ml_energy"] = energy
+            self.info["ml_forces"] = str(forces)
+            self.info["ml_fmax"] = fmax
 
             # Check if we are extrapolating too far
             need_to_retrain = self.unsafe_prediction(atoms_ML) or self.parent_verify(
@@ -177,9 +176,6 @@ class OnlineLearner(Calculator):
                 self.info["parent_fmax"] = fmax
             else:
                 # Otherwise use the ML predicted energies and forces
-                energy = ml_energy
-                forces = ml_forces
-                fmax = ml_fmax
                 self.info["check"] = False
 
         uncertainty_statement = "uncertainty: "
