@@ -7,6 +7,7 @@ import re
 import tempfile
 import random
 
+
 def convert_to_singlepoint(images):
     """
     Replaces the attached calculators with singlepoint calculators

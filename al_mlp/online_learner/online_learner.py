@@ -195,12 +195,7 @@ class OnlineLearner(Calculator):
         self.info["fmax"] = fmax
 
         # Write to asedb, mongodb, wandb
-        write_to_db_online(
-            self.queried_db,
-            [atoms],
-            self.info,
-            self.curr_step
-        )
+        write_to_db_online(self.queried_db, [atoms], self.info, self.curr_step)
         if self.mongo_wrapper is not None:
             self.mongo_wrapper.write_to_mongo(atoms_ML, self.info)
 
