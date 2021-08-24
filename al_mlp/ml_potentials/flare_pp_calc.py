@@ -86,7 +86,7 @@ class FlarePPCalc(Calculator):
             self.species_map,
             variance_type=self.variance_type,
             energy_training=self.mlp_params.get("energy_training", True),
-            force_training=self.mlp_params("force_training", True),
+            force_training=self.mlp_params.get("force_training", True),
             stress_training=False,
             max_iterations=self.mlp_params["hpo_max_iterations"],
             opt_method=self.opt_method,
