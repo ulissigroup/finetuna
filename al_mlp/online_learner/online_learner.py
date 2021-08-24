@@ -197,7 +197,7 @@ class OnlineLearner(Calculator):
 
         write_to_db_online(
             self.queried_db,
-            [atoms_ML],
+            [atoms],
             self.info,
         )
         if self.mongo_wrapper is not None:
