@@ -191,7 +191,8 @@ class OnlineLearner(Calculator):
 
         # Return the energy/force
         self.results["energy"] = self.info["energy"] = energy
-        self.results["forces"] = self.info["forces"] = str(forces)
+        self.results["forces"] = forces
+        self.info["forces"] = str(forces)
         self.info["fmax"] = fmax
 
         # Write to asedb, mongodb, wandb
