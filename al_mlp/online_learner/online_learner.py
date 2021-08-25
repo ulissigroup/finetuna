@@ -191,13 +191,13 @@ class OnlineLearner(Calculator):
 
         # Return the energy/force
         self.results["energy"] = self.info["energy"] = energy
-        self.results["forces"] = self.info["forces"] = forces
+        self.results["forces"] = self.info["forces"] = str(forces)
         self.info["fmax"] = fmax
 
         # Write to asedb, mongodb, wandb
         write_to_db_online(self.queried_db, [atoms], self.info, self.curr_step)
         if self.mongo_wrapper is not None:
-            self.mongo_wrapper.write_to_mongo(atoms_ML, self.info)
+            self.mongo_wrapper.write_to_mongo(atoms, self.info)
 
         if self.wandb_log:
             wandb.log(self.info)
