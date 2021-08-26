@@ -201,7 +201,9 @@ class OnlineLearner(Calculator):
             self.mongo_wrapper.write_to_mongo(atoms, self.info)
 
         if self.wandb_log:
-            wandb.log(self.info)
+            wandb.log(
+                {key: value for key, value in self.info.items() if value is not None}
+            )
 
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force or energy
