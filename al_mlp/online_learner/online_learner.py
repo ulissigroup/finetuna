@@ -63,7 +63,7 @@ class OnlineLearner(Calculator):
             }
             if mongo_db is not None:
                 wandb_config["mongo"] = self.mongo_wrapper.params
-            wandb.init(
+            self.wandb_run = wandb.init(
                 project=self.wandb_init.get("project", "almlp"),
                 name=self.wandb_init.get("name", "DefaultName"),
                 entity=self.wandb_init.get("entity", "ulissi-group"),
