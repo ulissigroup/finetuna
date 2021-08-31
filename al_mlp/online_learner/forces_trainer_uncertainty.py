@@ -177,9 +177,9 @@ class ForcesTrainer(BaseTrainer):
         if "relax_dataset" in self.config["task"]:
             assert os.path.isfile(self.config["task"]["relax_dataset"]["src"])
 
-            self.relax_dataset = registry.get_dataset_class("single_point_lmdb")(
-                self.config["task"]["relax_dataset"]
-            )
+            self.relax_dataset = registry.get_dataset_class(
+                "single_point_lmdb"
+            )(self.config["task"]["relax_dataset"])
 
             self.relax_sampler = DistributedSampler(
                 self.relax_dataset,
@@ -295,13 +295,7 @@ class ForcesTrainer(BaseTrainer):
             self.normalizers["target"].to(self.device)
             self.normalizers["grad_target"].to(self.device)
 
-        predictions = {
-            "id": [],
-            "energy": [],
-            "forces": [],
-            "forces_uncertainty": [],
-            "chunk_idx": [],
-        }
+        predictions = {"id": [], "energy": [], "forces": [], "forces_uncertainty": [],"chunk_idx": []}
 
         for i, batch_list in tqdm(
             enumerate(data_loader),
@@ -314,8 +308,12 @@ class ForcesTrainer(BaseTrainer):
                 out = self._forward(batch_list)
 
             if self.normalizers is not None and "target" in self.normalizers:
-                out["energy"] = self.normalizers["target"].denorm(out["energy"])
-                out["forces"] = self.normalizers["grad_target"].denorm(out["forces"])
+                out["energy"] = self.normalizers["target"].denorm(
+                    out["energy"]
+                )
+                out["forces"] = self.normalizers["grad_target"].denorm(
+                    out["forces"]
+                )
             if per_image:
                 systemids = [
                     str(i) + "_" + str(j)
@@ -324,27 +322,33 @@ class ForcesTrainer(BaseTrainer):
                     )
                 ]
                 predictions["id"].extend(systemids)
-                predictions["energy"].extend(out["energy"].to(torch.float16).tolist())
-                batch_natoms = torch.cat([batch.natoms for batch in batch_list])
+                predictions["energy"].extend(
+                    out["energy"].to(torch.float16).tolist()
+                )
+                batch_natoms = torch.cat(
+                    [batch.natoms for batch in batch_list]
+                )
                 batch_fixed = torch.cat([batch.fixed for batch in batch_list])
                 forces = out["forces"].cpu().detach().to(torch.float16)
-                forces_uncertainty = (
-                    out["forces_uncertainty"].cpu().detach().to(torch.float16)
-                )
+                forces_uncertainty = out["forces_uncertainty"].cpu().detach().to(torch.float16)
                 per_image_forces = torch.split(forces, batch_natoms.tolist())
-                per_image_forces_uncertainty = torch.split(
-                    forces_uncertainty, batch_natoms.tolist()
-                )
-                per_image_forces = [force.numpy() for force in per_image_forces]
+                per_image_forces_uncertainty = torch.split(forces_uncertainty, batch_natoms.tolist())
+                per_image_forces = [
+                    force.numpy() for force in per_image_forces
+                ]
                 per_image_forces_uncertainty = [
                     uncertainty.numpy() for uncertainty in per_image_forces_uncertainty
                 ]
                 # evalAI only requires forces on free atoms
                 if results_file is not None:
-                    _per_image_fixed = torch.split(batch_fixed, batch_natoms.tolist())
+                    _per_image_fixed = torch.split(
+                        batch_fixed, batch_natoms.tolist()
+                    )
                     _per_image_free_forces = [
                         force[(fixed == 0).tolist()]
-                        for force, fixed in zip(per_image_forces, _per_image_fixed)
+                        for force, fixed in zip(
+                            per_image_forces, _per_image_fixed
+                        )
                     ]
                     _per_image_free_forces_uncertainty = [
                         uncertainty[(fixed == 0).tolist()]
@@ -353,7 +357,10 @@ class ForcesTrainer(BaseTrainer):
                         )
                     ]
                     _chunk_idx = np.array(
-                        [free_force.shape[0] for free_force in _per_image_free_forces]
+                        [
+                            free_force.shape[0]
+                            for free_force in _per_image_free_forces
+                        ]
                     )
                     per_image_forces = _per_image_free_forces
                     per_images_forces_uncertainty = _per_image_free_forces_uncertainty
@@ -371,9 +378,7 @@ class ForcesTrainer(BaseTrainer):
         predictions["energy"] = np.array(predictions["energy"])
         predictions["id"] = np.array(predictions["id"])
         self.save_results(
-            predictions,
-            results_file,
-            keys=["energy", "forces", "forces_uncertainty", "chunk_idx"],
+            predictions, results_file, keys=["energy", "forces", "forces_uncertainty", "chunk_idx"]
         )
 
         if self.ema:
@@ -405,8 +410,12 @@ class ForcesTrainer(BaseTrainer):
                 )
 
     def train(self, disable_eval_tqdm=False):
-        eval_every = self.config["optim"].get("eval_every", len(self.train_loader))
-        checkpoint_every = self.config["optim"].get("checkpoint_every", eval_every)
+        eval_every = self.config["optim"].get(
+            "eval_every", len(self.train_loader)
+        )
+        checkpoint_every = self.config["optim"].get(
+            "checkpoint_every", eval_every
+        )
         primary_metric = self.config["task"].get(
             "primary_metric", self.evaluator.task_primary_metric[self.name]
         )
@@ -418,7 +427,9 @@ class ForcesTrainer(BaseTrainer):
         # to prevent inconsistencies due to different batch size in checkpoint.
         start_epoch = self.step // len(self.train_loader)
 
-        for epoch_int in range(start_epoch, self.config["optim"]["max_epochs"]):
+        for epoch_int in range(
+            start_epoch, self.config["optim"]["max_epochs"]
+        ):
             self.train_sampler.set_epoch(epoch_int)
             skip_steps = self.step % len(self.train_loader)
             train_loader_iter = iter(self.train_loader)
@@ -464,7 +475,9 @@ class ForcesTrainer(BaseTrainer):
                     and distutils.is_master()
                     and not self.is_hpo
                 ):
-                    log_str = ["{}: {:.2e}".format(k, v) for k, v in log_dict.items()]
+                    log_str = [
+                        "{}: {:.2e}".format(k, v) for k, v in log_dict.items()
+                    ]
                     logging.info(", ".join(log_str))
                     self.metrics = {}
 
@@ -477,7 +490,9 @@ class ForcesTrainer(BaseTrainer):
 
                 iters += 1
                 if checkpoint_every != -1 and iters % checkpoint_every == 0:
-                    self.save(checkpoint_file="checkpoint.pt", training_state=True)
+                    self.save(
+                        checkpoint_file="checkpoint.pt", training_state=True
+                    )
 
                 # Evaluate on val set every `eval_every` iterations.
                 if iters % eval_every == 0:
@@ -551,7 +566,9 @@ class ForcesTrainer(BaseTrainer):
         if self.normalizer.get("normalize_labels", False):
             energy_target = self.normalizers["target"].norm(energy_target)
         energy_mult = self.config["optim"].get("energy_coefficient", 1)
-        loss.append(energy_mult * self.loss_fn["energy"](out["energy"], energy_target))
+        loss.append(
+            energy_mult * self.loss_fn["energy"](out["energy"], energy_target)
+        )
 
         # Force loss.
         if self.config["model_attributes"].get("regress_forces", True):
@@ -559,15 +576,22 @@ class ForcesTrainer(BaseTrainer):
                 [batch.force.to(self.device) for batch in batch_list], dim=0
             )
             if self.normalizer.get("normalize_labels", False):
-                force_target = self.normalizers["grad_target"].norm(force_target)
+                force_target = self.normalizers["grad_target"].norm(
+                    force_target
+                )
 
-            tag_specific_weights = self.config["task"].get("tag_specific_weights", [])
+            tag_specific_weights = self.config["task"].get(
+                "tag_specific_weights", []
+            )
             if tag_specific_weights != []:
                 # handle tag specific weights as introduced in forcenet
                 assert len(tag_specific_weights) == 3
 
                 batch_tags = torch.cat(
-                    [batch.tags.float().to(self.device) for batch in batch_list],
+                    [
+                        batch.tags.float().to(self.device)
+                        for batch in batch_list
+                    ],
                     dim=0,
                 )
                 weight = torch.zeros_like(batch_tags)
@@ -600,11 +624,14 @@ class ForcesTrainer(BaseTrainer):
                     mask = fixed == 0
                     loss.append(
                         force_mult
-                        * self.loss_fn["force"](out["forces"][mask], force_target[mask])
+                        * self.loss_fn["force"](
+                            out["forces"][mask], force_target[mask]
+                        )
                     )
                 else:
                     loss.append(
-                        force_mult * self.loss_fn["force"](out["forces"], force_target)
+                        force_mult
+                        * self.loss_fn["force"](out["forces"], force_target)
                     )
         # Sanity check to make sure the compute graph is correct.
         for lc in loss:
@@ -631,7 +658,9 @@ class ForcesTrainer(BaseTrainer):
         out["natoms"] = natoms
 
         if self.config["task"].get("eval_on_free_atoms", True):
-            fixed = torch.cat([batch.fixed.to(self.device) for batch in batch_list])
+            fixed = torch.cat(
+                [batch.fixed.to(self.device) for batch in batch_list]
+            )
             mask = fixed == 0
             out["forces"] = out["forces"][mask]
             target["forces"] = target["forces"][mask]
@@ -639,14 +668,18 @@ class ForcesTrainer(BaseTrainer):
             s_idx = 0
             natoms_free = []
             for natoms in target["natoms"]:
-                natoms_free.append(torch.sum(mask[s_idx : s_idx + natoms]).item())
+                natoms_free.append(
+                    torch.sum(mask[s_idx : s_idx + natoms]).item()
+                )
                 s_idx += natoms
             target["natoms"] = torch.LongTensor(natoms_free).to(self.device)
             out["natoms"] = torch.LongTensor(natoms_free).to(self.device)
 
         if self.normalizer.get("normalize_labels", False):
             out["energy"] = self.normalizers["target"].denorm(out["energy"])
-            out["forces"] = self.normalizers["grad_target"].denorm(out["forces"])
+            out["forces"] = self.normalizers["grad_target"].denorm(
+                out["forces"]
+            )
 
         metrics = evaluator.eval(out, target, prev_metrics=metrics)
         return metrics
@@ -701,7 +734,9 @@ class ForcesTrainer(BaseTrainer):
                 s_idx = 0
                 natoms_free = []
                 for natoms in relaxed_batch.natoms:
-                    natoms_free.append(torch.sum(mask[s_idx : s_idx + natoms]).item())
+                    natoms_free.append(
+                        torch.sum(mask[s_idx : s_idx + natoms]).item()
+                    )
                     s_idx += natoms
 
                 target = {
@@ -750,7 +785,9 @@ class ForcesTrainer(BaseTrainer):
                     rank_results = np.load(rank_path, allow_pickle=True)
                     gather_results["ids"].extend(rank_results["ids"])
                     gather_results["pos"].extend(rank_results["pos"])
-                    gather_results["chunk_idx"].extend(rank_results["chunk_idx"])
+                    gather_results["chunk_idx"].extend(
+                        rank_results["chunk_idx"]
+                    )
                     os.remove(rank_path)
 
                 # Because of how distributed sampler works, some system ids
@@ -781,7 +818,8 @@ class ForcesTrainer(BaseTrainer):
                     ),
                 }
                 aggregated_metrics[k]["metric"] = (
-                    aggregated_metrics[k]["total"] / aggregated_metrics[k]["numel"]
+                    aggregated_metrics[k]["total"]
+                    / aggregated_metrics[k]["numel"]
                 )
             metrics = aggregated_metrics
 
