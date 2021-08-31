@@ -34,8 +34,7 @@ class OnlineLearner(Calculator):
         self.parent_calc = parent_calc
         self.learner_params = learner_params
         self.parent_dataset = []
-        ase.db.connect("oal_queried_images.db", append=False)
-        self.queried_db = ase.db.connect("oal_queried_images.db")
+        self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
         self.check_final_point = False
 
         if mongo_db is not None:
