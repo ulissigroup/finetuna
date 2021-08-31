@@ -34,8 +34,7 @@ class OnlineLearner(Calculator):
         self.parent_calc = parent_calc
         self.learner_params = learner_params
         self.parent_dataset = []
-        ase.db.connect("oal_queried_images.db", append=False)
-        self.queried_db = ase.db.connect("oal_queried_images.db")
+        self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
         self.check_final_point = False
 
         if mongo_db is not None:
@@ -50,9 +49,9 @@ class OnlineLearner(Calculator):
             self.mongo_wrapper = None
         self.ml_potential = ml_potential
 
-        if "uncertainty_metric" not in self.learner_params:
-            self.learner_params["uncertainty_metric"] = "forces"
-        self.uncertainty_metric = self.learner_params["uncertainty_metric"]
+        self.uncertainty_metric = self.learner_params.get(
+            "uncertainty_metric", "forces"
+        )
 
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
