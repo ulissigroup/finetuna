@@ -49,7 +49,9 @@ class OnlineLearner(Calculator):
             self.mongo_wrapper = None
         self.ml_potential = ml_potential
 
-        self.uncertainty_metric = self.learner_params.get("uncertainty_metric", "forces")
+        self.uncertainty_metric = self.learner_params.get(
+            "uncertainty_metric", "forces"
+        )
 
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
