@@ -1,0 +1,95 @@
+dataset:
+    normalize_labels: True
+    target_mean: -0.7554450631141663
+    target_std: 2.887317180633545
+    grad_target_mean: 0.0
+    grad_target_std: 2.887317180633545
+
+links:
+  traj: "/home/jovyan/shared-scratch/oc20_cleanup/adeesh/CuNP_oal.traj"
+  checkpoint_path: "/home/jovyan/shared-scratch/oc20_cleanup/adeesh/uncertainty/spcv-2M-uncertainty-cp.pt"
+
+task:
+  dataset: trajectory_lmdb
+  description: "Regressing to energies and forces for DFT trajectories from OCP"
+  type: regression
+  metric: mae
+  primary_metric: forces_mae
+  labels:
+    - potential energy
+  grad_input: atomic forces
+  train_on_free_atoms: True
+  eval_on_free_atoms: True
+
+model:
+  name: spinconv_grad11_uncertainty
+  model_ref_number: 59
+  hidden_channels: 32
+  mid_hidden_channels: 256
+  num_interactions: 3
+  num_basis_functions: 512
+  sphere_size_lat: 16
+  sphere_size_long: 12
+  max_num_neighbors: 40
+  cutoff: 6.0
+  sphere_message: fullconv
+  output_message: fullconv
+  force_estimator: random
+  energy_estimator: mlpnode
+  regress_forces: True
+  use_pbc: True
+  gaussian_learnable: False
+  scale_distances: True
+  basis_width_scalar: 3.0
+  num_rand_rotations: 3
+
+vasp:
+  ibrion: -1
+  nsw: 0
+  isif: 0
+  isym: 0
+  lreal: "Auto"
+  ediffg: -0.03
+  symprec: 1.0e-10
+  encut: 350.0
+  laechg: False
+  lcharg: False
+  lwave: False
+  ncore: 4
+  gga: "RP"
+  pp: "PBE"
+  xc: "PBE"
+
+
+learner: 
+  max_iterations: 100  # offline
+  samples_to_retrain: 1  # offline
+  filename: "relax_example"  # offline
+  file_dir: "./"  # offline
+  stat_uncertain_tol: 0.08  # online
+  dyn_uncertain_tol: 0.1  # online
+  fmax_verify_threshold: 0.03  # online
+  seed: 1  # offline
+
+relaxation: 
+  fmax: 0.03
+  steps: 2000
+  maxstep: 0.04
+  max_parent_calls: 200
+
+optim:
+  batch_size: 1
+  eval_batch_size: 1
+  num_workers: 4
+  lr_initial: 0.0004
+  optimizer: Adam
+  optimizer_params: {"amsgrad": True}
+  eval_every: 5000
+  scheduler: ReduceLROnPlateau
+  mode: min
+  factor: 0.8
+  patience: 3
+  max_epochs: 80
+  force_coefficient: 100
+  energy_coefficient: 1
+
