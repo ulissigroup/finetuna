@@ -286,13 +286,24 @@ class OnlineLearner(Calculator):
             + str(end - start)
         )
 
-        if (len(self.parent_dataset) >= 2) and (
+        # retrain the ml potential
+        # if training only on recent points, then check if dataset has become long enough to train on subset
+        if (self.learner_params.get("train_on_recent_points", None) is not None) and (
+            len(self.parent_dataset) > self.learner_params["train_on_recent_points"]
+        ):
+            self.ml_potential.train(
+                self.parent_dataset[-self.learner_params["train_on_recent_points"] :]
+            )
+        # otherwise, if partial fitting, partial fit if not training for the first time
+        elif (len(self.parent_dataset) >= 2) and (
             self.learner_params.get("partial_fit", False)
         ):
             self.ml_potential.train(self.parent_dataset, [new_data])
+        # otherwise just train as normal
         else:
             self.ml_potential.train(self.parent_dataset)
 
+        # if we are using a delta calc, add back on the base calc
         if self.base_calc is not None:
             new_delta = DeltaCalc(
                 [new_data.calc, self.base_calc],
