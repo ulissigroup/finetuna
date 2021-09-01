@@ -52,6 +52,9 @@ class OnlineLearner(Calculator):
         self.uncertainty_metric = self.learner_params.get(
             "uncertainty_metric", "forces"
         )
+        self.tolerance_selection = self.learner_params.get(
+            "tolerance_selection", "max"
+        )
 
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
@@ -219,21 +222,18 @@ class OnlineLearner(Calculator):
         else:
             raise ValueError("invalid uncertainty metric")
 
-        uncertainty_tol = max(
-            [self.dyn_uncertain_tol * base_tolerance, self.stat_uncertain_tol]
-        )
+        if self.tolerance_selection == "min":
+            uncertainty_tol = min(
+                [self.dyn_uncertain_tol * base_tolerance, self.stat_uncertain_tol]
+            )
+        else:
+            uncertainty_tol = max(
+                [self.dyn_uncertain_tol * base_tolerance, self.stat_uncertain_tol]
+            )
+
         atoms.info["dyn_uncertain_tol"] = self.dyn_uncertain_tol * base_tolerance
         atoms.info["stat_uncertain_tol"] = self.stat_uncertain_tol
         atoms.info["uncertain_tol"] = uncertainty_tol
-        # print(
-        #     "Max Force Std: %1.3f eV/A, Max Force Threshold: %1.3f eV/A"
-        #     % (uncertainty, uncertainty_tol)
-        # )
-
-        # print(
-        #     "static tol: %1.3f eV/A, dynamic tol: %1.3f eV/A"
-        #     % (self.stat_uncertain_tol, self.dyn_uncertain_tol * base_tolerance)
-        # )
         return uncertainty > uncertainty_tol
 
     def parent_verify(self, atoms):
