@@ -17,10 +17,12 @@ from al_mlp.online_learner.online_learner import OnlineLearner
 from ocpmodels.common.utils import setup_imports
 from al_mlp.ml_potentials.ocp_calc import OCPCalculator
 
+
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config-yml", required=True, help="Path to the config file")
     return parser
+
 
 if __name__ == "__main__":
 
@@ -39,10 +41,8 @@ if __name__ == "__main__":
     else:
         print("no recording to mongo db")
 
-
     # calculate kpts
     config["vasp"]["kpts"] = calculate_surface_k_points(initial_structure)
-
 
     dbname = "flare_" + str(initial_structure.get_chemical_formula()) + "_oal"
     oal_initial_structure = initial_structure
@@ -51,7 +51,9 @@ if __name__ == "__main__":
     parent_calc = Vasp(**config["vasp"])
 
     # declare ml calc
-    ml_potential = OCPCalculator(config, pbc_graph=True, checkpoint=config["links"]["checkpoint_path"])
+    ml_potential = OCPCalculator(
+        config, pbc_graph=True, checkpoint=config["links"]["checkpoint_path"]
+    )
 
     # declare online learner
     learner = OnlineLearner(
