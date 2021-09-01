@@ -52,9 +52,7 @@ class OnlineLearner(Calculator):
         self.uncertainty_metric = self.learner_params.get(
             "uncertainty_metric", "forces"
         )
-        self.tolerance_selection = self.learner_params.get(
-            "tolerance_selection", "max"
-        )
+        self.tolerance_selection = self.learner_params.get("tolerance_selection", "max")
 
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
