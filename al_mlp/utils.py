@@ -142,6 +142,7 @@ def write_to_db_online(
     info,
     seed,
 ):
+    random.seed(seed)
     for image in queried_images:
         dict_to_write = {
             "check": info.get("check"),
@@ -159,7 +160,7 @@ def write_to_db_online(
         database.write(
             image,
             key_value_pairs=dict_to_write,
-            id=seed,
+            # id=seed,
         )
 
 
