@@ -296,7 +296,7 @@ class OnlineLearner(Calculator):
             )
         # otherwise, if partial fitting, partial fit if not training for the first time
         elif (len(self.parent_dataset) >= 2) and (
-            self.learner_params.get("partial_fit", False)
+            self.learner_params.get("partial_fit", True)
         ):
             self.ml_potential.train(self.parent_dataset, [new_data])
         # otherwise just train as normal
