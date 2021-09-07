@@ -305,6 +305,7 @@ class OnlineLearner(Calculator):
 
         # if we are using a delta calc, add back on the base calc
         if self.base_calc is not None:
+            atoms_copy = atoms.copy()
             new_delta = DeltaCalc(
                 [new_data.calc, self.base_calc],
                 "add",
