@@ -18,6 +18,7 @@ def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
         "n_ensembles": 10,
         "use_dask": True,
         "wandb_init": wandb_init,
+        "train_on_recent_points": 3,
     }
 
     flare_params = {
@@ -30,6 +31,7 @@ def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
         "sigma_e": 0.01,
         "sigma_f": 0.1,
         "sigma_s": 0.0,
+        "freeze_hypes": 0,
         "hpo_max_iterations": 50,
     }
     ml_potential = FlarePPCalc(flare_params, images)
