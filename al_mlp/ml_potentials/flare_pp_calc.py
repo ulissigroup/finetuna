@@ -28,7 +28,6 @@ class FlarePPCalc(Calculator):
         self.variance_type = self.mlp_params.get("variance_type", "SOR")
         self.opt_method = self.mlp_params.get("opt_method", "BFGS")
         self.kernel_type = self.mlp_params.get("kernel_type", "NormalizedDotProduct")
-        self.fit_limit = self.mlp_params.get("fit_limit", None)
         self.iteration = 0
 
     def init_species_map(self):
@@ -213,12 +212,8 @@ class FlarePPCalc(Calculator):
         if not self.gp_model or not new_dataset:
             self.init_flare()
             self.fit(parent_dataset)
-        elif not self.fit_limit:
-            self.partial_fit(new_dataset)
-        elif isinstance(self.fit_limit, int):
-            self.limit_fit(parent_dataset)
         else:
-            raise NotImplementedError("flare_param['fit_limit'] needs to be a integer.")
+            self.partial_fit(new_dataset)
 
         # start_time = time.time()
         if isinstance(self.freeze_hyps, int) and self.iteration < self.freeze_hyps:
@@ -263,24 +258,4 @@ class FlarePPCalc(Calculator):
 
             self.gp_model.update_db(
                 train_structure, forces, [], energy, mode="all", update_qr=True
-            )
-
-    def limit_fit(self, parent_data):
-        if len(parent_data) <= self.fit_limit:
-            dataset = parent_data
-        else:
-            dataset = parent_data[-self.fit_limit :]
-        for image in dataset:
-            train_structure = struc.Structure(
-                image.get_cell(), image.get_atomic_numbers(), image.get_positions()
-            )
-            forces = image.get_forces(apply_constraint=False)
-            energy = image.get_potential_energy(apply_constraint=False)
-            self.gp_model.update_db(
-                train_structure,
-                forces,
-                self.update_gp_range,
-                energy,
-                mode=self.update_gp_mode,
-                update_qr=True,
             )
