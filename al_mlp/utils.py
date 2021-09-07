@@ -146,13 +146,15 @@ def write_to_db_online(
     for image in queried_images:
         dict_to_write = {
             "check": info.get("check"),
-            "force_uncertainty": info.get("force_uncertainty", "-"),
-            "tolerance": info.get("tolerance", "-"),
-            "parentE": info.get("parent_energy", "-"),
-            "parentMaxForce": info.get("parent_fmax", "-"),
-            "parentF": info.get("parent_forces", "-"),
-            "oalF": info.get("ml_forces", "-"),
-            "energy_uncertainty": info.get("energy_uncertainty", "-"),
+            "ml_energy": info.get("ml_energy"),
+            "ml_fmax": info.get("ml_fmax", "-"),
+            "parent_energy": info.get("parent_energy"),
+            "parent_fmax": info.get("parent_fmax"),
+            "force_uncertainty": info.get("force_uncertainty"),
+            "energy_uncertainty": info.get("energy_uncertainty"),
+            "dyn_uncertainty_tol": info.get("dyn_uncertainty_tol"),
+            "stat_uncertain_tol": info.get("stat_uncertain_tol"),
+            "tolerance": info.get("tolerance"),
         }
         for key, value in dict_to_write.items():
             if value is None:

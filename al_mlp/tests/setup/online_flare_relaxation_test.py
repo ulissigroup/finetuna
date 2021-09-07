@@ -22,7 +22,7 @@ def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
     }
 
     flare_params = {
-        "sigma": 1.0,
+        "sigma": 2.0,
         "power": 2,
         "cutoff_function": "quadratic",
         "cutoff": 3.0,
