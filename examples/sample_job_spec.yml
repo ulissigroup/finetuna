@@ -1,0 +1,57 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: my_name
+  namespace: my_namespace
+spec:
+  ttlSecondsAfterFinished: 120
+  backoffLimit: 1
+  template:
+    spec:
+      containers:
+      - env:
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: none
+        name: my_name
+        image: ulissigroup/kubeflow_vasp:amptorch_ocp
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 16
+            memory: 30Gi
+            nvidia.com/gpu: "0"
+          requests:
+            cpu: 16
+            memory: 30Gi
+        volumeMounts:
+        - mountPath: /home/jovyan
+          name: my-workspace
+        - mountPath: /home/jovyan/shared-datasets/
+          name: shared-datasets
+        - mountPath: /home/jovyan/shared-scratch/
+          name: shared-scratch
+        - mountPath: /dev/shm
+          name: dshm
+        command:
+        - /bin/bash
+        - -c
+        args:
+        - pip install al_mlp &&
+          pip install amptorch &&
+          wandb login &&
+          python al_mlp/examples/al_main.py --config-yml al_mlp/examples/sample_config.yml
+        workingDir: /home/jovyan/.kube
+      restartPolicy: Never
+      volumes:
+      - name: my-workspace
+        persistentVolumeClaim:
+          claimName: my-workspace
+      - name: shared-datasets
+        persistentVolumeClaim:
+          claimName: shared-datasets
+      - name: shared-scratch
+        persistentVolumeClaim:
+          claimName: shared-scratch
+      - emptyDir:
+          medium: Memory
+        name: dshm
