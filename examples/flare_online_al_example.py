@@ -20,7 +20,7 @@ images = []
 mongo_db = None
 if "MONGOC" in os.environ:
     mongo_string = os.environ["MONGOC"]
-    mongo_db = MongoClient(mongo_db)["al_db"]
+    mongo_db = MongoClient(mongo_string)["al_db"]
 else:
     print("no recording to mongo db")
 
