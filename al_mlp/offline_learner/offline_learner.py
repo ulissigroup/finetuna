@@ -1,12 +1,11 @@
 import random
 from al_mlp.base_calcs.dummy import Dummy
 from al_mlp.calcs import DeltaCalc
-from al_mlp.utils import convert_to_singlepoint, compute_with_calc, write_to_db
+from al_mlp.utils import compute_with_calc, write_to_db
 import ase
 from al_mlp.mongo import MongoWrapper
 import numpy as np
 from ase.calculators.calculator import Calculator
-from ase.calculators.singlepoint import SinglePointCalculator as sp
 
 
 class OfflineActiveLearner:
@@ -42,6 +41,7 @@ class OfflineActiveLearner:
         parent_calc,
         base_calc,
         mongo_db=None,
+        optional_config=None,
     ):
         self.learner_params = learner_params
         self.ml_potential = ml_potential
