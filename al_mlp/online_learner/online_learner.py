@@ -30,7 +30,7 @@ class OnlineLearner(Calculator):
         parent_calc,
         base_calc=None,
         mongo_db=None,
-        optional_config=None,
+        run_config={},
     ):
         Calculator.__init__(self)
         self.parent_calc = parent_calc
@@ -45,6 +45,7 @@ class OnlineLearner(Calculator):
             wandb_config = {
                 "learner": self.learner_params,
                 "ml_potential": self.ml_potential.mlp_params,
+                "run_config": run_config,
             }
             if mongo_db is not None:
                 wandb_config["mongo"] = self.mongo_wrapper.params
