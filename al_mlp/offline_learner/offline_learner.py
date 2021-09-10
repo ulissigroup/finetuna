@@ -1,11 +1,10 @@
 import random
 from al_mlp.base_calcs.dummy import Dummy
 from al_mlp.calcs import DeltaCalc
-from al_mlp.utils import compute_with_calc, write_to_db
-import ase
-from al_mlp.mongo import MongoWrapper
+from al_mlp.utils import compute_with_calc
 import numpy as np
 from ase.calculators.calculator import Calculator
+from al_mlp.logger import Logger
 
 
 class OfflineActiveLearner:
@@ -40,7 +39,7 @@ class OfflineActiveLearner:
         ml_potential,
         parent_calc,
         base_calc,
-        mongo_db=None,
+        mongo_db={"offline_learner:": None},
         optional_config=None,
     ):
         self.learner_params = learner_params
@@ -49,16 +48,15 @@ class OfflineActiveLearner:
         self.parent_calc = parent_calc
         self.base_calc = base_calc
         self.calcs = [parent_calc, base_calc]
-        if mongo_db is not None:
-            self.mongo_wrapper = MongoWrapper(
-                mongo_db["offline_learner"],
-                learner_params,
-                ml_potential,
-                parent_calc,
-                base_calc,
-            )
-        else:
-            self.mongo_wrapper = None
+
+        self.logger = Logger(
+            learner_params=learner_params,
+            ml_potential=ml_potential,
+            parent_calc=parent_calc,
+            base_calc=base_calc,
+            mongo_db_collection=mongo_db["offline_learner"],
+            optional_config=optional_config,
+        )
 
         self.init_learner()
         self.init_training_data()
@@ -80,7 +78,6 @@ class OfflineActiveLearner:
 
         random.seed(self.seed)
         self.query_seeds = random.sample(range(100000), self.max_iterations)
-        ase.db.connect("queried_images.db", append=False)
 
     def init_training_data(self):
         """
@@ -146,9 +143,36 @@ class OfflineActiveLearner:
         self.sample_candidates = list(
             self.atomistic_method.get_trajectory(filename=self.fn_label)
         )
-        if self.mongo_wrapper is not None:
-            self.mongo_wrapper.first = True
-        self.write_to_mongo(check=False, list_of_atoms=self.sample_candidates)
+
+        substep = 0
+        for image in self.sample_candidates:
+            energy = image.get_potential_energy(apply_constraint=False)
+            forces = image.get_forces(apply_constraint=False)
+            constrained_forces = image.get_forces()
+            fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
+            info = {
+                "check": False,
+                "energy": energy,
+                "forces": forces,
+                "fmax": fmax,
+                "ml_energy": energy,
+                "ml_forces": forces,
+                "ml_fmax": fmax,
+                "parent_energy": None,
+                "parent_forces": None,
+                "parent_fmax": None,
+                "force_uncertainty": image.info.get("max_force_stds", None),
+                "energy_uncertainty": image.info.get("energy_stds", None),
+                "dyn_uncertainty_tol": None,
+                "stat_uncertain_tol": None,
+                "tolerance": None,
+                "parent_calls": self.parent_calls,
+                "trained_on": False,
+                "query_idx": None,
+                "substep": substep,
+            }
+            substep += 1
+            self.logger.write(image, info)
 
         self.terminate = self.check_terminate()
         self.iterations += 1
@@ -180,23 +204,38 @@ class OfflineActiveLearner:
             [un_delta_image] = compute_with_calc([image], add_delta_calc)
             un_delta_new_dataset.append(un_delta_image)
 
-        if query_idx is None:
-            tag = "initial"
-            for image in un_delta_new_dataset:
-                image.info["max_force_stds"] = None
-        else:
-            tag = "queried"
-        queries_db = ase.db.connect("queried_images.db")
-        for image in un_delta_new_dataset:
-            parent_E = image.info["parent energy"]
-            base_E = image.info["base energy"]
-            write_to_db(queries_db, [image], tag, parent_E, base_E)
-        self.write_to_mongo(
-            check=True,
-            list_of_atoms=un_delta_new_dataset,
-            query_idx=query_idx,
-            trained_on=True,
-        )
+        for i in range(len(un_delta_new_dataset)):
+            image = un_delta_new_dataset[i]
+            idx = None
+            if query_idx is not None:
+                idx = query_idx[i]
+            energy = image.get_potential_energy(apply_constraint=False)
+            forces = image.get_forces(apply_constraint=False)
+            constrained_forces = image.get_forces()
+            fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
+            info = {
+                "check": True,
+                "energy": energy,
+                "forces": forces,
+                "fmax": fmax,
+                "ml_energy": None,
+                "ml_forces": None,
+                "ml_fmax": None,
+                "parent_energy": energy,
+                "parent_forces": forces,
+                "parent_fmax": fmax,
+                "force_uncertainty": image.info.get("max_force_stds", None),
+                "energy_uncertainty": image.info.get("energy_stds", None),
+                "dyn_uncertainty_tol": None,
+                "stat_uncertain_tol": None,
+                "tolerance": None,
+                "parent_calls": self.parent_calls,
+                "trained_on": True,
+                "query_idx": idx,
+                "substep": idx,
+            }
+            self.logger.write(image, info)
+
         return un_delta_new_dataset
 
     def check_terminate(self):
@@ -254,23 +293,3 @@ class OfflineActiveLearner:
         else:
             calc = ml_potential
         return calc
-
-    def write_to_mongo(self, check, list_of_atoms, query_idx=None, trained_on=False):
-        if self.mongo_wrapper is not None:
-            for i in range(len(list_of_atoms)):
-                image = list_of_atoms[i]
-                info = {
-                    "check": check,
-                    "uncertainty": image.info["max_force_stds"],
-                    "energy": image.get_potential_energy(),
-                    "maxForce": np.sqrt((image.get_forces() ** 2).sum(axis=1).max()),
-                    "forces": str(image.get_forces(apply_constraint=False)),
-                    "query_idx": None,
-                    "trained_on": trained_on,
-                }
-
-                if query_idx is not None:
-                    info["query_idx"] = query_idx[i]
-                if "force_stds" in image.calc.results:
-                    info["force_stds"] = image.calc.results["force_stds"]
-                self.mongo_wrapper.write_to_mongo(image, info)
