@@ -1,5 +1,6 @@
 #
 from ase.atoms import Atoms
+from numpy import ndarray
 from pymongo.collection import Collection
 from al_mlp.mongo import MongoWrapper
 import ase.db
@@ -77,13 +78,16 @@ class Logger:
             random.seed(self.step)
             dict_to_write = {}
             for key, value in info.items():
-                if value is None:
-                    dict_to_write[key] = "-"
-                elif key in ["energy", "fmax", "forces"]:
-                    new_key = "reported_" + key
-                    dict_to_write[new_key] = value
+                if key in ["energy", "fmax", "forces"]:
+                    write_key = "reported_" + key
                 else:
-                    dict_to_write[key] = value
+                    write_key = key
+
+                dict_to_write[write_key] = value
+                if value is None:
+                    dict_to_write[write_key] = "-"
+                elif type(value) is ndarray:
+                    dict_to_write[write_key] = str(value)
             with ase.db.connect(self.asedb_name) as asedb:
                 asedb.write(
                     atoms,
