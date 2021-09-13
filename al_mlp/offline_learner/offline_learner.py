@@ -76,11 +76,15 @@ class OfflineActiveLearner:
         self.parent_calls = 0
         self.terminate = False
         self.atomistic_method = Relaxation(
-            initial_geometry=Trajectory(self.learner_params.get("atomistic_method").get("initial_traj"))[0], 
+            initial_geometry=Trajectory(
+                self.learner_params.get("atomistic_method").get("initial_traj")
+            )[0],
             optimizer=BFGS,
             fmax=self.learner_params.get("atomistic_method", {}).get("fmax", 0.03),
             steps=self.learner_params.get("atomistic_method", {}).get("steps", 2000),
-            maxstep=self.learner_params.get("atomistic_method", {}).get("maxstep", 0.04)
+            maxstep=self.learner_params.get("atomistic_method", {}).get(
+                "maxstep", 0.04
+            ),
         )
         self.max_iterations = self.learner_params.get("max_iterations", 20)
         self.samples_to_retrain = self.learner_params.get("samples_to_retrain", 1)
@@ -259,7 +263,7 @@ class OfflineActiveLearner:
         final_image = self.add_data([final_image], [query_idx])[0]
         max_force = np.sqrt((final_image.get_forces() ** 2).sum(axis=1).max())
         terminate = False
-        if max_force <= self.learner_params["atomistic_method"].fmax:
+        if max_force <= self.atomistic_method.fmax:
             terminate = True
         print(
             "Final image check with parent calc: "
