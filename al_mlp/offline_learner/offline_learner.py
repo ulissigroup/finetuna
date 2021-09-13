@@ -39,7 +39,7 @@ class OfflineActiveLearner:
         ml_potential,
         parent_calc,
         base_calc,
-        mongo_db={"offline_learner:": None},
+        mongo_db=None,
         optional_config=None,
     ):
         self.learner_params = learner_params
@@ -49,6 +49,8 @@ class OfflineActiveLearner:
         self.base_calc = base_calc
         self.calcs = [parent_calc, base_calc]
 
+        if mongo_db is None:
+            mongo_db = {"offline_learner": None}
         self.logger = Logger(
             learner_params=learner_params,
             ml_potential=ml_potential,
