@@ -35,10 +35,6 @@ class Logger:
             Optional MongoClient from the pymongo package associated with the desired mongo_db.
         """
 
-        # asedb_name = learner_params.get("asedb_name", "oal_queried_images.db")
-        # if asedb_name is not None:
-        #     self.asedb = ase.db.connect(asedb_name, append=False)
-
         self.step = 0
 
         self.asedb_name = learner_params.get("asedb_name", "oal_queried_images.db")
@@ -83,6 +79,9 @@ class Logger:
             for key, value in info.items():
                 if value is None:
                     dict_to_write[key] = "-"
+                elif key in ["energy", "fmax", "forces"]:
+                    new_key = "reported_" + key
+                    dict_to_write[new_key] = value
                 else:
                     dict_to_write[key] = value
             with ase.db.connect(self.asedb_name) as asedb:
