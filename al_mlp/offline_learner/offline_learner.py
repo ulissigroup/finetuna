@@ -1,4 +1,8 @@
 import random
+from ase.io.trajectory import Trajectory
+
+from ase.optimize.bfgs import BFGS
+from al_mlp.atomistic_methods import Relaxation
 from al_mlp.base_calcs.dummy import Dummy
 from al_mlp.calcs import DeltaCalc
 from al_mlp.utils import compute_with_calc
@@ -71,7 +75,13 @@ class OfflineActiveLearner:
         self.iterations = 0
         self.parent_calls = 0
         self.terminate = False
-        self.atomistic_method = self.learner_params.get("atomistic_method")
+        self.atomistic_method = Relaxation(
+            initial_geometry=Trajectory(self.learner_params.get("atomistic_method").get("initial_traj"))[0], 
+            optimizer=BFGS,
+            fmax=self.learner_params.get("atomistic_method", {}).get("fmax", 0.03),
+            steps=self.learner_params.get("atomistic_method", {}).get("steps", 2000),
+            maxstep=self.learner_params.get("atomistic_method", {}).get("maxstep", 0.04)
+        )
         self.max_iterations = self.learner_params.get("max_iterations", 20)
         self.samples_to_retrain = self.learner_params.get("samples_to_retrain", 1)
         self.filename = self.learner_params.get("filename", "relax_example")
