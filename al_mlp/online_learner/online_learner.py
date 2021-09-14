@@ -290,7 +290,7 @@ class OnlineLearner(Calculator):
         if (
             self.learner_params.get("reverify_with_parent", True) is False
             and type(atoms.calc) is SinglePointCalculator
-            and atoms.calc.name == "vasp"
+            and atoms.calc.name == self.parent_calc.name
         ):
             warn(
                 "Assuming Atoms object Singlepoint labeled 'vasp' is precalculated (to turn this behavior off: set 'reverify_with_parent' to True)"
