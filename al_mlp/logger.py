@@ -1,7 +1,6 @@
 #
 from ase.atoms import Atoms
 from numpy import ndarray
-from pymongo.collection import Collection
 from al_mlp.mongo import MongoWrapper
 import ase.db
 from ase.calculators.calculator import Calculator
@@ -20,7 +19,7 @@ class Logger:
         ml_potential: Calculator,
         parent_calc: Calculator,
         base_calc: Calculator = None,
-        mongo_db_collection: Collection = None,
+        mongo_db_collection=None,
         optional_config: dict = None,
     ):
         """
