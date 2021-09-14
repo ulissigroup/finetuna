@@ -58,8 +58,10 @@ class OnlineLearner(Calculator):
         self.no_position_change_steps = self.learner_params.get(
             "no_position_change_steps", None
         )
-        self.min_step_size = self.learner_params.get("min_step_size", 0.04)
         if self.no_position_change_steps is not None:
+            self.min_position_change = self.learner_params.get(
+                "min_position_change", 0.04
+            )
             self.positions_queue = queue.Queue(maxsize=self.no_position_change_steps)
 
         self.wandb_init = self.learner_params.get("wandb_init", {})
@@ -250,10 +252,13 @@ class OnlineLearner(Calculator):
             new_positions = atoms.get_positions()
             if self.positions_queue.full():
                 old_positions = self.positions_queue.get()
-                if np.linalg.norm(new_positions - old_positions) < self.min_step_size:
+                if (
+                    np.linalg.norm(new_positions - old_positions)
+                    < self.min_position_change
+                ):
                     print(
                         "Positions haven't changed by more than "
-                        + str(self.min_step_size)
+                        + str(self.min_position_change)
                         + " in "
                         + str(self.no_position_change_steps)
                         + " steps, check with parent"
