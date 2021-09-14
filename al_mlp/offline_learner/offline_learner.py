@@ -75,17 +75,29 @@ class OfflineActiveLearner:
         self.iterations = 0
         self.parent_calls = 0
         self.terminate = False
-        self.atomistic_method = Relaxation(
-            initial_geometry=Trajectory(
-                self.learner_params.get("atomistic_method").get("initial_traj")
-            )[0],
-            optimizer=BFGS,
-            fmax=self.learner_params.get("atomistic_method", {}).get("fmax", 0.03),
-            steps=self.learner_params.get("atomistic_method", {}).get("steps", 2000),
-            maxstep=self.learner_params.get("atomistic_method", {}).get(
-                "maxstep", 0.04
-            ),
-        )
+
+        atomistic_method = self.learner_params.get("atomistic_method")
+        if type(atomistic_method) is Relaxation:
+            self.atomistic_method = atomistic_method
+        elif type(atomistic_method) is dict:
+            self.atomistic_method = Relaxation(
+                initial_geometry=Trajectory(
+                    self.learner_params.get("atomistic_method").get("initial_traj")
+                )[0],
+                optimizer=BFGS,
+                fmax=self.learner_params.get("atomistic_method", {}).get("fmax", 0.03),
+                steps=self.learner_params.get("atomistic_method", {}).get(
+                    "steps", 2000
+                ),
+                maxstep=self.learner_params.get("atomistic_method", {}).get(
+                    "maxstep", 0.04
+                ),
+            )
+        else:
+            raise TypeError(
+                "Passed in config without an atomistic method Relaxation object or dictionary"
+            )
+
         self.max_iterations = self.learner_params.get("max_iterations", 20)
         self.samples_to_retrain = self.learner_params.get("samples_to_retrain", 1)
         self.filename = self.learner_params.get("filename", "relax_example")
