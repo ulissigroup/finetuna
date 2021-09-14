@@ -9,6 +9,7 @@ import ase.db
 from al_mlp.calcs import DeltaCalc
 from al_mlp.mongo import MongoWrapper
 import wandb
+import queue
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -54,6 +55,12 @@ class OnlineLearner(Calculator):
             "uncertainty_metric", "forces"
         )
         self.tolerance_selection = self.learner_params.get("tolerance_selection", "max")
+        self.no_position_change_steps = self.learner_params.get(
+            "no_position_change_steps", None
+        )
+        self.min_step_size = self.learner_params.get("min_step_size", 0.04)
+        if self.no_position_change_steps is not None:
+            self.positions_queue = queue.Queue(maxsize=self.no_position_change_steps)
 
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
@@ -235,17 +242,38 @@ class OnlineLearner(Calculator):
         atoms.info["dyn_uncertain_tol"] = self.dyn_uncertain_tol * base_tolerance
         atoms.info["stat_uncertain_tol"] = self.stat_uncertain_tol
         atoms.info["uncertain_tol"] = uncertainty_tol
-        return uncertainty > uncertainty_tol
+
+        prediction_unsafe = uncertainty > uncertainty_tol
+
+        # check if positions have changed enough in the past n steps
+        if self.no_position_change_steps is not None:
+            new_positions = atoms.get_positions()
+            if self.positions_queue.full():
+                old_positions = self.positions_queue.get()
+                if np.linalg.norm(new_positions - old_positions) < self.min_step_size:
+                    print(
+                        "Positions haven't changed by more than "
+                        + str(self.min_step_size)
+                        + " in "
+                        + str(self.no_position_change_steps)
+                        + " steps, check with parent"
+                    )
+                    prediction_unsafe = True
+            self.positions_queue.put(new_positions)
+
+        return prediction_unsafe
 
     def parent_verify(self, atoms):
         forces = atoms.get_forces()
         fmax = np.sqrt((forces ** 2).sum(axis=1).max())
 
+        verify = False
         if fmax <= self.fmax_verify_threshold:
+            verify = True
             print("Force below threshold: check with parent")
         if self.check_final_point:
+            verify = True
             print("checking final point")
-        verify = (fmax <= self.fmax_verify_threshold) or self.check_final_point
         return verify
 
     def add_data_and_retrain(self, atoms):
