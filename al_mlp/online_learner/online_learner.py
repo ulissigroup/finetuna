@@ -288,9 +288,10 @@ class OnlineLearner(Calculator):
             type(atoms.calc) is SinglePointCalculator
             or atoms.calc.name == self.parent_calc.name
         ):
-            warn(
-                "Assuming Atoms object Singlepoint is precalculated (to turn this behavior off: set 'reverify_with_parent' to True)"
-            )
+            if not self.learner_params.get("suppress_warnings", False):
+                warn(
+                    "Assuming Atoms object Singlepoint is precalculated (to turn this behavior off: set 'reverify_with_parent' to True)"
+                )
             # check if parent calc is a delta, if so: turn the vasp singlepoint into a deltacalc singlepoint
             if type(self.parent_calc) is DeltaCalc:
                 (new_data,) = subtract_deltas(
