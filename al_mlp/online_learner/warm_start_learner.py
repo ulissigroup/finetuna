@@ -1,6 +1,4 @@
-from ase.optimize.bfgs import BFGS
 from al_mlp.online_learner.online_learner import OnlineLearner
-from al_mlp.atomistic_methods import Relaxation
 from al_mlp.utils import convert_to_singlepoint
 import numpy as np
 
