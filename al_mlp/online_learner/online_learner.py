@@ -36,11 +36,10 @@ class OnlineLearner(Calculator):
         self.parent_calc = parent_calc
         self.learner_params = learner_params
         self.parent_dataset = []
+        self.complete_dataset = []
         self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
         self.check_final_point = False
-        self.num_initial_points = self.learner_params.get(
-            "num_initial_points", 2
-        )
+        self.num_initial_points = self.learner_params.get("num_initial_points", 2)
         self.initial_points_to_keep = self.learner_params.get(
             "initial_points_to_keep", [i for i in range(self.num_initial_points)]
         )
@@ -167,6 +166,7 @@ class OnlineLearner(Calculator):
             wandb.log(
                 {key: value for key, value in self.info.items() if value is not None}
             )
+        self.complete_dataset.append(atoms)
 
     def get_energy_and_forces(self, atoms):
         # If we have less than two data points, uncertainty is not
@@ -180,10 +180,12 @@ class OnlineLearner(Calculator):
             self.info["ml_fmax"] = self.info["parent_fmax"] = fmax
 
             if len(self.parent_dataset) == self.num_initial_points:
-                new_parent_dataset = [self.parent_dataset[i] for i in self.initial_points_to_keep]
+                new_parent_dataset = [
+                    self.parent_dataset[i] for i in self.initial_points_to_keep
+                ]
                 self.parent_dataset = new_parent_dataset
                 self.num_initial_points = len(self.parent_dataset)
-                    
+
         else:
             # Make a copy of the atoms with ensemble energies as a SP
             atoms_copy = atoms.copy()
