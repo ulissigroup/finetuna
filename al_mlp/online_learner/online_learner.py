@@ -135,6 +135,37 @@ class OnlineLearner(Calculator):
 
         self.init_info()
 
+        energy, forces, fmax = self.get_energy_and_forces(atoms)
+
+        # Print a statement about the uncertainty
+        uncertainty_statement = "uncertainty: "
+        if self.uncertainty_metric == "forces":
+            uncertainty_statement += str(self.info["force_uncertainty"])
+        elif self.uncertainty_metric == "energy":
+            uncertainty_statement += str(self.info["energy_uncertainty"])
+        uncertainty_statement += ", tolerance: " + str(self.info["tolerance"])
+        print(uncertainty_statement)
+
+        # Record number of parent calls after this calculation
+        self.info["parent_calls"] = self.parent_calls
+
+        # Return the energy/force
+        self.results["energy"] = self.info["energy"] = energy
+        self.results["forces"] = forces
+        self.info["forces"] = str(forces)
+        self.info["fmax"] = fmax
+
+        # Write to asedb, mongodb, wandb
+        write_to_db_online(self.queried_db, [atoms], self.info, self.curr_step)
+        if self.mongo_wrapper is not None:
+            self.mongo_wrapper.write_to_mongo(atoms, self.info)
+
+        if self.wandb_log:
+            wandb.log(
+                {key: value for key, value in self.info.items() if value is not None}
+            )
+
+    def get_energy_and_forces(self, atoms):
         # If we have less than two data points, uncertainty is not
         # well calibrated so just use DFT
         if len(self.parent_dataset) < self.initial_training_point:
@@ -195,33 +226,7 @@ class OnlineLearner(Calculator):
                 # Otherwise use the ML predicted energies and forces
                 self.info["check"] = False
 
-        # Print a statement about the uncertainty
-        uncertainty_statement = "uncertainty: "
-        if self.uncertainty_metric == "forces":
-            uncertainty_statement += str(self.info["force_uncertainty"])
-        elif self.uncertainty_metric == "energy":
-            uncertainty_statement += str(self.info["energy_uncertainty"])
-        uncertainty_statement += ", tolerance: " + str(self.info["tolerance"])
-        print(uncertainty_statement)
-
-        # Record number of parent calls after this calculation
-        self.info["parent_calls"] = self.parent_calls
-
-        # Return the energy/force
-        self.results["energy"] = self.info["energy"] = energy
-        self.results["forces"] = forces
-        self.info["forces"] = str(forces)
-        self.info["fmax"] = fmax
-
-        # Write to asedb, mongodb, wandb
-        write_to_db_online(self.queried_db, [atoms], self.info, self.curr_step)
-        if self.mongo_wrapper is not None:
-            self.mongo_wrapper.write_to_mongo(atoms, self.info)
-
-        if self.wandb_log:
-            wandb.log(
-                {key: value for key, value in self.info.items() if value is not None}
-            )
+        return energy, forces, fmax
 
     def unsafe_prediction(self, atoms):
         # Set the desired tolerance based on the current max predcited force or energy
