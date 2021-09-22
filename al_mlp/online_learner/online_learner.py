@@ -41,6 +41,9 @@ class OnlineLearner(Calculator):
         self.initial_training_point = self.learner_params.get(
             "initial_training_point", 2
         )
+        self.initial_points_to_keep = self.learner_params.get(
+            "initial_points_to_keep", [i for i in range(self.initial_training_point)]
+        )
 
         if mongo_db is not None:
             self.mongo_wrapper = MongoWrapper(
@@ -175,6 +178,12 @@ class OnlineLearner(Calculator):
             self.info["ml_energy"] = self.info["parent_energy"] = energy
             self.info["ml_forces"] = self.info["parent_forces"] = str(forces)
             self.info["ml_fmax"] = self.info["parent_fmax"] = fmax
+
+            if len(self.parent_dataset) == self.initial_training_point:
+                new_parent_dataset = [self.parent_dataset[i] for i in self.initial_points_to_keep]
+                self.parent_dataset = new_parent_dataset
+                self.initial_training_point = len(self.parent_dataset)
+                    
         else:
             # Make a copy of the atoms with ensemble energies as a SP
             atoms_copy = atoms.copy()
