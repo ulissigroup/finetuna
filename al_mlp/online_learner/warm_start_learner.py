@@ -2,6 +2,7 @@ from al_mlp.online_learner.online_learner import OnlineLearner
 from al_mlp.utils import convert_to_singlepoint
 import numpy as np
 
+
 class WarmStartLearner(OnlineLearner):
     def __init__(
         self,
