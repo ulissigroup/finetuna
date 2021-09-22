@@ -106,10 +106,7 @@ class OnlineLearner(Calculator):
         for image in parent_dataset:
             self.add_data_and_retrain(image)
 
-    def calculate(self, atoms, properties, system_changes):
-        Calculator.calculate(self, atoms, properties, system_changes)
-        self.curr_step += 1
-
+    def init_info(self):
         self.info = {
             "check": None,
             "energy": None,
@@ -128,6 +125,12 @@ class OnlineLearner(Calculator):
             "tolerance": None,
             "parent_calls": None,
         }
+
+    def calculate(self, atoms, properties, system_changes):
+        Calculator.calculate(self, atoms, properties, system_changes)
+        self.curr_step += 1
+
+        self.init_info()
 
         # If we have less than two data points, uncertainty is not
         # well calibrated so just use DFT
