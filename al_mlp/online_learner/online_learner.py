@@ -38,11 +38,11 @@ class OnlineLearner(Calculator):
         self.parent_dataset = []
         self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
         self.check_final_point = False
-        self.initial_training_point = self.learner_params.get(
-            "initial_training_point", 2
+        self.num_initial_points = self.learner_params.get(
+            "num_initial_points", 2
         )
         self.initial_points_to_keep = self.learner_params.get(
-            "initial_points_to_keep", [i for i in range(self.initial_training_point)]
+            "initial_points_to_keep", [i for i in range(self.num_initial_points)]
         )
 
         if mongo_db is not None:
@@ -171,7 +171,7 @@ class OnlineLearner(Calculator):
     def get_energy_and_forces(self, atoms):
         # If we have less than two data points, uncertainty is not
         # well calibrated so just use DFT
-        if len(self.parent_dataset) < self.initial_training_point:
+        if len(self.parent_dataset) < self.num_initial_points:
             energy, forces, constrained_forces = self.add_data_and_retrain(atoms)
             fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
             self.info["check"] = True
@@ -179,10 +179,10 @@ class OnlineLearner(Calculator):
             self.info["ml_forces"] = self.info["parent_forces"] = str(forces)
             self.info["ml_fmax"] = self.info["parent_fmax"] = fmax
 
-            if len(self.parent_dataset) == self.initial_training_point:
+            if len(self.parent_dataset) == self.num_initial_points:
                 new_parent_dataset = [self.parent_dataset[i] for i in self.initial_points_to_keep]
                 self.parent_dataset = new_parent_dataset
-                self.initial_training_point = len(self.parent_dataset)
+                self.num_initial_points = len(self.parent_dataset)
                     
         else:
             # Make a copy of the atoms with ensemble energies as a SP
@@ -349,7 +349,7 @@ class OnlineLearner(Calculator):
                 self.parent_dataset[-self.learner_params["train_on_recent_points"] :]
             )
         # otherwise, if partial fitting, partial fit if not training for the first time
-        elif (len(self.parent_dataset) >= self.initial_training_point) and (
+        elif (len(self.parent_dataset) >= self.num_initial_points) and (
             self.learner_params.get("partial_fit", False)
         ):
             self.ml_potential.train(self.parent_dataset, [new_data])
