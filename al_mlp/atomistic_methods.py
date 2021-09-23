@@ -193,7 +193,7 @@ def max_parent_observer(calc, optimizer, max_parent_calls):
 
 def replay_trajectory(calc, optimizer):
     """Initialize hessian from parent dataset."""
-    if calc.info["check"]:
+    if calc.info.get("check", False):
         # parent_dataset = calc.parent_dataset
         complete_dataset = calc.complete_dataset
         # check the parent dataset and only use structures that match the final structure
@@ -209,7 +209,7 @@ def replay_trajectory(calc, optimizer):
         r0 = atoms.get_positions().ravel()
         f0 = atoms.get_forces().ravel()
         for atoms in dataset:
-            if atoms.info["check"]:
+            if atoms.info.get("check", False):
                 r = atoms.get_positions().ravel()
                 f = atoms.get_forces().ravel()
             else:

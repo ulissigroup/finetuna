@@ -166,7 +166,6 @@ class OnlineLearner(Calculator):
             wandb.log(
                 {key: value for key, value in self.info.items() if value is not None}
             )
-        self.complete_dataset.append(atoms)
 
     def get_energy_and_forces(self, atoms):
         # If we have less than two data points, uncertainty is not
@@ -174,11 +173,13 @@ class OnlineLearner(Calculator):
         if len(self.parent_dataset) < self.num_initial_points:
             energy, forces, constrained_forces = self.add_data_and_retrain(atoms)
             fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
+
             self.info["check"] = True
-            atoms.info["check"] = True
             self.info["ml_energy"] = self.info["parent_energy"] = energy
             self.info["ml_forces"] = self.info["parent_forces"] = str(forces)
             self.info["ml_fmax"] = self.info["parent_fmax"] = fmax
+
+            atoms.info["check"] = True
 
             if len(self.parent_dataset) == self.num_initial_points:
                 new_parent_dataset = [
@@ -230,15 +231,20 @@ class OnlineLearner(Calculator):
                 # Run DFT, so use that energy/force
                 energy, forces, constrained_forces = self.add_data_and_retrain(atoms)
                 fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
+
                 self.info["check"] = True
-                atoms.info["check"] = True
                 self.info["parent_energy"] = energy
                 self.info["parent_forces"] = str(forces)
                 self.info["parent_fmax"] = fmax
+
+                atoms.info["check"] = True
             else:
                 # Otherwise use the ML predicted energies and forces
                 self.info["check"] = False
+
                 atoms.info["check"] = False
+
+        self.complete_dataset.append(atoms)
 
         return energy, forces, fmax
 
