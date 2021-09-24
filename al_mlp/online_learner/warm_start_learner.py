@@ -48,15 +48,6 @@ class WarmStartLearner(OnlineLearner):
 
             if fmax < self.fmax_verify_threshold:
                 self.warming_up = False
-                energy, forces, constrained_forces = self.add_data_and_retrain(atoms)
-                fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
-                self.info["check"] = True
-                self.info["parent_energy"] = energy
-                self.info["parent_forces"] = str(forces)
-                self.info["parent_fmax"] = fmax
-
-                atoms.info["check"] = True
-
-            return energy, forces, fmax
+            return super().get_energy_and_forces(atoms)
         else:
             return super().get_energy_and_forces(atoms)

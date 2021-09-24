@@ -175,9 +175,9 @@ class OnlineLearner(Calculator):
             fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
 
             self.info["check"] = True
-            self.info["ml_energy"] = self.info["parent_energy"] = energy
-            self.info["ml_forces"] = self.info["parent_forces"] = str(forces)
-            self.info["ml_fmax"] = self.info["parent_fmax"] = fmax
+            self.info["parent_energy"] = energy
+            self.info["parent_forces"] = str(forces)
+            self.info["parent_fmax"] = fmax
 
             atoms.info["check"] = True
 
