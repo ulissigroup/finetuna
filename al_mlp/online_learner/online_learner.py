@@ -41,7 +41,23 @@ class OnlineLearner(Calculator):
         self.complete_dataset = []
         self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
         self.check_final_point = False
-
+        if self.wandb_log is True:
+            wandb_config = {
+                "learner": self.learner_params,
+                "ml_potential": self.ml_potential.mlp_params,
+            }
+            if mongo_db is not None:
+                wandb_config["mongo"] = self.mongo_wrapper.params
+            if optional_config is not None:
+                wandb_config["run_config"] = optional_config
+            self.wandb_run = wandb.init(
+                project=self.wandb_init.get("project", "almlp"),
+                name=self.wandb_init.get("name", "DefaultName"),
+                entity=self.wandb_init.get("entity", "ulissi-group"),
+                group=self.wandb_init.get("group", "DefaultGroup"),
+                notes=self.wandb_init.get("notes", ""),
+                config=wandb_config,
+            )
         if mongo_db is not None:
             self.mongo_wrapper = MongoWrapper(
                 mongo_db["online_learner"],
@@ -100,23 +116,6 @@ class OnlineLearner(Calculator):
 
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
-        if self.wandb_log is True:
-            wandb_config = {
-                "learner": self.learner_params,
-                "ml_potential": self.ml_potential.mlp_params,
-            }
-            if mongo_db is not None:
-                wandb_config["mongo"] = self.mongo_wrapper.params
-            if optional_config is not None:
-                wandb_config["run_config"] = optional_config
-            self.wandb_run = wandb.init(
-                project=self.wandb_init.get("project", "almlp"),
-                name=self.wandb_init.get("name", "DefaultName"),
-                entity=self.wandb_init.get("entity", "ulissi-group"),
-                group=self.wandb_init.get("group", "DefaultGroup"),
-                notes=self.wandb_init.get("notes", ""),
-                config=wandb_config,
-            )
 
     def init_info(self):
         self.info = {
