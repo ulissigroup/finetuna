@@ -325,7 +325,7 @@ class OnlineLearner(Calculator):
             type(atoms.calc) is SinglePointCalculator
             or atoms.calc.name == self.parent_calc.name
         ):
-            if not self.suppress_warning:
+            if not self.suppress_warnings:
                 warn(
                     "Assuming Atoms object Singlepoint is precalculated (to turn this behavior off: set 'reverify_with_parent' to True)"
                 )
