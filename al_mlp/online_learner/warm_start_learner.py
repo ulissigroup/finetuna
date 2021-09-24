@@ -48,6 +48,7 @@ class WarmStartLearner(OnlineLearner):
 
             if fmax < self.fmax_verify_threshold:
                 self.warming_up = False
-            return super().get_energy_and_forces(atoms)
+                energy, forces, fmax = super().get_energy_and_forces(atoms)
+            return energy, forces, fmax
         else:
             return super().get_energy_and_forces(atoms)
