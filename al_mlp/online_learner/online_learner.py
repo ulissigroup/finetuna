@@ -34,43 +34,13 @@ class OnlineLearner(Calculator):
     ):
         Calculator.__init__(self)
         self.parent_calc = parent_calc
+        self.ml_potential = ml_potential
         self.learner_params = learner_params
+        self.init_learner_params()
         self.parent_dataset = []
         self.complete_dataset = []
         self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
         self.check_final_point = False
-        self.num_initial_points = self.learner_params.get("num_initial_points", 2)
-        self.initial_points_to_keep = self.learner_params.get(
-            "initial_points_to_keep", [i for i in range(self.num_initial_points)]
-        )
-
-        if mongo_db is not None:
-            self.mongo_wrapper = MongoWrapper(
-                mongo_db["online_learner"],
-                learner_params,
-                ml_potential,
-                parent_calc,
-                base_calc,
-            )
-        else:
-            self.mongo_wrapper = None
-        self.ml_potential = ml_potential
-
-        self.uncertainty_metric = self.learner_params.get(
-            "uncertainty_metric", "forces"
-        )
-        self.tolerance_selection = self.learner_params.get("tolerance_selection", "max")
-        self.no_position_change_steps = self.learner_params.get(
-            "no_position_change_steps", None
-        )
-        if self.no_position_change_steps is not None:
-            self.min_position_change = self.learner_params.get(
-                "min_position_change", 0.04
-            )
-            self.positions_queue = queue.Queue(maxsize=self.no_position_change_steps)
-
-        self.wandb_init = self.learner_params.get("wandb_init", {})
-        self.wandb_log = self.wandb_init.get("wandb_log", False)
         if self.wandb_log is True:
             wandb_config = {
                 "learner": self.learner_params,
@@ -88,6 +58,16 @@ class OnlineLearner(Calculator):
                 notes=self.wandb_init.get("notes", ""),
                 config=wandb_config,
             )
+        if mongo_db is not None:
+            self.mongo_wrapper = MongoWrapper(
+                mongo_db["online_learner"],
+                learner_params,
+                ml_potential,
+                parent_calc,
+                base_calc,
+            )
+        else:
+            self.mongo_wrapper = None
 
         self.base_calc = base_calc
         if self.base_calc is not None:
@@ -97,19 +77,45 @@ class OnlineLearner(Calculator):
                 self.parent_calc.refs,
             )
 
-        if "fmax_verify_threshold" in self.learner_params:
-            self.fmax_verify_threshold = self.learner_params["fmax_verify_threshold"]
-        else:
-            self.fmax_verify_threshold = np.nan  # always False
-
-        self.stat_uncertain_tol = self.learner_params["stat_uncertain_tol"]
-        self.dyn_uncertain_tol = self.learner_params["dyn_uncertain_tol"]
-
         self.parent_calls = 0
         self.curr_step = 0
 
         for image in parent_dataset:
             self.add_data_and_retrain(image)
+
+    def init_learner_params(self):
+        self.fmax_verify_threshold = self.learner_params.get(
+            "fmax_verify_threshold", np.nan
+        )
+        self.stat_uncertain_tol = self.learner_params["stat_uncertain_tol"]
+        self.dyn_uncertain_tol = self.learner_params["dyn_uncertain_tol"]
+        self.suppress_warnings = self.learner_params.get("suppress_warnings", False)
+        self.reverify_with_parent = self.learner_params.get(
+            "reverify_with_parent", True
+        )
+        self.partial_fit = self.learner_params.get("partial_fit", False)
+        self.train_on_recent_points = self.learner_params.get(
+            "train_on_recent_points", None
+        )
+        self.num_initial_points = self.learner_params.get("num_initial_points", 2)
+        self.initial_points_to_keep = self.learner_params.get(
+            "initial_points_to_keep", [i for i in range(self.num_initial_points)]
+        )
+        self.uncertainty_metric = self.learner_params.get(
+            "uncertainty_metric", "forces"
+        )
+        self.tolerance_selection = self.learner_params.get("tolerance_selection", "max")
+        self.no_position_change_steps = self.learner_params.get(
+            "no_position_change_steps", None
+        )
+        if self.no_position_change_steps is not None:
+            self.min_position_change = self.learner_params.get(
+                "min_position_change", 0.04
+            )
+            self.positions_queue = queue.Queue(maxsize=self.no_position_change_steps)
+
+        self.wandb_init = self.learner_params.get("wandb_init", {})
+        self.wandb_log = self.wandb_init.get("wandb_log", False)
 
     def init_info(self):
         self.info = {
@@ -315,11 +321,11 @@ class OnlineLearner(Calculator):
     def add_data_and_retrain(self, atoms):
 
         # don't redo singlepoints if not instructed to reverify and atoms have proper vasp singlepoints attached
-        if self.learner_params.get("reverify_with_parent", True) is False and (
+        if self.reverify_with_parent is False and (
             type(atoms.calc) is SinglePointCalculator
             or atoms.calc.name == self.parent_calc.name
         ):
-            if not self.learner_params.get("suppress_warnings", False):
+            if not self.suppress_warnings:
                 warn(
                     "Assuming Atoms object Singlepoint is precalculated (to turn this behavior off: set 'reverify_with_parent' to True)"
                 )
@@ -353,15 +359,13 @@ class OnlineLearner(Calculator):
 
         # retrain the ml potential
         # if training only on recent points, then check if dataset has become long enough to train on subset
-        if (self.learner_params.get("train_on_recent_points", None) is not None) and (
-            len(self.parent_dataset) > self.learner_params["train_on_recent_points"]
+        if (self.train_on_recent_points is not None) and (
+            len(self.parent_dataset) > self.train_on_recent_points
         ):
-            self.ml_potential.train(
-                self.parent_dataset[-self.learner_params["train_on_recent_points"] :]
-            )
+            self.ml_potential.train(self.parent_dataset[-self.train_on_recent_points :])
         # otherwise, if partial fitting, partial fit if not training for the first time
         elif (len(self.parent_dataset) >= self.num_initial_points) and (
-            self.learner_params.get("partial_fit", False)
+            self.partial_fit
         ):
             self.ml_potential.train(self.parent_dataset, [new_data])
         # otherwise just train as normal
