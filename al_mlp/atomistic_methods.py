@@ -198,6 +198,8 @@ def replay_trajectory(calc, optimizer):
         complete_dataset = calc.complete_dataset
         # check the parent dataset and only use structures that match the final structure
         dataset = []
+        # if len(complete_dataset) >30:
+        #     complete_dataset = complete_dataset[-30:]
         final_atomic_numbers = complete_dataset[-1].get_atomic_numbers()
         for atoms in complete_dataset:
             match_array = atoms.get_atomic_numbers() == final_atomic_numbers
@@ -207,15 +209,16 @@ def replay_trajectory(calc, optimizer):
         optimizer.H = None
         atoms = dataset[0]
         r0 = atoms.get_positions().ravel()
-        f0 = atoms.get_forces().ravel()
+        f0 = atoms.get_forces(apply_constraint=False).ravel()
         for atoms in dataset:
             if atoms.info.get("check", False):
                 r = atoms.get_positions().ravel()
-                f = atoms.get_forces().ravel()
+                f = atoms.get_forces(apply_constraint=False).ravel()
             else:
                 atoms.calc = calc.ml_potential
                 r = atoms.get_positions().ravel()
-                f = atoms.get_forces().ravel()
+                f = atoms.get_forces(apply_constraint=False).ravel()
+
             optimizer.update(r, f, r0, f0)
             r0 = r
             f0 = f

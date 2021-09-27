@@ -142,8 +142,9 @@ class OnlineLearner(Calculator):
         self.curr_step += 1
 
         self.init_info()
-
-        energy, forces, fmax = self.get_energy_and_forces(atoms)
+        atoms_copy = atoms.copy()
+        atoms_copy.calc = atoms.calc
+        energy, forces, fmax = self.get_energy_and_forces(atoms_copy)
 
         # Print a statement about the uncertainty
         uncertainty_statement = "uncertainty: "
@@ -196,9 +197,9 @@ class OnlineLearner(Calculator):
 
         else:
             # Make a copy of the atoms with ensemble energies as a SP
-            atoms_copy = atoms.copy()
-            atoms_copy.set_calculator(self.ml_potential)
-            (atoms_ML,) = convert_to_singlepoint([atoms_copy])
+            # atoms_copy = atoms.copy()
+            atoms.set_calculator(self.ml_potential)
+            (atoms_ML,) = convert_to_singlepoint([atoms])
 
             if self.base_calc is not None:
                 new_delta = DeltaCalc(
@@ -206,8 +207,8 @@ class OnlineLearner(Calculator):
                     "add",
                     self.parent_calc.refs,
                 )
-                atoms_copy.set_calculator(new_delta)
-                (atoms_delta,) = convert_to_singlepoint([atoms_copy])
+                atoms.set_calculator(new_delta)
+                (atoms_delta,) = convert_to_singlepoint([atoms])
                 for key, value in atoms_ML.info.items():
                     atoms_delta.info[key] = value
                 atoms_ML = atoms_delta
@@ -337,6 +338,7 @@ class OnlineLearner(Calculator):
             # else just use the atoms as normal
             else:
                 new_data = atoms
+            atoms.info["check"] = True
         # if verifying (or reverifying) do the singlepoints, and record the time parent calls takes
         else:
             print("OnlineLearner: Parent calculation required")
