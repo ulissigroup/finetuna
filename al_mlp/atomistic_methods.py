@@ -198,8 +198,9 @@ def replay_trajectory(calc, optimizer):
         complete_dataset = calc.complete_dataset
         # check the parent dataset and only use structures that match the final structure
         dataset = []
-        # if len(complete_dataset) >30:
-        #     complete_dataset = complete_dataset[-30:]
+        if calc.rolling_window is not None:
+            if len(complete_dataset) > calc.rolling_window:
+                complete_dataset = complete_dataset[-calc.rolling_window:]
         final_atomic_numbers = complete_dataset[-1].get_atomic_numbers()
         for atoms in complete_dataset:
             match_array = atoms.get_atomic_numbers() == final_atomic_numbers

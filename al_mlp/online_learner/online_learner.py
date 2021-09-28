@@ -114,6 +114,8 @@ class OnlineLearner(Calculator):
             )
             self.positions_queue = queue.Queue(maxsize=self.no_position_change_steps)
 
+        self.rolling_window = self.learner_params.get("rolling_window", None)
+
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
 
