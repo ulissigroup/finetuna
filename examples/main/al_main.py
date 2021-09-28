@@ -220,7 +220,9 @@ def main(args):
         config["learner"]["atomistic_method"]["initial_traj"] = config["links"]["traj"]
         config["learner"]["atomistic_method"]["fmax"] = config["relaxation"]["fmax"]
         config["learner"]["atomistic_method"]["steps"] = config["relaxation"]["steps"]
-        config["learner"]["atomistic_method"]["maxstep"] = config["relaxation"]["maxstep"]
+        config["learner"]["atomistic_method"]["maxstep"] = config["relaxation"][
+            "maxstep"
+        ]
 
         # declare learner
         learner = OfflineActiveLearner(

@@ -12,7 +12,7 @@ def create_job(
     sample_job_spec_path="sample_job_spec.yml",
     sample_config_path=None,
     images=None,
-    local=False
+    local=False,
 ):
     # generate the params dictionary from the given config if applicable
     params = given_params
@@ -63,7 +63,7 @@ def create_job(
         else:
             params["vasp"].pop("kpts")
         if "gga" not in params["vasp"]:
-            params["vasp"]["gga"] = "PE" # defaults to PE for oxide
+            params["vasp"]["gga"] = "PE"  # defaults to PE for oxide
         params["vasp"]["nsw"] = 0
         params["vasp"]["ibrion"] = -1
         params["vasp"]["lreal"] = "Auto"
@@ -79,7 +79,9 @@ def create_job(
 
     # create the new job_spec dictionary from the sample_job_spec.yml
     job_spec["metadata"]["name"] = "job-" + job_name.replace("_", "-")
-    job_spec["spec"]["template"]["spec"]["containers"][0]["name"] = job_name.replace("_", "-")
+    job_spec["spec"]["template"]["spec"]["containers"][0]["name"] = job_name.replace(
+        "_", "-"
+    )
     args_string = job_spec["spec"]["template"]["spec"]["containers"][0]["args"][0]
     args_string = (
         args_string[: args_string.rindex("python")]
@@ -87,7 +89,10 @@ def create_job(
         + main_path
         + " --config-yml "
         + config_path
-        + " 2>&1 | tee " + basedir + subdir + "/run_logs.txt"
+        + " 2>&1 | tee "
+        + basedir
+        + subdir
+        + "/run_logs.txt"
     )
     job_spec["spec"]["template"]["spec"]["containers"][0]["args"][0] = args_string
 
@@ -99,7 +104,9 @@ def create_job(
     if local is False:
         # call kubectl on the job_spec.yml
         run_result = subprocess.run(["kubectl", "apply", "-f", job_spec_path])
-        print("Executed job " + job_name + " with exit code " + str(run_result.returncode))
+        print(
+            "Executed job " + job_name + " with exit code " + str(run_result.returncode)
+        )
 
     # change back to original working directory
     os.chdir(basedir)
