@@ -326,9 +326,13 @@ class OnlineLearner(Calculator):
     def add_data_and_retrain(self, atoms):
 
         # don't redo singlepoints if not instructed to reverify and atoms have proper vasp singlepoints attached
-        if self.reverify_with_parent is False and (
-            type(atoms.calc) is SinglePointCalculator
-            or atoms.calc.name == self.parent_calc.name
+        if (
+            self.reverify_with_parent is False
+            and hasattr(atoms, "calc")
+            and (
+                type(atoms.calc) is SinglePointCalculator
+                or atoms.calc.name == self.parent_calc.name
+            )
         ):
             if not self.suppress_warnings:
                 warn(
