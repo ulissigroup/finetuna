@@ -142,9 +142,8 @@ class OnlineLearner(Calculator):
         self.curr_step += 1
 
         self.init_info()
-        atoms_copy = atoms.copy()
-        atoms_copy.calc = atoms.calc
-        energy, forces, fmax = self.get_energy_and_forces(atoms_copy)
+
+        energy, forces, fmax = self.get_energy_and_forces(atoms)
 
         # Print a statement about the uncertainty
         uncertainty_statement = "uncertainty: "
@@ -175,10 +174,12 @@ class OnlineLearner(Calculator):
             )
 
     def get_energy_and_forces(self, atoms):
+        atoms_copy = atoms.copy()
+
         # If we have less than two data points, uncertainty is not
         # well calibrated so just use DFT
         if len(self.parent_dataset) < self.num_initial_points:
-            energy, forces, constrained_forces = self.add_data_and_retrain(atoms)
+            energy, forces, constrained_forces = self.add_data_and_retrain(atoms_copy)
             fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
 
             self.info["check"] = True
@@ -186,7 +187,7 @@ class OnlineLearner(Calculator):
             self.info["parent_forces"] = str(forces)
             self.info["parent_fmax"] = fmax
 
-            atoms.info["check"] = True
+            atoms_copy.info["check"] = True
 
             if len(self.parent_dataset) == self.num_initial_points:
                 new_parent_dataset = [
@@ -196,10 +197,9 @@ class OnlineLearner(Calculator):
                 self.num_initial_points = len(self.parent_dataset)
 
         else:
-            # Make a copy of the atoms with ensemble energies as a SP
-            # atoms_copy = atoms.copy()
-            atoms.set_calculator(self.ml_potential)
-            (atoms_ML,) = convert_to_singlepoint([atoms])
+            # Make a SP with ml energies
+            atoms_copy.set_calculator(self.ml_potential)
+            (atoms_ML,) = convert_to_singlepoint([atoms_copy])
 
             if self.base_calc is not None:
                 new_delta = DeltaCalc(
@@ -207,8 +207,8 @@ class OnlineLearner(Calculator):
                     "add",
                     self.parent_calc.refs,
                 )
-                atoms.set_calculator(new_delta)
-                (atoms_delta,) = convert_to_singlepoint([atoms])
+                atoms_copy.set_calculator(new_delta)
+                (atoms_delta,) = convert_to_singlepoint([atoms_copy])
                 for key, value in atoms_ML.info.items():
                     atoms_delta.info[key] = value
                 atoms_ML = atoms_delta
@@ -236,7 +236,9 @@ class OnlineLearner(Calculator):
             # If we are extrapolating too far add/retrain
             if need_to_retrain:
                 # Run DFT, so use that energy/force
-                energy, forces, constrained_forces = self.add_data_and_retrain(atoms)
+                energy, forces, constrained_forces = self.add_data_and_retrain(
+                    atoms_copy
+                )
                 fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
 
                 self.info["check"] = True
@@ -244,14 +246,14 @@ class OnlineLearner(Calculator):
                 self.info["parent_forces"] = str(forces)
                 self.info["parent_fmax"] = fmax
 
-                atoms.info["check"] = True
+                atoms_copy.info["check"] = True
             else:
                 # Otherwise use the ML predicted energies and forces
                 self.info["check"] = False
 
-                atoms.info["check"] = False
+                atoms_copy.info["check"] = False
 
-        self.complete_dataset.append(atoms)
+        self.complete_dataset.append(atoms_copy)
 
         return energy, forces, fmax
 
@@ -338,7 +340,6 @@ class OnlineLearner(Calculator):
             # else just use the atoms as normal
             else:
                 new_data = atoms
-            atoms.info["check"] = True
         # if verifying (or reverifying) do the singlepoints, and record the time parent calls takes
         else:
             print("OnlineLearner: Parent calculation required")
