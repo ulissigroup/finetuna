@@ -329,6 +329,7 @@ class OnlineLearner(Calculator):
         if (
             self.reverify_with_parent is False
             and hasattr(atoms, "calc")
+            and atoms.calc is not None
             and (
                 type(atoms.calc) is SinglePointCalculator
                 or atoms.calc.name == self.parent_calc.name
