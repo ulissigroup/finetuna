@@ -84,11 +84,17 @@ def create_job(
     )
 
     if "NAMESPACE" in os.environ:
-        job_spec["metadata"]["namespace"] = os.environ["NAMESPACE"]
+        namespace = os.environ["NAMESPACE"]
+        job_spec["metadata"]["namespace"] = namespace
     if "VOLUME" in os.environ:
-        job_spec["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][0]["name"] = os.environ["VOLUME"]
-        job_spec["spec"]["template"]["spec"]["volumes"][0]["name"] = os.environ["VOLUME"]
-        job_spec["spec"]["template"]["spec"]["volumes"][0]["persistentVolumeClaim"]["claimName"] = os.environ["VOLUME"]
+        volume = os.environ["VOLUME"]
+        job_spec["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][0][
+            "name"
+        ] = volume
+        job_spec["spec"]["template"]["spec"]["volumes"][0]["name"] = volume
+        job_spec["spec"]["template"]["spec"]["volumes"][0]["persistentVolumeClaim"][
+            "claimName"
+        ] = volume
 
     args_string = job_spec["spec"]["template"]["spec"]["containers"][0]["args"][0]
     args_string = (
