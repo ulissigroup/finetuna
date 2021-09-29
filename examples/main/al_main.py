@@ -1,10 +1,12 @@
 import os
+from ase.optimize.optimize import Optimizer
 import yaml
 from pymongo import MongoClient
 import argparse
 
 from ase.io import Trajectory
 from ase.optimize.bfgs import BFGS
+from ase.optimize.sciopt import SciPyFminCG
 from ase.calculators.vasp import Vasp
 from ase.db import connect
 
@@ -27,6 +29,44 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config-yml", required=True, help="Path to the config file")
     return parser
+
+
+def run_relaxation(
+    oal_initial_structure,
+    config,
+    learner,
+    dbname,
+):
+
+    optimizer_str = config["relaxation"].get("optimizer", "BFGS")
+
+    if optimizer_str == "BFGS":
+        optimizer_alg = BFGS
+        replay_traj_bool = True
+        maxstep = config["relaxation"]["maxstep"]
+    elif optimizer_str == "CG":
+        optimizer_alg = SciPyFminCG
+        replay_traj_bool = False
+        maxstep = None
+    else:
+        ValueError("Invalid optimizer name (" + optimizer_str + ") provided")
+
+    oal_relaxation = Relaxation(
+        oal_initial_structure,
+        optimizer_alg,
+        fmax=config["relaxation"]["fmax"],
+        steps=config["relaxation"]["steps"],
+        maxstep=maxstep,
+    )
+
+    oal_relaxation.run(
+        learner,
+        filename=dbname,
+        replay_traj=replay_traj_bool,
+        max_parent_calls=config["relaxation"]["max_parent_calls"],
+    )
+
+    return oal_relaxation
 
 
 def main(args):
@@ -90,19 +130,11 @@ def main(args):
             with open("runid.txt", "a") as f:
                 f.write(str(learner.mongo_wrapper.run_id) + "\n")
 
-        oal_relaxation = Relaxation(
+        oal_relaxation = run_relaxation(
             oal_initial_structure,
-            BFGS,
-            fmax=config["relaxation"]["fmax"],
-            steps=config["relaxation"]["steps"],
-            maxstep=config["relaxation"]["maxstep"],
-        )
-
-        oal_relaxation.run(
+            config,
             learner,
-            filename=dbname,
-            replay_traj=True,
-            max_parent_calls=config["relaxation"]["max_parent_calls"],
+            dbname,
         )
 
         if hasattr(parent_calc, "close"):
@@ -147,19 +179,11 @@ def main(args):
             with open("runid.txt", "a") as f:
                 f.write(str(learner.mongo_wrapper.run_id) + "\n")
 
-        oal_relaxation = Relaxation(
+        oal_relaxation = run_relaxation(
             oal_initial_structure,
-            BFGS,
-            fmax=config["relaxation"]["fmax"],
-            steps=config["relaxation"]["steps"],
-            maxstep=config["relaxation"]["maxstep"],
-        )
-
-        oal_relaxation.run(
+            config,
             learner,
-            filename=dbname,
-            replay_traj=True,
-            max_parent_calls=config["relaxation"]["max_parent_calls"],
+            dbname,
         )
 
         if hasattr(parent_calc, "close"):
@@ -190,19 +214,11 @@ def main(args):
             with open("runid.txt", "a") as f:
                 f.write(str(learner.mongo_wrapper.run_id) + "\n")
 
-        oal_relaxation = Relaxation(
+        oal_relaxation = run_relaxation(
             oal_initial_structure,
-            BFGS,
-            fmax=config["relaxation"]["fmax"],
-            steps=config["relaxation"]["steps"],
-            maxstep=config["relaxation"]["maxstep"],
-        )
-
-        oal_relaxation.run(
+            config,
             learner,
-            filename=dbname,
-            replay_traj=True,
-            max_parent_calls=config["relaxation"]["max_parent_calls"],
+            dbname,
         )
 
         if hasattr(parent_calc, "close"):
