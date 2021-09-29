@@ -86,7 +86,7 @@ def create_job(
     if "NAMESPACE" in os.environ:
         job_spec["metadata"]["namespace"] = os.environ["NAMESPACE"]
     if "VOLUME" in os.environ:
-        job_spec["spec"]["template"]["spec"]["env"]["mountPath"]["name"] = os.environ["VOLUME"]
+        job_spec["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][0]["name"] = os.environ["VOLUME"]
         job_spec["spec"]["template"]["spec"]["volumes"][0]["name"] = os.environ["VOLUME"]
         job_spec["spec"]["template"]["spec"]["volumes"][0]["persistentVolumeClaim"]["claimName"] = os.environ["VOLUME"]
 
