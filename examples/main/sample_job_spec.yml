@@ -11,7 +11,7 @@ spec:
       containers:
       - env:
         - name: VASP_COMMAND
-          value: "mpirun -q -np 16 --mca btl_vader_single_copy_mechanism none --mca mpi_cuda_support 0 /opt/vasp.6.1.2_pgi_mkl/bin/vasp_std --map-by hwthread"
+          value: "mpirun -q -np 16 --mca btl_vader_single_copy_mechanism none --mca mpi_cuda_support 0 --map-by hwthread /opt/vasp.6.1.2_pgi_mkl/bin/vasp_std"
         - name: NVIDIA_VISIBLE_DEVICES
           value: none
         name: job-name
