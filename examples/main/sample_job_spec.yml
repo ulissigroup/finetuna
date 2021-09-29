@@ -1,0 +1,74 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-name
+  namespace: my-namespace
+spec:
+  ttlSecondsAfterFinished: 172800
+  backoffLimit: 0
+  template:
+    spec:
+      containers:
+      - env:
+        - name: VASP_COMMAND
+          value: "mpirun -q -np 16 --mca btl_vader_single_copy_mechanism none --mca mpi_cuda_support 0 --map-by hwthread /opt/vasp.6.1.2_pgi_mkl/bin/vasp_std"
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: none
+        name: job-name
+        image: ulissigroup/kubeflow_vasp:amptorch_ocp
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 16
+            memory: 30Gi
+            nvidia.com/gpu: "0"
+          requests:
+            cpu: 16
+            memory: 30Gi
+        volumeMounts:
+        - mountPath: /home/jovyan
+          name: my-volume
+        - mountPath: /home/jovyan/shared-datasets/
+          name: shared-datasets
+        - mountPath: /home/jovyan/shared-scratch/
+          name: shared-scratch
+        - mountPath: /dev/shm
+          name: dshm
+        command:
+        - /bin/bash
+        - -c
+        args:
+        - echo "hello world!" &&
+          sudo rsync -av --progress /home/jovyan/working/ocp-modeling-dev /home &&
+          sudo rsync -av --progress /home/jovyan/working/al_mlp /home &&
+          sudo rsync -av --progress /home/jovyan/working/amptorch /home &&
+          sudo rsync -av --progress /home/jovyan/working/launch /home &&
+          cd /home/ocp-modeling-dev &&
+          pip install -e . &&
+          pre-commit install &&
+          cd /home/al_mlp &&
+          python setup.py install &&
+          cd /home/amptorch &&
+          python setup.py install &&
+          cd /home/launch &&
+          python setup.py install &&
+          pip install rmsd &&
+          wandb login &&
+          cd /home/jovyan/working/debug &&
+          python al_mlp/examples/al_main.py --config-yml al_mlp/examples/sample_config.yml 2>&1 | tee run_logs.txt
+        workingDir: /home/jovyan/.kube
+      restartPolicy: Never
+      volumes:
+      - name: my-volume
+        persistentVolumeClaim:
+          claimName: my-volume
+      - name: shared-datasets
+        persistentVolumeClaim:
+          claimName: shared-datasets
+      - name: shared-scratch
+        persistentVolumeClaim:
+          claimName: shared-scratch
+      - emptyDir:
+          medium: Memory
+        name: dshm
+      priorityClassName: default-priority
