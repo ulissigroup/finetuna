@@ -352,9 +352,8 @@ class OnlineLearner(Calculator):
             print("OnlineLearner: Parent calculation required")
             start = time.time()
 
-            atoms_copy = atoms.copy()
-            atoms_copy.set_calculator(self.parent_calc)
-            (new_data,) = convert_to_singlepoint([atoms_copy])
+            atoms.set_calculator(self.parent_calc)
+            (new_data,) = convert_to_singlepoint([atoms])
             end = time.time()
             print(
                 "Time to call parent (call #"
