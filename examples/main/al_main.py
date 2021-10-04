@@ -17,8 +17,6 @@ from al_mlp.online_learner.delta_learner import DeltaLearner
 from al_mlp.online_learner.warm_start_learner import WarmStartLearner
 
 from al_mlp.ml_potentials.flare_pp_calc import FlarePPCalc
-from al_mlp.utils import compute_with_calc
-from al_mlp.calcs import DeltaCalc
 
 from ocpmodels.common.relaxation.ase_utils import OCPCalculator
 
@@ -147,7 +145,7 @@ def main(args):
             optional_config=config,
         )
 
-        oal_relaxation = run_relaxation(
+        run_relaxation(
             oal_initial_structure,
             config,
             learner,
@@ -167,7 +165,7 @@ def main(args):
             optional_config=config,
         )
 
-        oal_relaxation = run_relaxation(
+        run_relaxation(
             oal_initial_structure,
             config,
             learner,
@@ -187,7 +185,7 @@ def main(args):
             optional_config=config,
         )
 
-        oal_relaxation = run_relaxation(
+        run_relaxation(
             oal_initial_structure,
             config,
             learner,
