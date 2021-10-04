@@ -32,6 +32,17 @@ def get_parser():
     parser.add_argument("--config-yml", required=True, help="Path to the config file")
     return parser
 
+def do_between_learner_and_run():
+    """
+    boiler plate stuff to do between starting the learner and starting the run
+    """
+    
+    if os.path.exists("dft_calls.db"):
+        os.remove("dft_calls.db")
+
+    if mongo_db is not None:
+        with open("runid.txt", "a") as f:
+            f.write(str(learner.mongo_wrapper.run_id) + "\n")
 
 def run_relaxation(
     oal_initial_structure,
@@ -39,6 +50,7 @@ def run_relaxation(
     learner,
     dbname,
 ):
+    do_between_learner_and_run()
 
     optimizer_str = config["relaxation"].get("optimizer", "BFGS")
 
@@ -69,7 +81,6 @@ def run_relaxation(
     )
 
     return oal_relaxation
-
 
 def main(args):
     config_yml = args.config_yml
@@ -132,13 +143,6 @@ def main(args):
             optional_config=config,
         )
 
-        if os.path.exists("dft_calls.db"):
-            os.remove("dft_calls.db")
-
-        if mongo_db is not None:
-            with open("runid.txt", "a") as f:
-                f.write(str(learner.mongo_wrapper.run_id) + "\n")
-
         oal_relaxation = run_relaxation(
             oal_initial_structure,
             config,
@@ -176,13 +180,6 @@ def main(args):
             optional_config=config,
         )
 
-        if os.path.exists("dft_calls.db"):
-            os.remove("dft_calls.db")
-
-        if mongo_db is not None:
-            with open("runid.txt", "a") as f:
-                f.write(str(learner.mongo_wrapper.run_id) + "\n")
-
         oal_relaxation = run_relaxation(
             oal_initial_structure,
             config,
@@ -204,13 +201,6 @@ def main(args):
             mongo_db=mongo_db,
             optional_config=config,
         )
-
-        if os.path.exists("dft_calls.db"):
-            os.remove("dft_calls.db")
-
-        if mongo_db is not None:
-            with open("runid.txt", "a") as f:
-                f.write(str(learner.mongo_wrapper.run_id) + "\n")
 
         oal_relaxation = run_relaxation(
             oal_initial_structure,
@@ -243,12 +233,8 @@ def main(args):
             optional_config=config,
         )
 
-        if os.path.exists("dft_calls.db"):
-            os.remove("dft_calls.db")
-
-        if mongo_db is not None:
-            with open("runid.txt", "a") as f:
-                f.write(str(learner.mongo_wrapper.run_id) + "\n")
+        # do boilerplate stuff
+        do_between_learner_and_run()
 
         # start run
         learner.learn()
