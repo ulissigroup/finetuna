@@ -13,6 +13,7 @@ from al_mlp.atomistic_methods import Relaxation
 from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
 from al_mlp.utils import calculate_surface_k_points
 from al_mlp.online_learner.online_learner import OnlineLearner
+from al_mlp.online_learner.delta_learner import DeltaLearner
 from al_mlp.online_learner.warm_start_learner import WarmStartLearner
 
 from al_mlp.ml_potentials.flare_pp_calc import FlarePPCalc
@@ -155,27 +156,12 @@ def main(args):
         )
 
     elif learner_class == "delta":
-        oal_initial_structure = compute_with_calc(
-            [initial_structure.copy()], parent_calc
-        )[0]
-
-        base_initial_structure = compute_with_calc(
-            [initial_structure.copy()], base_calc
-        )[0]
-
-        # declare delta calc
-        delta_calc = DeltaCalc(
-            [parent_calc, base_calc],
-            "sub",
-            [oal_initial_structure, base_initial_structure],
-        )
-
         # declare online learner
-        learner = OnlineLearner(
+        learner = DeltaLearner(
             config["learner"],
             images,
             ml_potential,
-            delta_calc,
+            parent_calc,
             base_calc=base_calc,
             mongo_db=mongo_db,
             optional_config=config,
