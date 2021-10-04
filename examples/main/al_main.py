@@ -150,9 +150,6 @@ def main(args):
             dbname,
         )
 
-        if hasattr(parent_calc, "close"):
-            parent_calc.close()
-
     elif learner_class == "delta":
         oal_initial_structure = compute_with_calc(
             [initial_structure.copy()], parent_calc
@@ -187,9 +184,6 @@ def main(args):
             dbname,
         )
 
-        if hasattr(parent_calc, "close"):
-            parent_calc.close()
-
     elif learner_class == "warmstart":
         # declare warmstart online learner
         learner = WarmStartLearner(
@@ -208,9 +202,6 @@ def main(args):
             learner,
             dbname,
         )
-
-        if hasattr(parent_calc, "close"):
-            parent_calc.close()
 
     elif learner_class == "offline":
         # set atomistic method
@@ -239,11 +230,12 @@ def main(args):
         # start run
         learner.learn()
 
-        if hasattr(parent_calc, "close"):
-            parent_calc.close()
-
     else:
         print("No valid learner class given")
+
+    # close parent_calc (if it needs to be closed, i.e. VaspInteractive)
+    if hasattr(parent_calc, "close"):
+        parent_calc.close()
 
 
 if __name__ == "__main__":
