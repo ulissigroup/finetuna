@@ -2,6 +2,7 @@ from al_mlp.online_learner.online_learner import OnlineLearner
 from al_mlp.calcs import DeltaCalc
 from al_mlp.utils import convert_to_singlepoint, subtract_deltas
 from al_mlp.mongo import MongoWrapper
+from al_mlp.utils import compute_with_calc
 
 
 class DeltaLearner(OnlineLearner):
@@ -17,31 +18,31 @@ class DeltaLearner(OnlineLearner):
     ):
 
         OnlineLearner.__init__(
-                self,
-                learner_params,
-                parent_dataset,
-                ml_potential,
-                parent_calc,
-                mongo_db=mongo_db,
-                optional_config=optional_config,
-            )
+            self,
+            learner_params,
+            parent_dataset,
+            ml_potential,
+            parent_calc,
+            mongo_db=mongo_db,
+            optional_config=optional_config,
+        )
 
         if mongo_db is not None:
-                self.mongo_wrapper = MongoWrapper(
-                    mongo_db["online_learner"],
-                    learner_params,
-                    ml_potential,
-                    parent_calc,
-                    base_calc,
-                )
-            else:
-                self.mongo_wrapper = None
+            self.mongo_wrapper = MongoWrapper(
+                mongo_db["online_learner"],
+                learner_params,
+                ml_potential,
+                parent_calc,
+                base_calc,
+            )
+        else:
+            self.mongo_wrapper = None
 
         self.base_calc = base_calc
+        self.refs = None
 
-        self.parent_ref = compute_with_calc(
-            [initial_structure.copy()], self.parent_calc
-        )[0]
+    def init_refs(self, initial_structure):
+        self.parent_ref = initial_structure
 
         self.base_ref = compute_with_calc(
             [initial_structure.copy()], self.base_calc
@@ -79,6 +80,9 @@ class DeltaLearner(OnlineLearner):
         Returns the partial dataset just added.
         Designed to overwritten by DeltaLearner which needs to modify data added to training set.
         """
+        if self.refs is None:
+            self.init_refs(new_data)
+
         (delta_sub_data,) = subtract_deltas(
             [new_data], self.base_calc, self.refs
         )
