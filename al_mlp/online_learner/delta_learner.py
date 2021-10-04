@@ -44,9 +44,7 @@ class DeltaLearner(OnlineLearner):
     def init_refs(self, initial_structure):
         self.parent_ref = initial_structure
 
-        self.base_ref = compute_with_calc(
-            [initial_structure.copy()], self.base_calc
-        )[0]
+        self.base_ref = compute_with_calc([initial_structure.copy()], self.base_calc)[0]
 
         self.refs = [self.parent_ref, self.base_ref]
 
@@ -83,9 +81,7 @@ class DeltaLearner(OnlineLearner):
         if self.refs is None:
             self.init_refs(new_data)
 
-        (delta_sub_data,) = subtract_deltas(
-            [new_data], self.base_calc, self.refs
-        )
+        (delta_sub_data,) = subtract_deltas([new_data], self.base_calc, self.refs)
         partial_dataset = [delta_sub_data]
         self.parent_dataset += partial_dataset
         return partial_dataset
