@@ -2,11 +2,10 @@ from logging import warn
 import numpy as np
 from ase.calculators.calculator import Calculator
 from ase.calculators.singlepoint import SinglePointCalculator
-from al_mlp.utils import convert_to_singlepoint, subtract_deltas, write_to_db_online
+from al_mlp.utils import convert_to_singlepoint, write_to_db_online
 import time
 import math
 import ase.db
-from al_mlp.calcs import DeltaCalc
 from al_mlp.mongo import MongoWrapper
 import wandb
 import queue
@@ -16,10 +15,6 @@ __email__ = "mshuaibi@andrew.cmu.edu"
 
 
 class OnlineLearner(Calculator):
-    """
-    If base_calc is set to some calculator, OnlineLearner will assume that the ml_potential is some kind of subtracting DeltaCalc. It will add base_calc to all the results.
-    """
-
     implemented_properties = ["energy", "forces"]
 
     def __init__(
@@ -28,7 +23,6 @@ class OnlineLearner(Calculator):
         parent_dataset,
         ml_potential,
         parent_calc,
-        base_calc=None,
         mongo_db=None,
         optional_config=None,
     ):
@@ -64,18 +58,10 @@ class OnlineLearner(Calculator):
                 learner_params,
                 ml_potential,
                 parent_calc,
-                base_calc,
+                None,
             )
         else:
             self.mongo_wrapper = None
-
-        self.base_calc = base_calc
-        if self.base_calc is not None:
-            self.delta_calc = DeltaCalc(
-                [self.ml_potential, self.base_calc],
-                "add",
-                self.parent_calc.refs,
-            )
 
         self.parent_calls = 0
         self.curr_step = 0
@@ -199,21 +185,7 @@ class OnlineLearner(Calculator):
                 self.num_initial_points = len(self.parent_dataset)
 
         else:
-            # Make a SP with ml energies
-            atoms_copy.set_calculator(self.ml_potential)
-            (atoms_ML,) = convert_to_singlepoint([atoms_copy])
-
-            if self.base_calc is not None:
-                new_delta = DeltaCalc(
-                    [atoms_ML.calc, self.base_calc],
-                    "add",
-                    self.parent_calc.refs,
-                )
-                atoms_copy.set_calculator(new_delta)
-                (atoms_delta,) = convert_to_singlepoint([atoms_copy])
-                for key, value in atoms_ML.info.items():
-                    atoms_delta.info[key] = value
-                atoms_ML = atoms_delta
+            atoms_ML = self.get_ml_prediction(atoms_copy)
 
             # Get ML potential predicted energies and forces
             energy = atoms_ML.get_potential_energy(apply_constraint=False)
@@ -339,14 +311,7 @@ class OnlineLearner(Calculator):
                 warn(
                     "Assuming Atoms object Singlepoint is precalculated (to turn this behavior off: set 'reverify_with_parent' to True)"
                 )
-            # check if parent calc is a delta, if so: turn the vasp singlepoint into a deltacalc singlepoint
-            if type(self.parent_calc) is DeltaCalc:
-                (new_data,) = subtract_deltas(
-                    [atoms], self.parent_calc.calcs[1], self.parent_calc.refs
-                )
-            # else just use the atoms as normal
-            else:
-                new_data = atoms
+            new_data = atoms
         # if verifying (or reverifying) do the singlepoints, and record the time parent calls takes
         else:
             print("OnlineLearner: Parent calculation required")
@@ -362,7 +327,7 @@ class OnlineLearner(Calculator):
                 + str(end - start)
             )
 
-        self.parent_dataset += [new_data]
+        partial_dataset = self.add_to_dataset(new_data)
 
         self.parent_calls += 1
 
@@ -376,23 +341,33 @@ class OnlineLearner(Calculator):
         elif (len(self.parent_dataset) >= self.num_initial_points) and (
             self.partial_fit
         ):
-            self.ml_potential.train(self.parent_dataset, [new_data])
+            self.ml_potential.train(self.parent_dataset, partial_dataset)
         # otherwise just train as normal
         else:
             self.ml_potential.train(self.parent_dataset)
-
-        # if we are using a delta calc, add back on the base calc
-        if self.base_calc is not None:
-            atoms_copy = atoms.copy()
-            new_delta = DeltaCalc(
-                [new_data.calc, self.base_calc],
-                "add",
-                self.parent_calc.refs,
-            )
-            atoms_copy.set_calculator(new_delta)
-            (new_data,) = convert_to_singlepoint([atoms_copy])
 
         energy_actual = new_data.get_potential_energy(apply_constraint=False)
         force_actual = new_data.get_forces(apply_constraint=False)
         force_cons = new_data.get_forces()
         return energy_actual, force_actual, force_cons
+
+    def get_ml_prediction(self, atoms_copy):
+        """
+        Helper function which takes an atoms object.
+        Returns it with an ML potential predicted singlepoint.
+        Designed to be overwritten by subclasses (DeltaLearner) that modify ML predictions.
+        """
+        atoms_copy.set_calculator(self.ml_potential)
+        (atoms_ML,) = convert_to_singlepoint([atoms_copy])
+        return atoms_ML
+
+    def add_to_dataset(self, new_data):
+        """
+        Helper function which takes an atoms object.
+        And adds new parent data to the training set.
+        Returns the partial dataset just added.
+        Designed to be overwritten by subclasses (DeltaLearner) that modify data added to training set.
+        """
+        partial_dataset = [new_data]
+        self.parent_dataset += partial_dataset
+        return partial_dataset
