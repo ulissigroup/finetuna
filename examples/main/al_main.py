@@ -20,9 +20,11 @@ from al_mlp.ml_potentials.flare_pp_calc import FlarePPCalc
 from al_mlp.utils import compute_with_calc
 from al_mlp.calcs import DeltaCalc
 
+from ocpmodels.common.relaxation.ase_utils import OCPCalculator
+
 # possibly remove these later when we switch to only OCPCalculator
-from al_mlp.base_calcs.ocp_model import OCPModel
-from experimental.zitnick.models import spinconv_grad11
+# from al_mlp.base_calcs.ocp_model import OCPModel
+# from experimental.zitnick.models import spinconv_grad11
 
 
 def get_parser():
@@ -104,6 +106,13 @@ def main(args):
     # declare parent calc
     parent_calc = Vasp(**config["vasp"])
 
+    # declare base calc (if path is given)
+    if "ocp" in config:
+        base_calc = OCPCalculator(
+            config_yml=config["ocp"]["model_path"],
+            checkpoint=config["ocp"]["checkpoint_path"],
+        )
+
     # use given ml potential class
     potential_class = config["links"].get("ml_potential", "flare")
     if potential_class == "flare":
@@ -145,11 +154,6 @@ def main(args):
             [initial_structure.copy()], parent_calc
         )[0]
 
-        # declare base calc
-        base_calc = OCPModel(
-            model_path=config["ocp"]["model_path"],
-            checkpoint_path=config["ocp"]["checkpoint_path"],
-        )
         base_initial_structure = compute_with_calc(
             [initial_structure.copy()], base_calc
         )[0]
@@ -190,12 +194,6 @@ def main(args):
             parent_calc.close()
 
     elif learner_class == "warmstart":
-        # declare base calc
-        base_calc = OCPModel(
-            model_path=config["ocp"]["model_path"],
-            checkpoint_path=config["ocp"]["checkpoint_path"],
-        )
-
         # declare warmstart online learner
         learner = WarmStartLearner(
             config["learner"],
@@ -225,12 +223,6 @@ def main(args):
             parent_calc.close()
 
     elif learner_class == "offline":
-        # declare base calc
-        base_calc = OCPModel(
-            model_path=config["ocp"]["model_path"],
-            checkpoint_path=config["ocp"]["checkpoint_path"],
-        )
-
         # set atomistic method
         config["learner"]["atomistic_method"] = {}
         config["learner"]["atomistic_method"]["initial_traj"] = config["links"]["traj"]
