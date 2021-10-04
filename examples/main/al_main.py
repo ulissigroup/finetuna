@@ -1,5 +1,4 @@
 import os
-from ase.optimize.optimize import Optimizer
 import yaml
 from pymongo import MongoClient
 import argparse
@@ -32,11 +31,12 @@ def get_parser():
     parser.add_argument("--config-yml", required=True, help="Path to the config file")
     return parser
 
-def do_between_learner_and_run():
+
+def do_between_learner_and_run(learner, mongo_db):
     """
     boiler plate stuff to do between starting the learner and starting the run
     """
-    
+
     if os.path.exists("dft_calls.db"):
         os.remove("dft_calls.db")
 
@@ -44,13 +44,15 @@ def do_between_learner_and_run():
         with open("runid.txt", "a") as f:
             f.write(str(learner.mongo_wrapper.run_id) + "\n")
 
+
 def run_relaxation(
     oal_initial_structure,
     config,
     learner,
     dbname,
+    mongo_db,
 ):
-    do_between_learner_and_run()
+    do_between_learner_and_run(learner, mongo_db)
 
     optimizer_str = config["relaxation"].get("optimizer", "BFGS")
 
@@ -81,6 +83,7 @@ def run_relaxation(
     )
 
     return oal_relaxation
+
 
 def main(args):
     config_yml = args.config_yml
@@ -148,6 +151,7 @@ def main(args):
             config,
             learner,
             dbname,
+            mongo_db,
         )
 
     elif learner_class == "delta":
@@ -182,6 +186,7 @@ def main(args):
             config,
             learner,
             dbname,
+            mongo_db,
         )
 
     elif learner_class == "warmstart":
@@ -201,6 +206,7 @@ def main(args):
             config,
             learner,
             dbname,
+            mongo_db,
         )
 
     elif learner_class == "offline":
@@ -225,7 +231,7 @@ def main(args):
         )
 
         # do boilerplate stuff
-        do_between_learner_and_run()
+        do_between_learner_and_run(learner, mongo_db)
 
         # start run
         learner.learn()
