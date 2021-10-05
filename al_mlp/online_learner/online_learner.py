@@ -189,6 +189,7 @@ class OnlineLearner(Calculator):
 
         else:
             atoms_ML = self.get_ml_prediction(atoms_copy)
+            self.complete_dataset.append(atoms_ML)
 
             # Get ML potential predicted energies and forces
             energy = atoms_ML.get_potential_energy(apply_constraint=False)
@@ -229,8 +230,6 @@ class OnlineLearner(Calculator):
                 self.info["check"] = False
 
                 atoms_copy.info["check"] = False
-
-        self.complete_dataset.append(atoms_copy)
 
         return energy, forces, fmax
 
@@ -331,6 +330,7 @@ class OnlineLearner(Calculator):
             )
 
         partial_dataset = self.add_to_dataset(new_data)
+        self.complete_dataset.append(partial_dataset[0])
 
         self.parent_calls += 1
 
@@ -356,7 +356,7 @@ class OnlineLearner(Calculator):
 
     def get_ml_prediction(self, atoms_copy):
         """
-        Helper function which takes an atoms object.
+        Helper function which takes an atoms object with no calc attached.
         Returns it with an ML potential predicted singlepoint.
         Designed to be overwritten by subclasses (DeltaLearner) that modify ML predictions.
         """
@@ -366,8 +366,8 @@ class OnlineLearner(Calculator):
 
     def add_to_dataset(self, new_data):
         """
-        Helper function which takes an atoms object.
-        And adds new parent data to the training set.
+        Helper function which takes an atoms object with parent singlepoint attached.
+        And adds the new parent data to the training set.
         Returns the partial dataset just added.
         Designed to be overwritten by subclasses (DeltaLearner) that modify data added to training set.
         """

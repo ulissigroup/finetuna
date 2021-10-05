@@ -58,7 +58,7 @@ class DeltaLearner(OnlineLearner):
 
     def get_ml_prediction(self, atoms_copy):
         """
-        Helper function which takes an atoms object
+        Helper function which takes an atoms object with no calc attached.
         Makes an Ml prediction.
         Performs a delta add operation since the ML model was trained on delta sub data.
         Returns it with a delta ML potential predicted singlepoint.
@@ -74,7 +74,7 @@ class DeltaLearner(OnlineLearner):
 
     def add_to_dataset(self, new_data):
         """
-        Helper function which takes an atoms object.
+        Helper function which takes an atoms object with parent singlepoint attached.
         Performs a delta sub operation on the parent data so that the ML model will train on delta sub data.
         And adds new parent data to the training set.
         Returns the partial dataset just added.
