@@ -5,6 +5,7 @@ from al_mlp.mongo import MongoWrapper
 from al_mlp.utils import compute_with_calc
 from copy import deepcopy
 
+
 class DeltaLearner(OnlineLearner):
     def __init__(
         self,
