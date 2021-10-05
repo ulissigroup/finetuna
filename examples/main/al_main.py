@@ -1,5 +1,4 @@
 import os
-from ase.optimize.optimize import Optimizer
 import yaml
 from pymongo import MongoClient
 import argparse
@@ -14,15 +13,16 @@ from al_mlp.atomistic_methods import Relaxation
 from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
 from al_mlp.utils import calculate_surface_k_points
 from al_mlp.online_learner.online_learner import OnlineLearner
+from al_mlp.online_learner.delta_learner import DeltaLearner
 from al_mlp.online_learner.warm_start_learner import WarmStartLearner
 
 from al_mlp.ml_potentials.flare_pp_calc import FlarePPCalc
-from al_mlp.utils import compute_with_calc
-from al_mlp.calcs import DeltaCalc
+
+from ocpmodels.common.relaxation.ase_utils import OCPCalculator
 
 # possibly remove these later when we switch to only OCPCalculator
-from al_mlp.base_calcs.ocp_model import OCPModel
-from experimental.zitnick.models import spinconv_grad11
+# from al_mlp.base_calcs.ocp_model import OCPModel
+# from experimental.zitnick.models import spinconv_grad11
 
 
 def get_parser():
@@ -31,12 +31,27 @@ def get_parser():
     return parser
 
 
+def do_between_learner_and_run(learner, mongo_db):
+    """
+    boiler plate stuff to do between starting the learner and starting the run
+    """
+
+    if os.path.exists("dft_calls.db"):
+        os.remove("dft_calls.db")
+
+    if mongo_db is not None:
+        with open("runid.txt", "a") as f:
+            f.write(str(learner.mongo_wrapper.run_id) + "\n")
+
+
 def run_relaxation(
     oal_initial_structure,
     config,
     learner,
     dbname,
+    mongo_db,
 ):
+    do_between_learner_and_run(learner, mongo_db)
 
     optimizer_str = config["relaxation"].get("optimizer", "BFGS")
 
@@ -104,6 +119,13 @@ def main(args):
     # declare parent calc
     parent_calc = Vasp(**config["vasp"])
 
+    # declare base calc (if path is given)
+    if "ocp" in config:
+        base_calc = OCPCalculator(
+            config_yml=config["ocp"]["model_path"],
+            checkpoint=config["ocp"]["checkpoint_path"],
+        )
+
     # use given ml potential class
     potential_class = config["links"].get("ml_potential", "flare")
     if potential_class == "flare":
@@ -123,79 +145,35 @@ def main(args):
             optional_config=config,
         )
 
-        if os.path.exists("dft_calls.db"):
-            os.remove("dft_calls.db")
-
-        if mongo_db is not None:
-            with open("runid.txt", "a") as f:
-                f.write(str(learner.mongo_wrapper.run_id) + "\n")
-
-        oal_relaxation = run_relaxation(
+        run_relaxation(
             oal_initial_structure,
             config,
             learner,
             dbname,
+            mongo_db,
         )
-
-        if hasattr(parent_calc, "close"):
-            parent_calc.close()
 
     elif learner_class == "delta":
-        oal_initial_structure = compute_with_calc(
-            [initial_structure.copy()], parent_calc
-        )[0]
-
-        # declare base calc
-        base_calc = OCPModel(
-            model_path=config["ocp"]["model_path"],
-            checkpoint_path=config["ocp"]["checkpoint_path"],
-        )
-        base_initial_structure = compute_with_calc(
-            [initial_structure.copy()], base_calc
-        )[0]
-
-        # declare delta calc
-        delta_calc = DeltaCalc(
-            [parent_calc, base_calc],
-            "sub",
-            [oal_initial_structure, base_initial_structure],
-        )
-
         # declare online learner
-        learner = OnlineLearner(
+        learner = DeltaLearner(
             config["learner"],
             images,
             ml_potential,
-            delta_calc,
+            parent_calc,
             base_calc=base_calc,
             mongo_db=mongo_db,
             optional_config=config,
         )
 
-        if os.path.exists("dft_calls.db"):
-            os.remove("dft_calls.db")
-
-        if mongo_db is not None:
-            with open("runid.txt", "a") as f:
-                f.write(str(learner.mongo_wrapper.run_id) + "\n")
-
-        oal_relaxation = run_relaxation(
+        run_relaxation(
             oal_initial_structure,
             config,
             learner,
             dbname,
+            mongo_db,
         )
-
-        if hasattr(parent_calc, "close"):
-            parent_calc.close()
 
     elif learner_class == "warmstart":
-        # declare base calc
-        base_calc = OCPModel(
-            model_path=config["ocp"]["model_path"],
-            checkpoint_path=config["ocp"]["checkpoint_path"],
-        )
-
         # declare warmstart online learner
         learner = WarmStartLearner(
             config["learner"],
@@ -207,30 +185,15 @@ def main(args):
             optional_config=config,
         )
 
-        if os.path.exists("dft_calls.db"):
-            os.remove("dft_calls.db")
-
-        if mongo_db is not None:
-            with open("runid.txt", "a") as f:
-                f.write(str(learner.mongo_wrapper.run_id) + "\n")
-
-        oal_relaxation = run_relaxation(
+        run_relaxation(
             oal_initial_structure,
             config,
             learner,
             dbname,
+            mongo_db,
         )
-
-        if hasattr(parent_calc, "close"):
-            parent_calc.close()
 
     elif learner_class == "offline":
-        # declare base calc
-        base_calc = OCPModel(
-            model_path=config["ocp"]["model_path"],
-            checkpoint_path=config["ocp"]["checkpoint_path"],
-        )
-
         # set atomistic method
         config["learner"]["atomistic_method"] = {}
         config["learner"]["atomistic_method"]["initial_traj"] = config["links"]["traj"]
@@ -251,21 +214,18 @@ def main(args):
             optional_config=config,
         )
 
-        if os.path.exists("dft_calls.db"):
-            os.remove("dft_calls.db")
-
-        if mongo_db is not None:
-            with open("runid.txt", "a") as f:
-                f.write(str(learner.mongo_wrapper.run_id) + "\n")
+        # do boilerplate stuff
+        do_between_learner_and_run(learner, mongo_db)
 
         # start run
         learner.learn()
 
-        if hasattr(parent_calc, "close"):
-            parent_calc.close()
-
     else:
         print("No valid learner class given")
+
+    # close parent_calc (if it needs to be closed, i.e. VaspInteractive)
+    if hasattr(parent_calc, "close"):
+        parent_calc.close()
 
 
 if __name__ == "__main__":

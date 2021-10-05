@@ -2,6 +2,7 @@
 import unittest
 
 # import test modules
+from al_mlp.tests.cases.case_delta_CuNP import delta_CuNP
 from al_mlp.tests.cases.case_online_CuNP import online_CuNP
 from al_mlp.tests.cases.case_offline_CuNP import offline_CuNP
 from al_mlp.tests.cases.case_offline_uncertainty_test import offline_uncertainty_CuNP
@@ -24,6 +25,7 @@ suite = unittest.TestSuite()
 suite.addTests(loader.loadTestsFromModule(online_CuNP))
 suite.addTests(loader.loadTestsFromTestCase(offline_CuNP))
 suite.addTests(loader.loadTestsFromModule(offline_uncertainty_CuNP))
+suite.addTests(loader.loadTestsFromModule(delta_CuNP))
 
 # suite.addTests(loader.loadTestsFromModule(online_flare_CuNP))
 
