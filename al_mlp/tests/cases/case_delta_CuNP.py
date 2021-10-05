@@ -95,33 +95,29 @@ class delta_CuNP(unittest.TestCase):
 
         atoms_ML = self.OAL_learner.get_ml_prediction(atoms_copy.copy())
         delta_sub_energy = atoms_ML.get_potential_energy()
-        delta_sub_fmax = np.sqrt((atoms_ML.get_forces() ** 2).sum(axis=1).max())
+        delta_sub_forces = atoms_ML.get_forces()
 
         atoms_copy = atoms_copy.copy()
         atoms_copy.set_calculator(self.OAL_learner.ml_potential)
-        (atoms_plain,) = convert_to_singlepoint([atoms_copy])
-        plain_energy = atoms_plain.get_potential_energy()
-        plain_fmax = np.sqrt((atoms_plain.get_forces() ** 2).sum(axis=1).max())
+        (atoms_ml_trained_on_diff_,) = convert_to_singlepoint([atoms_copy])
+        ml_trained_on_diff_energy = atoms_ml_trained_on_diff_.get_potential_energy()
+        ml_trained_on_diff_forces = atoms_ml_trained_on_diff_.get_forces()
 
         atoms_copy = atoms_copy.copy()
         atoms_copy.set_calculator(self.OAL_learner.base_calc)
         (atoms_base,) = convert_to_singlepoint([atoms_copy])
         base_energy = atoms_base.get_potential_energy()
-        base_fmax = np.sqrt((atoms_base.get_forces() ** 2).sum(axis=1).max())
+        base_forces = atoms_base.get_forces()
 
         parent_ref_energy = self.OAL_learner.refs[0].get_potential_energy()
         base_ref_energy = self.OAL_learner.refs[1].get_potential_energy()
-        parent_ref_fmax = np.sqrt(
-            (self.OAL_learner.refs[0].get_forces() ** 2).sum(axis=1).max()
-        )
-        base_ref_fmax = np.sqrt(
-            (self.OAL_learner.refs[1].get_forces() ** 2).sum(axis=1).max()
-        )
 
-        delta_hand_energy = (plain_energy - parent_ref_energy) - (
+        # ml = (parent -parent ref) - (base - base ref)
+        # parent = (base - base ref) + (ml + parent ref)
+        delta_hand_energy = (ml_trained_on_diff_energy + parent_ref_energy) + (
             base_energy - base_ref_energy
         )
-        delta_hand_fmax = (plain_fmax - parent_ref_fmax) - (base_fmax - base_ref_fmax)
+        delta_hand_forces = ml_trained_on_diff_forces + base_forces
 
         assert np.allclose(
             delta_sub_energy,
@@ -130,17 +126,33 @@ class delta_CuNP(unittest.TestCase):
         ), str(
             "DeltaLearner get_ml_prediction() energy inconsistent:\n"
             + str(delta_sub_energy)
-            + "with calculated ML prediction delta:\n"
+            + "\nwith hand calculated ML prediction delta:\n"
             + str(delta_hand_energy)
+            + "\ncomposed of:\n  the ML trained on difference prediction:\n"
+            + str(ml_trained_on_diff_energy)
+            + "\n  the base calc prediction:\n"
+            + str(base_energy)
+            + "\n  the parent ref:\n"
+            + str(parent_ref_energy)
+            + "\n  the base ref:\n"
+            + str(base_ref_energy)
             + "\nfor Energy Threshold: "
             + str(ENERGY_THRESHOLD)
         )
 
-        assert np.allclose(delta_sub_fmax, delta_hand_fmax, atol=FORCE_THRESHOLD,), str(
-            "DeltaLearner get_ml_prediction() fmax inconsistent:\n"
-            + str(delta_sub_fmax)
-            + "with calculated ML prediction delta:\n"
-            + str(delta_hand_fmax)
+        assert np.allclose(
+            delta_sub_forces,
+            delta_hand_forces,
+            atol=FORCE_THRESHOLD,
+        ), str(
+            "DeltaLearner get_ml_prediction() forces inconsistent:\n"
+            + str(delta_sub_forces)
+            + "\nwith hand calculated ML prediction delta:\n"
+            + str(delta_hand_forces)
+            + "\ncomposed of:\n  the ML trained on difference prediction:\n"
+            + str(ml_trained_on_diff_forces)
+            + "\n  the base calc prediction:\n"
+            + str(base_forces)
             + "\nfor Force Threshold: "
             + str(FORCE_THRESHOLD)
         )
@@ -149,58 +161,66 @@ class delta_CuNP(unittest.TestCase):
         atoms_copy = self.OAL_learner.parent_dataset[-1].copy()
 
         atoms_copy.set_calculator(EMT())
-        [atoms_parent] = self.OAL_learner.add_to_dataset(atoms_copy)
-        delta_sub_energy = atoms_parent.get_potential_energy()
-        delta_sub_fmax = np.sqrt((atoms_parent.get_forces() ** 2).sum(axis=1).max())
+        [atoms_delta_sub] = self.OAL_learner.add_to_dataset(atoms_copy)
+        delta_sub_energy = atoms_delta_sub.get_potential_energy()
+        delta_sub_forces = atoms_delta_sub.get_forces()
 
         atoms_copy = atoms_copy.copy()
         atoms_copy.set_calculator(EMT())
-        (atoms_plain,) = convert_to_singlepoint([atoms_copy])
-        plain_energy = atoms_plain.get_potential_energy()
-        plain_fmax = np.sqrt((atoms_plain.get_forces() ** 2).sum(axis=1).max())
+        (atoms_parent,) = convert_to_singlepoint([atoms_copy])
+        parent_energy = atoms_parent.get_potential_energy()
+        parent_forces = atoms_parent.get_forces()
 
         atoms_copy = atoms_copy.copy()
         atoms_copy.set_calculator(self.OAL_learner.base_calc)
         (atoms_base,) = convert_to_singlepoint([atoms_copy])
         base_energy = atoms_base.get_potential_energy()
-        base_fmax = np.sqrt((atoms_base.get_forces() ** 2).sum(axis=1).max())
+        base_forces = atoms_base.get_forces()
 
         parent_ref_energy = self.OAL_learner.refs[0].get_potential_energy()
         base_ref_energy = self.OAL_learner.refs[1].get_potential_energy()
-        parent_ref_fmax = np.sqrt(
-            (self.OAL_learner.refs[0].get_forces() ** 2).sum(axis=1).max()
-        )
-        base_ref_fmax = np.sqrt(
-            (self.OAL_learner.refs[1].get_forces() ** 2).sum(axis=1).max()
-        )
 
         delta_hand_energy = (delta_sub_energy + parent_ref_energy) + (
             base_energy - base_ref_energy
         )
-        delta_hand_fmax = (delta_sub_fmax + parent_ref_fmax) + (
-            base_fmax - base_ref_fmax
-        )
+        delta_hand_forces = delta_sub_forces + base_forces
 
         assert self.OAL_learner.parent_dataset[-1] == atoms_parent
 
         assert np.allclose(
             delta_hand_energy,
-            plain_energy,
+            parent_energy,
             atol=ENERGY_THRESHOLD,
         ), str(
-            "DeltaLearner add_to_dataset() + delta energy inconsistent:\n"
+            "DeltaLearner add_to_dataset() + base calc energy inconsistent:\n"
             + str(delta_hand_energy)
             + "with calculated parent prediction:\n"
-            + str(plain_energy)
+            + str(parent_energy)
+            + "\ncomposed of:\n  the add_to_dataset() parent prediction:\n"
+            + str(delta_sub_energy)
+            + "\n  the base calc prediction:\n"
+            + str(base_energy)
+            + "\n  the parent ref:\n"
+            + str(parent_ref_energy)
+            + "\n  the base ref:\n"
+            + str(base_ref_energy)
             + "\nfor Energy Threshold: "
             + str(ENERGY_THRESHOLD)
         )
 
-        assert np.allclose(delta_hand_fmax, plain_fmax, atol=FORCE_THRESHOLD,), str(
-            "DeltaLearner add_to_dataset() + delta fmax inconsistent:\n"
-            + str(delta_hand_fmax)
+        assert np.allclose(
+            delta_hand_forces,
+            parent_forces,
+            atol=FORCE_THRESHOLD,
+        ), str(
+            "DeltaLearner add_to_dataset() + base calc forces inconsistent:\n"
+            + str(delta_hand_forces)
             + "with calculated parent prediction:\n"
-            + str(plain_fmax)
+            + str(parent_forces)
+            + "\ncomposed of:\n  the add_to_dataset() parent prediction:\n"
+            + str(delta_sub_forces)
+            + "\n  the base calc prediction:\n"
+            + str(base_forces)
             + "\nfor Force Threshold: "
             + str(FORCE_THRESHOLD)
         )
