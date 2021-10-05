@@ -8,7 +8,7 @@ import os
 import torch
 
 
-def run_delta_al(atomistic_method, images, elements, dbname, parent_calc, base_calc):
+def run_delta_al(atomistic_method, images, elements, dbname, parent_calc):
 
     Gs = {
         "default": {
