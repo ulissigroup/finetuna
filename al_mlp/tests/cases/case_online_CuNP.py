@@ -41,7 +41,7 @@ class online_CuNP(unittest.TestCase):
             [],
             ["Cu"],
             "CuNP_oal",
-            EMT(),
+            CounterCalc(EMT()),
         )
 
         # Retain images of the final structure from both relaxations
@@ -87,4 +87,14 @@ class online_CuNP(unittest.TestCase):
             + str(self.OAL_learner.parent_calls)
             + " not less than: "
             + str(0.5 * self.emt_counter.force_calls)
+        )
+
+    def test_oal_CuNP_calls_consistent(self):
+        assert (
+            self.OAL_learner.parent_calls == self.OAL_learner.parent_calc.force_calls
+        ), str(
+            "number of parent calls tracked by learner: "
+            + str(self.OAL_learner.parent_calls)
+            + ", is not equal to number of calls tracked by parent call counter: "
+            + str(self.OAL_learner.parent_calc.force_calls)
         )
