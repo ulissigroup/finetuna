@@ -34,7 +34,7 @@ class online_CuNP(unittest.TestCase):
         OAL_initial_structure = initial_structure.copy()
         OAL_initial_structure.set_calculator(EMT())
         OAL_relaxation = Relaxation(
-            OAL_initial_structure, BFGS, fmax=0.05, steps=60, maxstep=0.04
+            OAL_initial_structure, BFGS, fmax=0.05, steps=100, maxstep=0.04
         )
         cls.OAL_learner, cls.OAL_structure_optim = run_online_al(
             OAL_relaxation,
@@ -64,6 +64,9 @@ class online_CuNP(unittest.TestCase):
             + str(self.OAL_image.get_potential_energy())
             + "\nwith Energy Threshold: "
             + str(ENERGY_THRESHOLD)
+            + "\nafter "
+            + str(self.OAL_learner.curr_step)
+            + " steps"
         )
 
     def test_oal_CuNP_forces(self):
@@ -75,6 +78,9 @@ class online_CuNP(unittest.TestCase):
             + str(fmax)
             + "\nwith Force Threshold: "
             + str(FORCE_THRESHOLD)
+            + "\nafter "
+            + str(self.OAL_learner.curr_step)
+            + " steps"
         )
 
     def test_oal_CuNP_calls(self):
@@ -87,6 +93,9 @@ class online_CuNP(unittest.TestCase):
             + str(self.OAL_learner.parent_calls)
             + " not less than: "
             + str(0.5 * self.emt_counter.force_calls)
+            + "\nafter "
+            + str(self.OAL_learner.curr_step)
+            + " steps"
         )
 
     def test_oal_CuNP_calls_consistent(self):
