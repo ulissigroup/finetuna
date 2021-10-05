@@ -7,6 +7,7 @@ from ase.calculators.emt import EMT
 import numpy as np
 from ase.cluster.icosahedron import Icosahedron
 from ase.optimize import BFGS
+from al_mlp.utils import convert_to_singlepoint
 
 FORCE_THRESHOLD = 0.05
 ENERGY_THRESHOLD = 0.01
@@ -16,13 +17,13 @@ class delta_CuNP(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         # Set up parent calculator and image environment
-        initial_structure = Icosahedron("Cu", 2)
-        initial_structure.rattle(0.1)
-        initial_structure.set_pbc(True)
-        initial_structure.set_cell([20, 20, 20])
+        cls.initial_structure = Icosahedron("Cu", 2)
+        cls.initial_structure.rattle(0.1)
+        cls.initial_structure.set_pbc(True)
+        cls.initial_structure.set_cell([20, 20, 20])
 
         # Run relaxation with the parent calc
-        EMT_initial_structure = initial_structure.copy()
+        EMT_initial_structure = cls.initial_structure.copy()
         cls.emt_counter = CounterCalc(EMT())
         EMT_initial_structure.set_calculator(cls.emt_counter)
         cls.EMT_structure_optim = Relaxation(
@@ -31,7 +32,7 @@ class delta_CuNP(unittest.TestCase):
         cls.EMT_structure_optim.run(cls.emt_counter, "CuNP_emt")
 
         # Run relaxation with active learning
-        OAL_initial_structure = initial_structure.copy()
+        OAL_initial_structure = cls.initial_structure.copy()
         OAL_initial_structure.set_calculator(EMT())
         OAL_relaxation = Relaxation(
             OAL_initial_structure, BFGS, fmax=0.05, steps=60, maxstep=0.04
@@ -88,3 +89,59 @@ class delta_CuNP(unittest.TestCase):
             + " not less than: "
             + str(0.5 * self.emt_counter.force_calls)
         )
+
+    def test_delta_get_ml_prediction(self):
+        atoms_copy = self.OAL_learner.parent_dataset[-1].copy()
+
+        atoms_ML = self.OAL_learner.get_ml_prediction(atoms_copy.copy())
+        delta_sub_energy = atoms_ML.get_potential_energy()
+        delta_sub_fmax = np.sqrt((atoms_ML.get_forces() ** 2).sum(axis=1).max())
+
+        atoms_copy = atoms_copy.copy()
+        atoms_copy.set_calculator(self.OAL_learner.ml_potential)
+        (atoms_plain,) = convert_to_singlepoint([atoms_copy])
+        plain_energy = atoms_plain.get_potential_energy()
+        plain_fmax = np.sqrt((atoms_plain.get_forces() ** 2).sum(axis=1).max())
+
+        atoms_copy = atoms_copy.copy()
+        atoms_copy.set_calculator(self.OAL_learner.base_calc)
+        (atoms_base,) = convert_to_singlepoint([atoms_copy])
+        base_energy = atoms_base.get_potential_energy()
+        base_fmax = np.sqrt((atoms_base.get_forces() ** 2).sum(axis=1).max())
+
+        parent_ref_energy = self.OAL_learner.refs[0].get_potential_energy()
+        base_ref_energy = self.OAL_learner.refs[1].get_potential_energy()
+        parent_ref_fmax = np.sqrt((self.OAL_learner.refs[0].get_forces() ** 2).sum(axis=1).max())
+        base_ref_fmax = np.sqrt((self.OAL_learner.refs[1].get_forces() ** 2).sum(axis=1).max())
+
+        delta_hand_energy = (plain_energy - parent_ref_energy) - (base_energy - base_ref_energy)
+        delta_hand_fmax = (plain_fmax - parent_ref_fmax) - (base_fmax - base_ref_fmax)
+
+        assert np.allclose(
+            delta_sub_energy,
+            delta_hand_energy,
+            atol=ENERGY_THRESHOLD,
+        ), str(
+            "DeltaLearner get_ml_prediction() energy inconsistent:\n"
+            + str(self.EMT_image.get_potential_energy())
+            + "with calculated ML prediction delta:\n"
+            + str(self.OAL_image.get_potential_energy())
+            + "\nfor Energy Threshold: "
+            + str(ENERGY_THRESHOLD)
+        )
+
+        assert np.allclose(
+            delta_sub_fmax,
+            delta_hand_fmax,
+            atol=FORCE_THRESHOLD,
+        ), str(
+            "DeltaLearner get_ml_prediction() fmax inconsistent:\n"
+            + str(self.EMT_image.get_potential_energy())
+            + "with calculated ML prediction delta:\n"
+            + str(self.OAL_image.get_potential_energy())
+            + "\nfor Force Threshold: "
+            + str(FORCE_THRESHOLD)
+        )
+
+    # def test_delta_add_to_dataset(self):
+    #     pass
