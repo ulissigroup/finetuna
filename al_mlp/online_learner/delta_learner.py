@@ -3,7 +3,7 @@ from al_mlp.calcs import DeltaCalc
 from al_mlp.utils import convert_to_singlepoint, subtract_deltas
 from al_mlp.mongo import MongoWrapper
 from al_mlp.utils import compute_with_calc
-
+from copy import deepcopy
 
 class DeltaLearner(OnlineLearner):
     def __init__(
@@ -42,7 +42,8 @@ class DeltaLearner(OnlineLearner):
             self.mongo_wrapper = None
 
     def init_refs(self, initial_structure):
-        self.parent_ref = initial_structure
+        self.parent_ref = initial_structure.copy()
+        self.parent_ref.calc = deepcopy(initial_structure.calc)
 
         self.base_ref = compute_with_calc([initial_structure.copy()], self.base_calc)[0]
 
