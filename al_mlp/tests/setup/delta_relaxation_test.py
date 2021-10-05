@@ -66,7 +66,7 @@ def run_delta_al(atomistic_method, images, elements, dbname, parent_calc):
 
     trainer = AtomsTrainer(config)
 
-    base_calc = MultiMorse(iamges=images, cutoff=Gs["default"]["cutoff"])
+    base_calc = MultiMorse(images=images, cutoff=Gs["default"]["cutoff"])
 
     ml_potential = AmptorchEnsembleCalc(trainer, learner_params["n_ensembles"])
     deltacalc = DeltaLearner(

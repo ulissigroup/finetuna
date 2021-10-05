@@ -38,7 +38,7 @@ class delta_CuNP(unittest.TestCase):
         )
         cls.OAL_learner, cls.OAL_structure_optim = run_delta_al(
             OAL_relaxation,
-            [],
+            [OAL_initial_structure],
             ["Cu"],
             "CuNP_oal",
             EMT(),
