@@ -52,22 +52,25 @@ class OnlineLearner(Calculator):
                 notes=self.wandb_init.get("notes", ""),
                 config=wandb_config,
             )
-        if mongo_db is not None:
-            self.mongo_wrapper = MongoWrapper(
-                mongo_db["online_learner"],
-                learner_params,
-                ml_potential,
-                parent_calc,
-                None,
-            )
-        else:
-            self.mongo_wrapper = None
+        self.init_mongo(mongo_db=mongo_db)
 
         self.parent_calls = 0
         self.curr_step = 0
 
         for image in parent_dataset:
             self.add_data_and_retrain(image)
+
+    def init_mongo(self, mongo_db):
+        if mongo_db is not None:
+            self.mongo_wrapper = MongoWrapper(
+                mongo_db["online_learner"],
+                self.learner_params,
+                self.ml_potential,
+                self.parent_calc,
+                None,
+            )
+        else:
+            self.mongo_wrapper = None
 
     def init_learner_params(self):
         self.fmax_verify_threshold = self.learner_params.get(

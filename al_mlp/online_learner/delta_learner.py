@@ -16,6 +16,8 @@ class DeltaLearner(OnlineLearner):
         mongo_db=None,
         optional_config=None,
     ):
+        self.base_calc = base_calc
+        self.refs = None
 
         OnlineLearner.__init__(
             self,
@@ -27,19 +29,17 @@ class DeltaLearner(OnlineLearner):
             optional_config=optional_config,
         )
 
+    def init_mongo(self, mongo_db):
         if mongo_db is not None:
             self.mongo_wrapper = MongoWrapper(
                 mongo_db["online_learner"],
-                learner_params,
-                ml_potential,
-                parent_calc,
-                base_calc,
+                self.learner_params,
+                self.ml_potential,
+                self.parent_calc,
+                self.base_calc,
             )
         else:
             self.mongo_wrapper = None
-
-        self.base_calc = base_calc
-        self.refs = None
 
     def init_refs(self, initial_structure):
         self.parent_ref = initial_structure
