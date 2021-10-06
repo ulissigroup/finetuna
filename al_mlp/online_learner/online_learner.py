@@ -126,6 +126,8 @@ class OnlineLearner(Calculator):
             "stat_uncertain_tol": None,
             "tolerance": None,
             "parent_calls": None,
+            "energy_error": None,
+            "forces_error": None,
         }
 
     def calculate(self, atoms, properties, system_changes):
@@ -213,6 +215,8 @@ class OnlineLearner(Calculator):
 
             # If we are extrapolating too far add/retrain
             if need_to_retrain:
+                energy_ML = energy
+                constrained_forces_ML = constrained_forces
                 # Run DFT, so use that energy/force
                 energy, forces, constrained_forces = self.add_data_and_retrain(
                     atoms_copy
@@ -223,6 +227,8 @@ class OnlineLearner(Calculator):
                 self.info["parent_energy"] = energy
                 self.info["parent_forces"] = str(forces)
                 self.info["parent_fmax"] = fmax
+                self.info["energy_error"] = energy - energy_ML
+                self.info["forces_error"] = constrained_forces - constrained_forces_ML
 
                 atoms_copy.info["check"] = True
             else:
