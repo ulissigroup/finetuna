@@ -20,10 +20,6 @@ from al_mlp.ml_potentials.flare_pp_calc import FlarePPCalc
 
 from ocpmodels.common.relaxation.ase_utils import OCPCalculator
 
-# possibly remove these later when we switch to only OCPCalculator
-# from al_mlp.base_calcs.ocp_model import OCPModel
-# from experimental.zitnick.models import spinconv_grad11
-
 
 def get_parser():
     parser = argparse.ArgumentParser()
