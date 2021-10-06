@@ -121,10 +121,15 @@ def main(args):
 
     # declare base calc (if path is given)
     if "ocp" in config:
-        base_calc = OCPCalculator(
-            config_yml=config["ocp"]["model_path"],
-            checkpoint=config["ocp"]["checkpoint_path"],
-        )
+        if "model_path" in config["ocp"] and "checkpoint_path" in config["ocp"]:
+            base_calc = OCPCalculator(
+                config_yml=config["ocp"]["model_path"],
+                checkpoint=config["ocp"]["checkpoint_path"],
+            )
+        elif "checkpoint_path" in config["ocp"]:
+            base_calc = OCPCalculator(
+                checkpoint=config["ocp"]["checkpoint_path"],
+            )
 
     # use given ml potential class
     potential_class = config["links"].get("ml_potential", "flare")
