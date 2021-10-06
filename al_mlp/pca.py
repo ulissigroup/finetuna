@@ -113,6 +113,20 @@ def pca_xyz(traj_dict, fig_title=None):
     ax.legend()
     plt.savefig("pca.png")
 
+def pca_traj(traj, image):
+    """
+    Perform a PCA analysis on a particular atoms object for a given trajectory object.
+    Parameters
+    ----------
+    traj: Trajectory
+        the parent Trajectory for this system to be compared to
+
+    image: Atoms
+        the specific ase Atoms object to compare to the traj
+    """
+    pca = PCA(n_components=2)
+    pass
+    # need to either figure out the descriptors or solve the problem with wrapping around unit cells
 
 def init_species_map(image):
     species_map = {}
