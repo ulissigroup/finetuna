@@ -75,14 +75,16 @@ class Logger:
                 config=wandb_config,
             )
 
-        self.pca_metrics = False
-        self.uncertainty_metrics = False
+        self.uncertainty_metric = learner_params.get("uncertainty_metric", "forces")
+        
+        self.pca_quantify = False
+        self.uncertainty_quantify = False
         self.parent_traj = None
         # if a trajectory is supplied in the optional config, store that for PCA, uncertainty metrics, etc.
         if optional_config is not None and "links" in optional_config and "traj" in optional_config["links"]:
             self.parent_traj = Trajectory(optional_config["links"]["traj"])
-            self.pca_metrics = learner_params.get("logger", {}).get("pca_metrics", False)
-            self.uncertainty_metrics = learner_params.get("logger", {}).get("uncertainty_metrics", False)
+            self.pca_quantify = learner_params.get("logger", {}).get("pca_quantify", False)
+            self.uncertainty_quantify = learner_params.get("logger", {}).get("uncertainty_quantify", False)
 
     def write(self, atoms: Atoms, info: dict):
         if self.pca_metrics:
