@@ -163,11 +163,15 @@ def quantify_uncertainty(traj, model_calc):
         energy_uncertainties.append(mi.info["energy_stds"])
 
     force_scores = get_all_metrics(
-        np.array(predicted_forces), np.array(force_uncertainties), np.array(true_forces)
+        np.array(predicted_forces),
+        np.array(force_uncertainties),
+        np.array(true_forces),
+        verbose=False,
     )
     energy_scores = get_all_metrics(
         np.array(predicted_energies),
         np.array(energy_uncertainties),
         np.array(true_energies),
+        verbose=False,
     )
     return force_scores, energy_scores
