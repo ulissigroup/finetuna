@@ -105,6 +105,8 @@ class OnlineLearner(Calculator):
 
         self.rolling_opt_window = self.learner_params.get("rolling_opt_window", None)
 
+        self.constraint = self.learner_params.get("train_on_constraint", False)
+
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
 
@@ -194,8 +196,8 @@ class OnlineLearner(Calculator):
             self.complete_dataset.append(atoms_ML)
 
             # Get ML potential predicted energies and forces
-            energy = atoms_ML.get_potential_energy(apply_constraint=False)
-            forces = atoms_ML.get_forces(apply_constraint=False)
+            energy = atoms_ML.get_potential_energy(apply_constraint=self.constraint)
+            forces = atoms_ML.get_forces(apply_constraint=self.constraint)
             constrained_forces = atoms_ML.get_forces()
             fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
             self.info["ml_energy"] = energy
@@ -355,8 +357,8 @@ class OnlineLearner(Calculator):
         else:
             self.ml_potential.train(self.parent_dataset)
 
-        energy_actual = new_data.get_potential_energy(apply_constraint=False)
-        force_actual = new_data.get_forces(apply_constraint=False)
+        energy_actual = new_data.get_potential_energy(apply_constraint=self.constraint)
+        force_actual = new_data.get_forces(apply_constraint=self.constraint)
         force_cons = new_data.get_forces()
         return energy_actual, force_actual, force_cons
 
