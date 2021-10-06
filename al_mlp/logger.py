@@ -37,10 +37,12 @@ class Logger:
 
         self.step = 0
 
+        # initialize local ASE db file
         self.asedb_name = learner_params.get("asedb_name", "oal_queried_images.db")
         if self.asedb_name is not None:
             ase.db.connect(self.asedb_name, append=False)
 
+        # initialize mongo db
         self.mongo_wrapper = None
         if mongo_db_collection is not None:
             self.mongo_wrapper = MongoWrapper(
@@ -51,6 +53,7 @@ class Logger:
                 base_calc,
             )
 
+        # initialize Weights and Biases run
         self.wandb_run = None
         wandb_init = learner_params.get("wandb_init", {})
         if wandb_init.get("wandb_log", False) is True:
@@ -70,6 +73,11 @@ class Logger:
                 notes=wandb_init.get("notes", ""),
                 config=wandb_config,
             )
+        
+        self.parent_traj = None
+        # if a trajectory is supplied in the optional config, store that for PCA, uncertainty metrics, etc.
+        if optional_config is not None and "links" in optional_config and "traj" in optional_config["links"]:
+            self.parent_traj = Trajectory(optional_config["links"]["traj"])
 
     def write(self, atoms: Atoms, info: dict):
         # write to ASE db
