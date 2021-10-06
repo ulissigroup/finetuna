@@ -99,12 +99,17 @@ class Logger:
             )
 
     def write(self, atoms: Atoms, info: dict):
+        extra_info = {}
         if self.pca_metrics:
             pass  # call function to get pca x and y values and store them in info
-        if self.uncertainty_metrics:
+        if self.uncertainty_quantify:
             force_scores, energy_scores = quantify_uncertainty(
                 self.parent_traj, self.ml_potential
             )
+            force_scores.pop("adv_group_calibration")
+            energy_scores.pop("adv_group_calibration")
+            extra_info["force_scores"] = force_scores
+            extra_info["energy_scores"] = energy_scores
 
         # write to ASE db
         if self.asedb_name is not None:
@@ -134,7 +139,7 @@ class Logger:
 
         # write to Weights and Biases
         if self.wandb_run is not None:
-            wandb.log({key: value for key, value in info.items() if value is not None})
+            wandb.log({key: value for key, value in info.items() + extra_info.items() if value is not None})
 
         # increment step
         self.step += 1
