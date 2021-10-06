@@ -1,10 +1,8 @@
 from ase.atoms import Atoms
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from ase.io import Trajectory, read, write
+from ase.io import Trajectory
 import numpy as np
-import os
-import re
 from ase.db import connect
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
@@ -113,6 +111,7 @@ def pca_xyz(traj_dict, fig_title=None):
     ax.legend()
     plt.savefig("pca.png")
 
+
 def pca_traj(traj, image):
     """
     Perform a PCA analysis on a particular atoms object for a given trajectory object.
@@ -125,8 +124,11 @@ def pca_traj(traj, image):
         the specific ase Atoms object to compare to the traj
     """
     pca = PCA(n_components=2)
+    raise NotImplementedError
     pass
+    # TODO:
     # need to either figure out the descriptors or solve the problem with wrapping around unit cells
+
 
 def init_species_map(image):
     species_map = {}
