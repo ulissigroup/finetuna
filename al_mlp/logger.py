@@ -1,5 +1,6 @@
 #
 from ase.atoms import Atoms
+from ase.io import Trajectory
 from numpy import ndarray
 from al_mlp.mongo import MongoWrapper
 import ase.db
