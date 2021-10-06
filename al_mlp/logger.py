@@ -102,7 +102,9 @@ class Logger:
         if self.pca_metrics:
             pass  # call function to get pca x and y values and store them in info
         if self.uncertainty_metrics:
-            quantify_uncertainty(self.parent_traj, self.ml_potential)
+            force_scores, energy_scores = quantify_uncertainty(
+                self.parent_traj, self.ml_potential
+            )
 
         # write to ASE db
         if self.asedb_name is not None:
@@ -160,8 +162,12 @@ def quantify_uncertainty(traj, model_calc):
         predicted_energies.append(mi.get_potential_energy())
         energy_uncertainties.append(mi.info["energy_stds"])
 
-    force_scores = get_all_metrics(predicted_forces, force_uncertainties, true_forces)
+    force_scores = get_all_metrics(
+        np.array(predicted_forces), np.array(force_uncertainties), np.array(true_forces)
+    )
     energy_scores = get_all_metrics(
-        predicted_energies, energy_uncertainties, true_energies
+        np.array(predicted_energies),
+        np.array(energy_uncertainties),
+        np.array(true_energies),
     )
     return force_scores, energy_scores
