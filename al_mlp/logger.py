@@ -143,7 +143,13 @@ class Logger:
 
         # write to Weights and Biases
         if self.wandb_run is not None:
-            wandb.log({key: value for key, value in info.items() + extra_info.items() if value is not None})
+            wandb.log(
+                {
+                    key: value
+                    for key, value in info.items() + extra_info.items()
+                    if value is not None
+                }
+            )
 
         # increment step
         self.step += 1
