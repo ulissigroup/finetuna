@@ -10,6 +10,28 @@ from ase.constraints import constrained_indices
 from flare_pp._C_flare import Structure, B2
 
 
+def pca_traj(traj, image):
+    """
+    Perform a PCA analysis on a particular atoms object for a given trajectory object.
+    Parameters
+    ----------
+    traj: Trajectory
+        the parent Trajectory for this system to be compared to
+
+    image: Atoms
+        the specific ase Atoms object to compare to the traj
+    """
+    raise NotImplementedError
+
+    # TODO:
+    # need to either figure out the descriptors or solve the problem with wrapping around unit cells
+    pca = PCA(n_components=2)
+
+    x = None
+    y = None
+    return x, y
+
+
 def pca_xyz(traj_dict, fig_title=None):
     """Perform a PCA analysis for the trajectories.
     Parameters
@@ -110,24 +132,6 @@ def pca_xyz(traj_dict, fig_title=None):
     colorbar.set_label("-log(abs(energy))")
     ax.legend()
     plt.savefig("pca.png")
-
-
-def pca_traj(traj, image):
-    """
-    Perform a PCA analysis on a particular atoms object for a given trajectory object.
-    Parameters
-    ----------
-    traj: Trajectory
-        the parent Trajectory for this system to be compared to
-
-    image: Atoms
-        the specific ase Atoms object to compare to the traj
-    """
-    pca = PCA(n_components=2)
-    raise NotImplementedError
-    pass
-    # TODO:
-    # need to either figure out the descriptors or solve the problem with wrapping around unit cells
 
 
 def init_species_map(image):
