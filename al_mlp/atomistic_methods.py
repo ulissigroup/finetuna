@@ -216,9 +216,10 @@ def replay_trajectory(calc, optimizer):
                 r = atoms.get_positions().ravel()
                 f = atoms.get_forces(apply_constraint=False).ravel()
             else:
-                atoms.calc = calc.ml_potential
-                r = atoms.get_positions().ravel()
-                f = atoms.get_forces(apply_constraint=False).ravel()
+                atoms_copy = atoms.copy()
+                atoms_copy.calc = calc.ml_potential
+                r = atoms_copy.get_positions().ravel()
+                f = atoms_copy.get_forces(apply_constraint=False).ravel()
 
             optimizer.update(r, f, r0, f0)
             r0 = r

@@ -10,6 +10,7 @@ links:
   checkpoint_path: "/home/jovyan/shared-scratch/oc20_cleanup/adeesh/uncertainty/spcv-2M-uncertainty-cp.pt"
   ml_potential: "flare"
   learner_class: "online"
+  parent_calc: "vasp"
 
 task:
   dataset: trajectory_lmdb
