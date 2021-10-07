@@ -364,12 +364,13 @@ class OnlineLearner(Calculator):
         force_cons = new_data.get_forces()
         return energy_actual, force_actual, force_cons
 
-    def get_ml_prediction(self, atoms_copy):
+    def get_ml_prediction(self, atoms):
         """
         Helper function which takes an atoms object with no calc attached.
         Returns it with an ML potential predicted singlepoint.
         Designed to be overwritten by subclasses (DeltaLearner) that modify ML predictions.
         """
+        atoms_copy = atoms.copy()
         atoms_copy.set_calculator(self.ml_potential)
         (atoms_ML,) = convert_to_singlepoint([atoms_copy])
         return atoms_ML

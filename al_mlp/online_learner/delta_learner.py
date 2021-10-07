@@ -56,7 +56,7 @@ class DeltaLearner(OnlineLearner):
             self.refs,
         )
 
-    def get_ml_prediction(self, atoms_copy):
+    def get_ml_prediction(self, atoms):
         """
         Helper function which takes an atoms object with no calc attached.
         Makes an Ml prediction.
@@ -64,6 +64,7 @@ class DeltaLearner(OnlineLearner):
         Returns it with a delta ML potential predicted singlepoint.
         Designed to be overwritten by DeltaLearner which needs to modify ML predictions.
         """
+        atoms_copy = atoms.copy()
         atoms_copy.set_calculator(self.ml_potential)
         (atoms_with_info,) = convert_to_singlepoint([atoms_copy])
         atoms_copy.set_calculator(self.add_delta_calc)
