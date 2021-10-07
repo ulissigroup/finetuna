@@ -8,8 +8,6 @@ from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from ase.md import VelocityVerlet, Langevin, nvtberendsen
 import numpy as np
 
-from al_mlp.utils import copy_images
-
 
 class NEBcalc:
     def __init__(self, starting_images, intermediate_samples=3):
