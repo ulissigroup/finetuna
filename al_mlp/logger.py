@@ -106,6 +106,7 @@ class Logger:
             # pca_x, pca_y = pca_traj(self.parent_traj, atoms)
             # extra_info["pca_x"] = pca_x
             # extra_info["pca_y"] = pca_y
+            pass
         if self.uncertainty_quantify:
             force_scores, energy_scores = quantify_uncertainty(
                 self.parent_traj, self.ml_potential
