@@ -119,7 +119,7 @@ def main(args):
     oal_initial_structure = initial_structure
 
     # declare parent calc
-    parent_str = config["links"].get("parent_calc", "vasp"):
+    parent_str = config["links"].get("parent_calc", "vasp")
     if parent_str == "vasp":
         parent_calc = Vasp(**config["vasp"])
     elif parent_str == "vasp_interactive":
