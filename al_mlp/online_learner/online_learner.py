@@ -364,6 +364,9 @@ class OnlineLearner(Calculator):
         force_cons = new_data.get_forces()
         return energy_actual, force_actual, force_cons
 
+    def get_ml_calc(self):
+        return self.ml_potential
+
     def get_ml_prediction(self, atoms):
         """
         Helper function which takes an atoms object with no calc attached.

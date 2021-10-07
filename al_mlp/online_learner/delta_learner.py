@@ -56,6 +56,9 @@ class DeltaLearner(OnlineLearner):
             self.refs,
         )
 
+    def get_ml_calc(self):
+        return self.add_delta_calc
+
     def get_ml_prediction(self, atoms):
         """
         Helper function which takes an atoms object with no calc attached.
