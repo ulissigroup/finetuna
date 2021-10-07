@@ -125,7 +125,7 @@ def main(args):
     elif parent_str == "vasp_interactive":
         parent_calc = VaspInteractive(**config["vasp"])
     elif parent_str == "emt":
-        parent_calc == EMT()
+        parent_calc = EMT()
 
     # declare base calc (if path is given)
     if "ocp" in config:
