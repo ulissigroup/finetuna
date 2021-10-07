@@ -103,7 +103,7 @@ class Logger:
     def write(self, atoms: Atoms, info: dict):
         # perform calculations for extra info
         extra_info = {}
-        if self.pca_metrics:
+        if self.pca_quantify:
             # pca_x, pca_y = pca_traj(self.parent_traj, atoms)
             # extra_info["pca_x"] = pca_x
             # extra_info["pca_y"] = pca_y
