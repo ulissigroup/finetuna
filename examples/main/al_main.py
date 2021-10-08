@@ -7,6 +7,8 @@ from ase.io import Trajectory
 from ase.optimize.bfgs import BFGS
 from ase.optimize.sciopt import SciPyFminCG
 from ase.calculators.vasp import Vasp
+from ase.calculators.emt import EMT
+from vasp_interactive import VaspInteractive
 from ase.db import connect
 
 from al_mlp.atomistic_methods import Relaxation
@@ -117,7 +119,13 @@ def main(args):
     oal_initial_structure = initial_structure
 
     # declare parent calc
-    parent_calc = Vasp(**config["vasp"])
+    parent_str = config["links"].get("parent_calc", "vasp")
+    if parent_str == "vasp":
+        parent_calc = Vasp(**config["vasp"])
+    elif parent_str == "vasp_interactive":
+        parent_calc = VaspInteractive(**config["vasp"])
+    elif parent_str == "emt":
+        parent_calc = EMT()
 
     # declare base calc (if path is given)
     if "ocp" in config:
