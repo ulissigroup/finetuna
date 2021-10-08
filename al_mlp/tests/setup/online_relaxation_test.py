@@ -75,6 +75,6 @@ def run_online_al(atomistic_method, images, elements, dbname, parent_calc):
 
     if os.path.exists("dft_calls.db"):
         os.remove("dft_calls.db")
-    atomistic_method.run(onlinecalc, filename=dbname)
+    atomistic_method.run(onlinecalc, filename=dbname, replay_traj = True)
 
     return onlinecalc, atomistic_method
