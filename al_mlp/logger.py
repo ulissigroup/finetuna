@@ -110,9 +110,6 @@ class Logger:
             )
 
     def write(self, atoms: Atoms, info: dict, extra_info: dict = {}):
-        # perform calculations for extra info
-        extra_info = self.get_extra_info()
-
         # write to ASE db
         if self.asedb_name is not None:
             random.seed(self.step)
