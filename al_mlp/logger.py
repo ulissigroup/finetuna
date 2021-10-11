@@ -171,6 +171,10 @@ def quantify_uncertainty(traj, model_calc):
     parent_images = copy_images(traj)
     model_images = compute_with_calc(traj, model_calc)
 
+    initial_energy_diff = (
+        model_images[0].get_potential_energy() - parent_images[0].get_potential_energy()
+    )
+
     true_forces = []
     predicted_forces = []
     force_uncertainties = []
@@ -186,7 +190,7 @@ def quantify_uncertainty(traj, model_calc):
             raise ValueError("NaN uncertainty")
 
         true_energies.append(pi.get_potential_energy())
-        predicted_energies.append(mi.get_potential_energy())
+        predicted_energies.append(mi.get_potential_energy() - initial_energy_diff)
         energy_uncertainties.append(mi.info["energy_stds"])
 
     force_scores = get_all_metrics(
