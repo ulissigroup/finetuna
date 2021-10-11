@@ -33,7 +33,7 @@ class OnlineLearner(Calculator):
         self.parent_dataset = []
         self.complete_dataset = []
         self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
-        self.trained_once = False
+        self.trained_at_least_once = False
         self.check_final_point = False
 
         if mongo_db is None:
@@ -143,7 +143,7 @@ class OnlineLearner(Calculator):
         self.info["fmax"] = fmax
 
         extra_info = {}
-        if self.trained_once:
+        if self.trained_at_least_once:
             extra_info = self.logger.get_extra_info(atoms, self.get_ml_calc)
         self.logger.write(atoms, self.info, extra_info=extra_info)
 
@@ -328,16 +328,16 @@ class OnlineLearner(Calculator):
         if (
             (self.train_on_recent_points is not None)
             and (len(self.parent_dataset) > self.train_on_recent_points)
-            and self.trained_once
+            and self.trained_at_least_once
         ):
             self.ml_potential.train(self.parent_dataset[-self.train_on_recent_points :])
         # otherwise, if partial fitting, partial fit if not training for the first time
-        elif self.trained_once and (self.partial_fit):
+        elif self.trained_at_least_once and (self.partial_fit):
             self.ml_potential.train(self.parent_dataset, partial_dataset)
         # otherwise just train as normal
         else:
             self.ml_potential.train(self.parent_dataset)
-            self.trained_once = True
+            self.trained_at_least_once = True
 
         energy_actual = new_data.get_potential_energy(apply_constraint=self.constraint)
         force_actual = new_data.get_forces(apply_constraint=self.constraint)
