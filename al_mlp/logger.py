@@ -90,9 +90,6 @@ class Logger:
         self.init_extra_info()
 
     def init_extra_info(self):
-        # extra info bool initializes to False, must be set later when learner is okay with it
-        self.extra_info_bool = False
-
         # initialize booleans for extra calculations
         self.pca_quantify = False
         self.uncertainty_quantify = False
@@ -112,7 +109,7 @@ class Logger:
                 "uncertainty_quantify", False
             )
 
-    def write(self, atoms: Atoms, info: dict):
+    def write(self, atoms: Atoms, info: dict, extra_info: dict = {}):
         # perform calculations for extra info
         extra_info = self.get_extra_info()
 
@@ -155,26 +152,22 @@ class Logger:
         # increment step
         self.step += 1
 
-    def get_extra_info(self):
+    def get_extra_info(self, atoms: Atoms):
         extra_info = {}
-        if self.extra_info_bool:
-            if self.pca_quantify:
-                # pca_x, pca_y = pca_traj(self.parent_traj, atoms)
-                # extra_info["pca_x"] = pca_x
-                # extra_info["pca_y"] = pca_y
-                pass
-            if self.uncertainty_quantify:
-                force_scores, energy_scores = quantify_uncertainty(
-                    self.parent_traj, self.ml_potential
-                )
-                force_scores.pop("adv_group_calibration")
-                energy_scores.pop("adv_group_calibration")
-                extra_info["force_scores"] = force_scores
-                extra_info["energy_scores"] = energy_scores
+        if self.pca_quantify:
+            # pca_x, pca_y = pca_traj(self.parent_traj, atoms)
+            # extra_info["pca_x"] = pca_x
+            # extra_info["pca_y"] = pca_y
+            pass
+        if self.uncertainty_quantify:
+            force_scores, energy_scores = quantify_uncertainty(
+                self.parent_traj, self.ml_potential
+            )
+            force_scores.pop("adv_group_calibration")
+            energy_scores.pop("adv_group_calibration")
+            extra_info["force_scores"] = force_scores
+            extra_info["energy_scores"] = energy_scores
         return extra_info
-
-    def set_extra_info_bool(self, extra_bool):
-        self.extra_info_bool = extra_bool
 
 
 def quantify_uncertainty(traj, model_calc):
