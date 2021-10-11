@@ -90,6 +90,10 @@ class Logger:
         self.init_extra_info()
 
     def init_extra_info(self):
+        # extra info bool initializes to False, must be set later when learner is okay with it
+        self.extra_info_bool = False
+
+        # initialize booleans for extra calculations
         self.pca_quantify = False
         self.uncertainty_quantify = False
         self.parent_traj = None
