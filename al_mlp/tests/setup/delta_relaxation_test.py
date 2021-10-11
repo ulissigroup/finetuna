@@ -79,6 +79,6 @@ def run_delta_al(atomistic_method, images, elements, dbname, parent_calc):
 
     if os.path.exists("dft_calls.db"):
         os.remove("dft_calls.db")
-    atomistic_method.run(deltacalc, filename=dbname)
+    atomistic_method.run(deltacalc, filename=dbname, replay_traj=True)
 
     return deltacalc, atomistic_method
