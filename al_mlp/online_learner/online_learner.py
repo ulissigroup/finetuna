@@ -34,6 +34,7 @@ class OnlineLearner(Calculator):
         self.parent_dataset = []
         self.complete_dataset = []
         self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
+        self.trained_once = False
         self.check_final_point = False
         if self.wandb_log is True:
             wandb_config = {
@@ -345,19 +346,20 @@ class OnlineLearner(Calculator):
         self.parent_calls += 1
 
         # retrain the ml potential
-        # if training only on recent points, then check if dataset has become long enough to train on subset
-        if (self.train_on_recent_points is not None) and (
-            len(self.parent_dataset) > self.train_on_recent_points
+        # if training only on recent points, and have trained before, then check if dataset has become long enough to train on subset
+        if (
+            (self.train_on_recent_points is not None)
+            and (len(self.parent_dataset) > self.train_on_recent_points)
+            and self.trained_once
         ):
             self.ml_potential.train(self.parent_dataset[-self.train_on_recent_points :])
         # otherwise, if partial fitting, partial fit if not training for the first time
-        elif (len(self.parent_dataset) >= self.num_initial_points) and (
-            self.partial_fit
-        ):
+        elif self.trained_once and (self.partial_fit):
             self.ml_potential.train(self.parent_dataset, partial_dataset)
         # otherwise just train as normal
         else:
             self.ml_potential.train(self.parent_dataset)
+            self.trained_once = True
 
         energy_actual = new_data.get_potential_energy(apply_constraint=self.constraint)
         force_actual = new_data.get_forces(apply_constraint=self.constraint)
