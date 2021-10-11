@@ -2,12 +2,11 @@ from logging import warn
 import numpy as np
 from ase.calculators.calculator import Calculator
 from ase.calculators.singlepoint import SinglePointCalculator
-from al_mlp.utils import convert_to_singlepoint, write_to_db_online
+from al_mlp.logger import Logger
+from al_mlp.utils import convert_to_singlepoint
 import time
 import math
 import ase.db
-from al_mlp.mongo import MongoWrapper
-import wandb
 import queue
 
 __author__ = "Muhammed Shuaibi"
@@ -36,24 +35,10 @@ class OnlineLearner(Calculator):
         self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
         self.trained_once = False
         self.check_final_point = False
-        if self.wandb_log is True:
-            wandb_config = {
-                "learner": self.learner_params,
-                "ml_potential": self.ml_potential.mlp_params,
-            }
-            if mongo_db is not None:
-                wandb_config["mongo"] = self.mongo_wrapper.params
-            if optional_config is not None:
-                wandb_config["run_config"] = optional_config
-            self.wandb_run = wandb.init(
-                project=self.wandb_init.get("project", "almlp"),
-                name=self.wandb_init.get("name", "DefaultName"),
-                entity=self.wandb_init.get("entity", "ulissi-group"),
-                group=self.wandb_init.get("group", "DefaultGroup"),
-                notes=self.wandb_init.get("notes", ""),
-                config=wandb_config,
-            )
-        self.init_mongo(mongo_db=mongo_db)
+
+        if mongo_db is None:
+            mongo_db = {"online_learner": None}
+        self.init_logger(mongo_db, optional_config)
 
         self.parent_calls = 0
         self.curr_step = 0
@@ -61,17 +46,15 @@ class OnlineLearner(Calculator):
         for image in parent_dataset:
             self.add_data_and_retrain(image)
 
-    def init_mongo(self, mongo_db):
-        if mongo_db is not None:
-            self.mongo_wrapper = MongoWrapper(
-                mongo_db["online_learner"],
-                self.learner_params,
-                self.ml_potential,
-                self.parent_calc,
-                None,
-            )
-        else:
-            self.mongo_wrapper = None
+    def init_logger(self, mongo_db, optional_config):
+        self.logger = Logger(
+            learner_params=self.learner_params,
+            ml_potential=self.ml_potential,
+            parent_calc=self.parent_calc,
+            base_calc=None,
+            mongo_db_collection=mongo_db["online_learner"],
+            optional_config=optional_config,
+        )
 
     def init_learner_params(self):
         self.fmax_verify_threshold = self.learner_params.get(
@@ -159,15 +142,10 @@ class OnlineLearner(Calculator):
         self.info["forces"] = str(forces)
         self.info["fmax"] = fmax
 
-        # Write to asedb, mongodb, wandb
-        write_to_db_online(self.queried_db, [atoms], self.info, self.curr_step)
-        if self.mongo_wrapper is not None:
-            self.mongo_wrapper.write_to_mongo(atoms, self.info)
-
-        if self.wandb_log:
-            wandb.log(
-                {key: value for key, value in self.info.items() if value is not None}
-            )
+        extra_info = {}
+        if self.trained_once:
+            extra_info = self.logger.get_extra_info(atoms, self.get_ml_calc)
+        self.logger.write(atoms, self.info, extra_info=extra_info)
 
     def get_energy_and_forces(self, atoms):
         atoms_copy = atoms.copy()

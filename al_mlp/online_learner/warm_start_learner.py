@@ -1,6 +1,7 @@
 from al_mlp.online_learner.online_learner import OnlineLearner
 from al_mlp.utils import convert_to_singlepoint
 import numpy as np
+from al_mlp.logger import Logger
 
 
 class WarmStartLearner(OnlineLearner):
@@ -14,6 +15,9 @@ class WarmStartLearner(OnlineLearner):
         mongo_db=None,
         optional_config=None,
     ):
+        self.warm_start_calc = base_calc
+        self.warming_up = True
+
         OnlineLearner.__init__(
             self,
             learner_params,
@@ -24,8 +28,15 @@ class WarmStartLearner(OnlineLearner):
             optional_config=optional_config,
         )
 
-        self.warm_start_calc = base_calc
-        self.warming_up = True
+    def init_logger(self, mongo_db, optional_config):
+        self.logger = Logger(
+            learner_params=self.learner_params,
+            ml_potential=self.ml_potential,
+            parent_calc=self.parent_calc,
+            base_calc=self.warm_start_calc,
+            mongo_db_collection=mongo_db["online_learner"],
+            optional_config=optional_config,
+        )
 
     def get_energy_and_forces(self, atoms):
         if self.warming_up:
