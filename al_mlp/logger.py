@@ -41,6 +41,12 @@ class Logger:
         mongo_db: MongoClient
             Optional MongoClient from the pymongo package associated with the desired mongo_db.
         """
+        # save input arguments
+        self.learner_params = learner_params
+        self.ml_potential = ml_potential
+        self.parent_calc = parent_calc
+        self.base_calc = base_calc
+        self.optional_config = optional_config
 
         self.step = 0
 
@@ -81,41 +87,30 @@ class Logger:
                 config=wandb_config,
             )
 
-        self.ml_potential = ml_potential
+        self.init_extra_info()
+
+    def init_extra_info(self):
         self.pca_quantify = False
         self.uncertainty_quantify = False
         self.parent_traj = None
         # if a trajectory is supplied in the optional config, store that for PCA, uncertainty metrics, etc.
         if (
-            optional_config is not None
-            and "links" in optional_config
-            and "traj" in optional_config["links"]
+            self.optional_config is not None
+            and "links" in self.optional_config
+            and "traj" in self.optional_config["links"]
         ):
-            self.parent_traj = Trajectory(optional_config["links"]["traj"])
+            self.parent_traj = Trajectory(self.optional_config["links"]["traj"])
 
-            self.pca_quantify = learner_params.get("logger", {}).get(
+            self.pca_quantify = self.learner_params.get("logger", {}).get(
                 "pca_quantify", False
             )
-            self.uncertainty_quantify = learner_params.get("logger", {}).get(
+            self.uncertainty_quantify = self.learner_params.get("logger", {}).get(
                 "uncertainty_quantify", False
             )
 
     def write(self, atoms: Atoms, info: dict):
         # perform calculations for extra info
-        extra_info = {}
-        if self.pca_quantify:
-            # pca_x, pca_y = pca_traj(self.parent_traj, atoms)
-            # extra_info["pca_x"] = pca_x
-            # extra_info["pca_y"] = pca_y
-            pass
-        if self.uncertainty_quantify:
-            force_scores, energy_scores = quantify_uncertainty(
-                self.parent_traj, self.ml_potential
-            )
-            force_scores.pop("adv_group_calibration")
-            energy_scores.pop("adv_group_calibration")
-            extra_info["force_scores"] = force_scores
-            extra_info["energy_scores"] = energy_scores
+        extra_info = self.get_extra_info()
 
         # write to ASE db
         if self.asedb_name is not None:
@@ -155,6 +150,27 @@ class Logger:
 
         # increment step
         self.step += 1
+
+    def get_extra_info(self):
+        extra_info = {}
+        if self.extra_info_bool:
+            if self.pca_quantify:
+                # pca_x, pca_y = pca_traj(self.parent_traj, atoms)
+                # extra_info["pca_x"] = pca_x
+                # extra_info["pca_y"] = pca_y
+                pass
+            if self.uncertainty_quantify:
+                force_scores, energy_scores = quantify_uncertainty(
+                    self.parent_traj, self.ml_potential
+                )
+                force_scores.pop("adv_group_calibration")
+                energy_scores.pop("adv_group_calibration")
+                extra_info["force_scores"] = force_scores
+                extra_info["energy_scores"] = energy_scores
+        return extra_info
+
+    def set_extra_info_bool(self, extra_bool):
+        self.extra_info_bool = extra_bool
 
 
 def quantify_uncertainty(traj, model_calc):
