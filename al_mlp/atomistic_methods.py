@@ -154,7 +154,7 @@ class Relaxation:
         replay_traj=False,
         max_parent_calls=None,
         check_final=False,
-        online_ml_fmax = None,
+        online_ml_fmax=None,
     ):
         structure = self.initial_geometry.copy()
         structure.set_calculator(calc)
