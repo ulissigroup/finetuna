@@ -11,7 +11,8 @@ from al_mlp.utils import compute_with_calc, copy_images
 import math
 import numpy as np
 from uncertainty_toolbox.metrics import get_all_metrics
-from al_mlp.pca import pca_traj
+
+# from al_mlp.pca import pca_traj
 
 
 class Logger:
@@ -151,9 +152,10 @@ class Logger:
     def get_extra_info(self, atoms: Atoms, ml_potential: Calculator, check: bool):
         extra_info = {}
         if self.pca_quantify:
-            pca_x, pca_y = pca_traj(self.parent_traj, atoms)
-            extra_info["pca_x"] = pca_x
-            extra_info["pca_y"] = pca_y
+            # pca_x, pca_y = pca_traj(self.parent_traj, atoms)
+            # extra_info["pca_x"] = pca_x
+            # extra_info["pca_y"] = pca_y
+            pass
         if self.uncertainty_quantify and check:
             force_scores, energy_scores = quantify_uncertainty(
                 self.parent_traj, ml_potential
