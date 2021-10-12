@@ -72,16 +72,12 @@ def run_relaxation(
         maxstep=maxstep,
     )
 
-    online_ml_fmax = None
-    if config["relaxation"]["fmax"] != config["learner"]["fmax_verify_threshold"]:
-        online_ml_fmax = config["learner"]["fmax_verify_threshold"]
-
     oal_relaxation.run(
         learner,
         filename=dbname,
         replay_traj=replay_traj_bool,
         max_parent_calls=config["relaxation"]["max_parent_calls"],
-        online_ml_fmax=online_ml_fmax,
+        online_ml_fmax=config["learner"]["fmax_verify_threshold"],
     )
 
     return oal_relaxation
