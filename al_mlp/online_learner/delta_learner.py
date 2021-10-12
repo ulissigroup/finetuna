@@ -55,6 +55,8 @@ class DeltaLearner(OnlineLearner):
         )
 
     def get_ml_calc(self):
+        self.ml_potential.reset()
+        self.add_delta_calc.reset()
         return self.add_delta_calc
 
     def get_ml_prediction(self, atoms):

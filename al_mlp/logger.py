@@ -141,7 +141,7 @@ class Logger:
             wandb.log(
                 {
                     key: value
-                    for key, value in info.items() + extra_info.items()
+                    for key, value in {**info, **extra_info}.items()
                     if value is not None
                 }
             )
