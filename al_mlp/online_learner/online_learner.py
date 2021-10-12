@@ -143,8 +143,10 @@ class OnlineLearner(Calculator):
         self.info["fmax"] = fmax
 
         extra_info = {}
-        if self.trained_at_least_once and self.info["check"]:
-            extra_info = self.logger.get_extra_info(atoms, self.get_ml_calc())
+        if self.trained_at_least_once:
+            extra_info = self.logger.get_extra_info(
+                atoms, self.get_ml_calc(), self.info["check"]
+            )
         self.logger.write(atoms, self.info, extra_info=extra_info)
 
     def get_energy_and_forces(self, atoms):

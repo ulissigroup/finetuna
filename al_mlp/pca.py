@@ -53,30 +53,44 @@ def pca_traj(traj, image):
     for i in range(np.shape(des_list[0])[-1]):
         columns.append(i)
 
-    df = []
-    for i in range(len(des_list)):
-        df.append(pd.DataFrame(des_list[i], columns=columns))
-    df = pd.concat([df[i] for i in range(len(df))], ignore_index=True)
+    # df = []
+    # for i in range(len(des_list)):
+    #     df.append(pd.DataFrame(des_list[i], columns=columns))
+    # df = pd.concat([df[i] for i in range(len(df))], ignore_index=True)
+
+    df = pd.DataFrame(des_list)
 
     df = df.loc[:, ~df.eq(0).all()]
-    columns = list(df.columns)[:-1]
+    columns = list(df.columns)
     sub_array = df.loc[:, columns].values
-    stand_scaler = StandardScaler().fit_transform(sub_array)
+    standard_scaler = StandardScaler()
+    transformed = standard_scaler.fit_transform(sub_array)
 
-    pca = PCA(n_components=2)
-    principal_components = pca.fit_transform(stand_scaler)
-    principal_df = pd.DataFrame(
-        data=principal_components,
-        columns=["principal component 1", "principal component 2"],
+    pca = PCA(n_components=10)
+    principal_components = pca.fit_transform(transformed)
+    # principal_df = pd.DataFrame(
+    #     data=principal_components,
+    #     columns=["principal component 1", "principal component 2"],
+    # )
+
+    image_structure_descriptor = Structure(
+        image.get_cell(),
+        [species_map[x] for x in image.get_atomic_numbers()],
+        image.get_positions(),
+        5,
+        [b2calc],
     )
+    des = image_structure_descriptor.descriptors[0].descriptors
+    des_reshape = []
+    for a in des:
+        for b in a:
+            des_reshape.extend(np.ravel(np.array(b)))
+    transformed_image = standard_scaler.transform([des_reshape])
 
-    raise NotImplementedError
-    # TODO:
-    # need to either figure out the descriptors or solve the problem with wrapping around unit cells
-    pca = PCA(n_components=2)
+    pc_xy = pca.transform(transformed_image)
 
-    x = None
-    y = None
+    x = pc_xy[0][0]
+    y = pc_xy[0][1]
     return x, y
 
 
