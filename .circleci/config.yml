@@ -34,6 +34,7 @@ jobs:
               conda install --yes -c anaconda openblas
               conda install --yes -c anaconda cmake
               conda install --yes -c conda-forge liblapacke
+              module load cmake
               BLA_VENDOR=OpenBLAS pip install flare_pp
               conda install -c conda-forge conda-merge
               wget https://raw.githubusercontent.com/ulissigroup/amptorch/master/env_cpu.yml -O env_amptorch_cpu.yml
