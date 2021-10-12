@@ -77,6 +77,7 @@ def run_relaxation(
         filename=dbname,
         replay_traj=replay_traj_bool,
         max_parent_calls=config["relaxation"]["max_parent_calls"],
+        online_ml_fmax=config["relaxation"]["online_ml_fmax"]
     )
 
     return oal_relaxation
