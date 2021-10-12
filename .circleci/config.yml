@@ -56,6 +56,10 @@ jobs:
             conda activate al_mlp
             pip install -e .
             pip install spglib
+            conda install --yes -c anaconda openblas
+            conda install --yes -c anaconda cmake
+            conda install --yes -c conda-forge liblapacke
+            BLA_VENDOR=OpenBLAS pip install flare_pp
             pip install git+https://github.com/uncertainty-toolbox/uncertainty-toolbox
             OMP_NUM_THREADS=1 pytest al_mlp/tests/suites/light_suite.py
           no_output_timeout: 1.5h
