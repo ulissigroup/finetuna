@@ -39,7 +39,7 @@ def do_between_learner_and_run(learner, mongo_db):
 
     if mongo_db is not None:
         with open("runid.txt", "a") as f:
-            f.write(str(learner.mongo_wrapper.run_id) + "\n")
+            f.write(str(learner.logger.mongo_wrapper.run_id) + "\n")
 
 
 def run_relaxation(
