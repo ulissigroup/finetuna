@@ -174,7 +174,7 @@ class Relaxation:
         if check_final:
             dyn.attach(check_final_point, 1, calc, dyn)
 
-        if online_ml_fmax is not None:
+        if online_ml_fmax is not None and online_ml_fmax != self.fmax:
             dyn.parent_fmax = self.fmax
             dyn.ml_fmax = online_ml_fmax
             dyn.attach(set_online_ml_fmax, 1, calc, dyn)
