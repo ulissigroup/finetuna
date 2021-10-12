@@ -144,7 +144,7 @@ class OnlineLearner(Calculator):
 
         extra_info = {}
         if self.trained_at_least_once:
-            extra_info = self.logger.get_extra_info(atoms, self.get_ml_calc)
+            extra_info = self.logger.get_extra_info(atoms, self.get_ml_calc())
         self.logger.write(atoms, self.info, extra_info=extra_info)
 
     def get_energy_and_forces(self, atoms):
