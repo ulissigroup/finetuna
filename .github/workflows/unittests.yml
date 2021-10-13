@@ -32,12 +32,6 @@ jobs:
         cd /home/jovyan/ocp
         pip install -e .
         cd $CWD
-        pwd
-        ls
-        al_mlp/
-        tests/
-        tests/suites/
-        tests/suites/light_suite.py
     - name: Run pytest on light test suite unit tests
       run: |
-        pytest tests/suites/light_suite.py
+        pytest al_mlp/tests/suites/light_suite.py
