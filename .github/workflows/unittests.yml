@@ -9,7 +9,7 @@ jobs:
   test_local_scheduler:
     name: Test al_mlp with light test suite
 
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted, linux, shared-scratch]
 
     container:
       image: docker://ulissigroup/kubeflow_vasp:amptorch_ocp
