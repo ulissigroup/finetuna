@@ -6,7 +6,7 @@ env:
 on: [push, pull_request]
 
 jobs:
-  test_local_scheduler:
+  light_test:
     name: Test al_mlp with light test suite
 
     runs-on: [self-hosted, linux, shared-scratch]
@@ -14,14 +14,15 @@ jobs:
     container:
       image: docker://ulissigroup/kubeflow_vasp:amptorch_ocp
 
+      steps:
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
     steps:
-
-    - name: Login to DockerHub
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-
     - name: Run pytest on light test suite unit tests
       uses: actions/checkout@v2
     - run: |
