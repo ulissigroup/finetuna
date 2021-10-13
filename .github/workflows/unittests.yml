@@ -15,13 +15,16 @@ jobs:
       image: docker://ulissigroup/kubeflow_vasp:amptorch_ocp
 
     steps:
-    - run: |
-        sudo apt update && sudo apt install git-lfs
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
     - name: Run pytest on light test suite unit tests
       uses: actions/checkout@v2
-      with: 
-        lfs: true
-    - run: |
+      run: |
         pip install git+https://github.com/uncertainty-toolbox/uncertainty-toolbox
         cd /home/jovyan
         git clone https://github.com/ulissigroup/amptorch
@@ -30,5 +33,4 @@ jobs:
         git clone https://github.com/Open-Catalyst-Project/ocp
         cd /home/jovyan/ocp
         pip install -e .
-        git clone https://github.com/ulissigroup/al_mlp
         pytest al_mlp/tests/suites/light_suite.py
