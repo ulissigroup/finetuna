@@ -53,14 +53,10 @@ def pca_traj(traj, image):
     for i in range(np.shape(des_list[0])[-1]):
         columns.append(i)
 
-    # df = []
-    # for i in range(len(des_list)):
-    #     df.append(pd.DataFrame(des_list[i], columns=columns))
-    # df = pd.concat([df[i] for i in range(len(df))], ignore_index=True)
-
     df = pd.DataFrame(des_list)
+    keep_columns = ~df.eq(0).all()
 
-    df = df.loc[:, ~df.eq(0).all()]
+    df = df.loc[:, keep_columns]
     columns = list(df.columns)
     sub_array = df.loc[:, columns].values
     standard_scaler = StandardScaler()
@@ -68,10 +64,6 @@ def pca_traj(traj, image):
 
     pca = PCA(n_components=10)
     principal_components = pca.fit_transform(transformed)
-    # principal_df = pd.DataFrame(
-    #     data=principal_components,
-    #     columns=["principal component 1", "principal component 2"],
-    # )
 
     image_structure_descriptor = Structure(
         image.get_cell(),
@@ -85,7 +77,9 @@ def pca_traj(traj, image):
     for a in des:
         for b in a:
             des_reshape.extend(np.ravel(np.array(b)))
-    transformed_image = standard_scaler.transform([des_reshape])
+    df = pd.DataFrame([des_reshape]).loc[:, keep_columns]
+    sub_array = df.values
+    transformed_image = standard_scaler.transform(sub_array)
 
     pc_xy = pca.transform(transformed_image)
 
