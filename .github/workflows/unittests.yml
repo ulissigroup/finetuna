@@ -24,6 +24,7 @@ jobs:
       run: |
         export CWD=$(pwd)
         pip install git+https://github.com/uncertainty-toolbox/uncertainty-toolbox
+        pip install h5py
         cd /home/jovyan
         git clone https://github.com/ulissigroup/amptorch
         cd /home/jovyan/amptorch
