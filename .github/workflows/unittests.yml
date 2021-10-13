@@ -22,6 +22,7 @@ jobs:
       uses: actions/checkout@v2
     - name: Set up environment
       run: |
+        export CWD=$(pwd)
         pip install git+https://github.com/uncertainty-toolbox/uncertainty-toolbox
         cd /home/jovyan
         git clone https://github.com/ulissigroup/amptorch
@@ -30,7 +31,7 @@ jobs:
         git clone https://github.com/Open-Catalyst-Project/ocp
         cd /home/jovyan/ocp
         pip install -e .
-        cd /home/jovyan
+        cd $CWD
     - name: Run pytest on light test suite unit tests
       run: |
-        pytest al_mlp/tests/suites/light_suite.py
+        pytest tests/suites/light_suite.py
