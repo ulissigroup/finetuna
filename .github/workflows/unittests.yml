@@ -1,0 +1,34 @@
+name: Test al_mlp by running unit tests with pytest
+
+env:
+  OMP_NUM_THREADS: '1'
+
+on: [push, pull_request]
+
+jobs:
+  test_local_scheduler:
+    name: Test al_mlp with light test suite
+
+    runs-on: [self-hosted, linux]
+
+    container:
+      image: docker://ulissigroup/kubeflow_vasp:amptorch_ocp
+
+    steps:
+    - run: |
+        sudo apt update && sudo apt install git-lfs
+    - name: Run pytest on light test suite unit tests
+      uses: actions/checkout@v2
+      with: 
+        lfs: true
+    - run: |
+        pip install git+https://github.com/uncertainty-toolbox/uncertainty-toolbox
+        cd /home/jovyan
+        git clone https://github.com/ulissigroup/amptorch
+        cd /home/jovyan/amptorch
+        python setup.py install
+        git clone https://github.com/Open-Catalyst-Project/ocp
+        cd /home/jovyan/ocp
+        pip install -e .
+        git clone https://github.com/ulissigroup/al_mlp
+        pytest al_mlp/tests/suites/light_suite.py
