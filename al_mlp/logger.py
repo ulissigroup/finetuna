@@ -109,8 +109,8 @@ class Logger:
                 "uncertainty_quantify", False
             )
 
-            if self.pca_quantify:
-                self.pca_analyzer = TrajPCA(self.parent_traj)
+            # if self.pca_quantify:
+            #     self.pca_analyzer = TrajPCA(self.parent_traj)
 
     def write(self, atoms: Atoms, info: dict, extra_info: dict = {}):
         # write to ASE db
