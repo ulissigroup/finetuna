@@ -18,9 +18,10 @@ jobs:
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     steps:
-    - name: Run pytest on light test suite unit tests
+    - name: Checkout actions
       uses: actions/checkout@v2
-    - run: |
+    - name: Set up environment
+      run: |
         pip install git+https://github.com/uncertainty-toolbox/uncertainty-toolbox
         cd /home/jovyan
         git clone https://github.com/ulissigroup/amptorch
@@ -29,4 +30,7 @@ jobs:
         git clone https://github.com/Open-Catalyst-Project/ocp
         cd /home/jovyan/ocp
         pip install -e .
+        cd /home/jovyan
+    - name: Run pytest on light test suite unit tests
+      run: |
         pytest al_mlp/tests/suites/light_suite.py
