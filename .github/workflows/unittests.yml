@@ -24,7 +24,7 @@ jobs:
 
     - name: Run pytest on light test suite unit tests
       uses: actions/checkout@v2
-      run: |
+    - run: |
         pip install git+https://github.com/uncertainty-toolbox/uncertainty-toolbox
         cd /home/jovyan
         git clone https://github.com/ulissigroup/amptorch
