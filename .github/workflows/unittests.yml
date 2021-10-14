@@ -1,0 +1,38 @@
+name: Test al_mlp by running unit tests with pytest
+
+env:
+  OMP_NUM_THREADS: '1'
+
+on: [push, pull_request]
+
+jobs:
+  light_test:
+    name: Test al_mlp with light test suite
+
+    runs-on: [self-hosted, linux, shared-scratch]
+
+    container:
+      image: docker://ulissigroup/kubeflow_vasp:amptorch_ocp
+      credentials:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    steps:
+    - name: Checkout actions
+      uses: actions/checkout@v2
+    - name: Set up environment
+      run: |
+        export CWD=$(pwd)
+        pip install git+https://github.com/uncertainty-toolbox/uncertainty-toolbox
+        pip install h5py
+        cd /home/jovyan
+        git clone https://github.com/ulissigroup/amptorch
+        cd /home/jovyan/amptorch
+        python setup.py install
+        git clone https://github.com/Open-Catalyst-Project/ocp
+        cd /home/jovyan/ocp
+        pip install -e .
+        cd $CWD
+    - name: Run pytest on light test suite unit tests
+      run: |
+        pytest al_mlp/tests/suites/light_suite.py

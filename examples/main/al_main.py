@@ -22,10 +22,6 @@ from al_mlp.ml_potentials.flare_pp_calc import FlarePPCalc
 
 from ocpmodels.common.relaxation.ase_utils import OCPCalculator
 
-# possibly remove these later when we switch to only OCPCalculator
-# from al_mlp.base_calcs.ocp_model import OCPModel
-# from experimental.zitnick.models import spinconv_grad11
-
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -43,7 +39,7 @@ def do_between_learner_and_run(learner, mongo_db):
 
     if mongo_db is not None:
         with open("runid.txt", "a") as f:
-            f.write(str(learner.mongo_wrapper.run_id) + "\n")
+            f.write(str(learner.logger.mongo_wrapper.run_id) + "\n")
 
 
 def run_relaxation(
@@ -81,6 +77,7 @@ def run_relaxation(
         filename=dbname,
         replay_traj=replay_traj_bool,
         max_parent_calls=config["relaxation"]["max_parent_calls"],
+        online_ml_fmax=config["learner"]["fmax_verify_threshold"],
     )
 
     return oal_relaxation

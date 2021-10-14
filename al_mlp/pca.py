@@ -1,10 +1,8 @@
 from ase.atoms import Atoms
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from ase.io import Trajectory, read, write
+from ase.io import Trajectory
 import numpy as np
-import os
-import re
 from ase.db import connect
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
@@ -243,3 +241,90 @@ def des_pca(traj_dict, fig_title=None):
     colorbar = fig.colorbar(sm)
     colorbar.set_label("-log(abs(energy))")
     plt.savefig("pca.png")
+
+
+class TrajPCA:
+    """
+    Perform PCA on a given trajectory object. Then save that analysis for use on later atoms objects
+    Parameters
+    """
+
+    def __init__(self, traj):
+        """
+        Arguments
+        ----------
+        traj: Trajectory
+            the parent Trajectory for this system to be compared to
+        """
+        self.species_map = init_species_map(traj[0])
+        self.b2calc = B2(
+            "chebyshev",
+            "quadratic",
+            [0, 5],
+            [],
+            [len(self.species_map), 12, 3],
+        )
+
+        energies = []
+        des_list = []
+        energies.append([j.get_potential_energy() for j in traj])
+        for j in range(len(traj)):
+            atoms = traj[j]
+            structure_descriptor = Structure(
+                atoms.get_cell(),
+                [self.species_map[x] for x in atoms.get_atomic_numbers()],
+                atoms.get_positions(),
+                5,
+                [self.b2calc],
+            )
+            des = structure_descriptor.descriptors[0].descriptors
+            des_reshape = []
+            for a in des:
+                for b in a:
+                    des_reshape.extend(np.ravel(np.array(b)))
+            des_list.append(des_reshape)
+
+        columns = []
+        for i in range(np.shape(des_list[0])[-1]):
+            columns.append(i)
+
+        df = pd.DataFrame(des_list)
+        self.keep_columns = ~df.eq(0).all()
+
+        df = df.loc[:, self.keep_columns]
+        columns = list(df.columns)
+        sub_array = df.loc[:, columns].values
+        self.standard_scaler = StandardScaler()
+        transformed = self.standard_scaler.fit_transform(sub_array)
+
+        self.pca = PCA(n_components=10)
+        principal_components = self.pca.fit_transform(transformed)
+
+    def analyze_image(self, image):
+        """
+        Arguments
+        ----------
+        image: Atoms
+            the specific ase Atoms object to compare to the traj
+        """
+        image_structure_descriptor = Structure(
+            image.get_cell(),
+            [self.species_map[x] for x in image.get_atomic_numbers()],
+            image.get_positions(),
+            5,
+            [self.b2calc],
+        )
+        des = image_structure_descriptor.descriptors[0].descriptors
+        des_reshape = []
+        for a in des:
+            for b in a:
+                des_reshape.extend(np.ravel(np.array(b)))
+        df = pd.DataFrame([des_reshape]).loc[:, self.keep_columns]
+        sub_array = df.values
+        transformed_image = self.standard_scaler.transform(sub_array)
+
+        pc_xy = self.pca.transform(transformed_image)
+
+        x = pc_xy[0][0]
+        y = pc_xy[0][1]
+        return x, y

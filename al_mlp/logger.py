@@ -1,11 +1,18 @@
 #
 from ase.atoms import Atoms
+from ase.io import Trajectory
 from numpy import ndarray
 from al_mlp.mongo import MongoWrapper
 import ase.db
 from ase.calculators.calculator import Calculator
 import random
 import wandb
+from al_mlp.utils import compute_with_calc, copy_images
+import math
+import numpy as np
+from uncertainty_toolbox.metrics import get_all_metrics
+
+from al_mlp.pca import TrajPCA
 
 
 class Logger:
@@ -34,13 +41,21 @@ class Logger:
         mongo_db: MongoClient
             Optional MongoClient from the pymongo package associated with the desired mongo_db.
         """
+        # save input arguments
+        self.learner_params = learner_params
+        self.ml_potential = ml_potential
+        self.parent_calc = parent_calc
+        self.base_calc = base_calc
+        self.optional_config = optional_config
 
         self.step = 0
 
+        # initialize local ASE db file
         self.asedb_name = learner_params.get("asedb_name", "oal_queried_images.db")
         if self.asedb_name is not None:
             ase.db.connect(self.asedb_name, append=False)
 
+        # initialize mongo db
         self.mongo_wrapper = None
         if mongo_db_collection is not None:
             self.mongo_wrapper = MongoWrapper(
@@ -51,6 +66,7 @@ class Logger:
                 base_calc,
             )
 
+        # initialize Weights and Biases run
         self.wandb_run = None
         wandb_init = learner_params.get("wandb_init", {})
         if wandb_init.get("wandb_log", False) is True:
@@ -71,7 +87,32 @@ class Logger:
                 config=wandb_config,
             )
 
-    def write(self, atoms: Atoms, info: dict):
+        self.init_extra_info()
+
+    def init_extra_info(self):
+        # initialize booleans for extra calculations
+        self.pca_quantify = False
+        self.uncertainty_quantify = False
+        self.parent_traj = None
+        # if a trajectory is supplied in the optional config, store that for PCA, uncertainty metrics, etc.
+        if (
+            self.optional_config is not None
+            and "links" in self.optional_config
+            and "traj" in self.optional_config["links"]
+        ):
+            self.parent_traj = Trajectory(self.optional_config["links"]["traj"])
+
+            self.pca_quantify = self.learner_params.get("logger", {}).get(
+                "pca_quantify", False
+            )
+            self.uncertainty_quantify = self.learner_params.get("logger", {}).get(
+                "uncertainty_quantify", False
+            )
+
+            if self.pca_quantify:
+                self.pca_analyzer = TrajPCA(self.parent_traj)
+
+    def write(self, atoms: Atoms, info: dict, extra_info: dict = {}):
         # write to ASE db
         if self.asedb_name is not None:
             random.seed(self.step)
@@ -100,7 +141,71 @@ class Logger:
 
         # write to Weights and Biases
         if self.wandb_run is not None:
-            wandb.log({key: value for key, value in info.items() if value is not None})
+            wandb.log(
+                {
+                    key: value
+                    for key, value in {**info, **extra_info}.items()
+                    if value is not None
+                }
+            )
 
         # increment step
         self.step += 1
+
+    def get_extra_info(self, atoms: Atoms, ml_potential: Calculator, check: bool):
+        extra_info = {}
+        if self.pca_quantify:
+            pca_x, pca_y = self.pca_analyzer.analyze_image(atoms)
+            extra_info["pca_x"] = pca_x
+            extra_info["pca_y"] = pca_y
+            pass
+        if self.uncertainty_quantify and check:
+            force_scores, energy_scores = quantify_uncertainty(
+                self.parent_traj, ml_potential
+            )
+            force_scores.pop("adv_group_calibration")
+            energy_scores.pop("adv_group_calibration")
+            extra_info["force_scores"] = force_scores
+            extra_info["energy_scores"] = energy_scores
+        return extra_info
+
+
+def quantify_uncertainty(traj, model_calc):
+    parent_images = copy_images(traj)
+    model_images = compute_with_calc(traj, model_calc)
+
+    initial_energy_diff = (
+        model_images[0].get_potential_energy() - parent_images[0].get_potential_energy()
+    )
+
+    true_forces = []
+    predicted_forces = []
+    force_uncertainties = []
+    true_energies = []
+    predicted_energies = []
+    energy_uncertainties = []
+    for pi, mi in zip(parent_images, model_images):
+        true_forces.append(np.sqrt((pi.get_forces() ** 2).sum(axis=1).max()))
+        predicted_forces.append(np.sqrt((mi.get_forces() ** 2).sum(axis=1).max()))
+        force_uncertainties.append(mi.info["max_force_stds"])
+
+        if math.isnan(force_uncertainties[-1]):
+            raise ValueError("NaN uncertainty")
+
+        true_energies.append(pi.get_potential_energy())
+        predicted_energies.append(mi.get_potential_energy() - initial_energy_diff)
+        energy_uncertainties.append(mi.info["energy_stds"])
+
+    force_scores = get_all_metrics(
+        np.array(predicted_forces),
+        np.array(force_uncertainties),
+        np.array(true_forces),
+        verbose=False,
+    )
+    energy_scores = get_all_metrics(
+        np.array(predicted_energies),
+        np.array(energy_uncertainties),
+        np.array(true_energies),
+        verbose=False,
+    )
+    return force_scores, energy_scores

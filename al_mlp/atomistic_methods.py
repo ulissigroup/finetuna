@@ -154,6 +154,7 @@ class Relaxation:
         replay_traj=False,
         max_parent_calls=None,
         check_final=False,
+        online_ml_fmax=None,
     ):
         structure = self.initial_geometry.copy()
         structure.set_calculator(calc)
@@ -173,11 +174,23 @@ class Relaxation:
         if check_final:
             dyn.attach(check_final_point, 1, calc, dyn)
 
+        if online_ml_fmax is not None and online_ml_fmax != self.fmax:
+            dyn.parent_fmax = self.fmax
+            dyn.ml_fmax = online_ml_fmax
+            dyn.attach(set_online_ml_fmax, 1, calc, dyn)
+
         dyn.run(fmax=self.fmax, steps=self.steps)
 
     def get_trajectory(self, filename):
         trajectory = ase.io.Trajectory(filename + ".traj")
         return trajectory
+
+
+def set_online_ml_fmax(calc, optimizer):
+    if calc.info.get("check", True):
+        optimizer.fmax = optimizer.parent_fmax
+    else:
+        optimizer.fmax = optimizer.ml_fmax
 
 
 def check_final_point(calc, optimizer):

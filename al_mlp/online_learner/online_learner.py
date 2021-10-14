@@ -2,12 +2,11 @@ from logging import warn
 import numpy as np
 from ase.calculators.calculator import Calculator
 from ase.calculators.singlepoint import SinglePointCalculator
-from al_mlp.utils import convert_to_singlepoint, write_to_db_online
+from al_mlp.logger import Logger
+from al_mlp.utils import convert_to_singlepoint
 import time
 import math
 import ase.db
-from al_mlp.mongo import MongoWrapper
-import wandb
 import queue
 
 __author__ = "Muhammed Shuaibi"
@@ -34,25 +33,12 @@ class OnlineLearner(Calculator):
         self.parent_dataset = []
         self.complete_dataset = []
         self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
+        self.trained_at_least_once = False
         self.check_final_point = False
-        if self.wandb_log is True:
-            wandb_config = {
-                "learner": self.learner_params,
-                "ml_potential": self.ml_potential.mlp_params,
-            }
-            if mongo_db is not None:
-                wandb_config["mongo"] = self.mongo_wrapper.params
-            if optional_config is not None:
-                wandb_config["run_config"] = optional_config
-            self.wandb_run = wandb.init(
-                project=self.wandb_init.get("project", "almlp"),
-                name=self.wandb_init.get("name", "DefaultName"),
-                entity=self.wandb_init.get("entity", "ulissi-group"),
-                group=self.wandb_init.get("group", "DefaultGroup"),
-                notes=self.wandb_init.get("notes", ""),
-                config=wandb_config,
-            )
-        self.init_mongo(mongo_db=mongo_db)
+
+        if mongo_db is None:
+            mongo_db = {"online_learner": None}
+        self.init_logger(mongo_db, optional_config)
 
         self.parent_calls = 0
         self.curr_step = 0
@@ -60,17 +46,15 @@ class OnlineLearner(Calculator):
         for image in parent_dataset:
             self.add_data_and_retrain(image)
 
-    def init_mongo(self, mongo_db):
-        if mongo_db is not None:
-            self.mongo_wrapper = MongoWrapper(
-                mongo_db["online_learner"],
-                self.learner_params,
-                self.ml_potential,
-                self.parent_calc,
-                None,
-            )
-        else:
-            self.mongo_wrapper = None
+    def init_logger(self, mongo_db, optional_config):
+        self.logger = Logger(
+            learner_params=self.learner_params,
+            ml_potential=self.ml_potential,
+            parent_calc=self.parent_calc,
+            base_calc=None,
+            mongo_db_collection=mongo_db["online_learner"],
+            optional_config=optional_config,
+        )
 
     def init_learner_params(self):
         self.fmax_verify_threshold = self.learner_params.get(
@@ -105,6 +89,8 @@ class OnlineLearner(Calculator):
 
         self.rolling_opt_window = self.learner_params.get("rolling_opt_window", None)
 
+        self.constraint = self.learner_params.get("train_on_constraint", False)
+
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
 
@@ -126,6 +112,8 @@ class OnlineLearner(Calculator):
             "stat_uncertain_tol": None,
             "tolerance": None,
             "parent_calls": None,
+            "energy_error": None,
+            "forces_error": None,
         }
 
     def calculate(self, atoms, properties, system_changes):
@@ -154,15 +142,12 @@ class OnlineLearner(Calculator):
         self.info["forces"] = str(forces)
         self.info["fmax"] = fmax
 
-        # Write to asedb, mongodb, wandb
-        write_to_db_online(self.queried_db, [atoms], self.info, self.curr_step)
-        if self.mongo_wrapper is not None:
-            self.mongo_wrapper.write_to_mongo(atoms, self.info)
-
-        if self.wandb_log:
-            wandb.log(
-                {key: value for key, value in self.info.items() if value is not None}
+        extra_info = {}
+        if self.trained_at_least_once:
+            extra_info = self.logger.get_extra_info(
+                atoms, self.get_ml_calc(), self.info["check"]
             )
+        self.logger.write(atoms, self.info, extra_info=extra_info)
 
     def get_energy_and_forces(self, atoms):
         atoms_copy = atoms.copy()
@@ -192,8 +177,8 @@ class OnlineLearner(Calculator):
             self.complete_dataset.append(atoms_ML)
 
             # Get ML potential predicted energies and forces
-            energy = atoms_ML.get_potential_energy(apply_constraint=False)
-            forces = atoms_ML.get_forces(apply_constraint=False)
+            energy = atoms_ML.get_potential_energy(apply_constraint=self.constraint)
+            forces = atoms_ML.get_forces(apply_constraint=self.constraint)
             constrained_forces = atoms_ML.get_forces()
             fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
             self.info["ml_energy"] = energy
@@ -213,6 +198,8 @@ class OnlineLearner(Calculator):
 
             # If we are extrapolating too far add/retrain
             if need_to_retrain:
+                energy_ML = energy
+                constrained_forces_ML = constrained_forces
                 # Run DFT, so use that energy/force
                 energy, forces, constrained_forces = self.add_data_and_retrain(
                     atoms_copy
@@ -223,6 +210,10 @@ class OnlineLearner(Calculator):
                 self.info["parent_energy"] = energy
                 self.info["parent_forces"] = str(forces)
                 self.info["parent_fmax"] = fmax
+                self.info["energy_error"] = energy - energy_ML
+                self.info["forces_error"] = np.sum(
+                    constrained_forces - constrained_forces_ML
+                )
 
                 atoms_copy.info["check"] = True
             else:
@@ -335,31 +326,37 @@ class OnlineLearner(Calculator):
         self.parent_calls += 1
 
         # retrain the ml potential
-        # if training only on recent points, then check if dataset has become long enough to train on subset
-        if (self.train_on_recent_points is not None) and (
-            len(self.parent_dataset) > self.train_on_recent_points
+        # if training only on recent points, and have trained before, then check if dataset has become long enough to train on subset
+        if (
+            (self.train_on_recent_points is not None)
+            and (len(self.parent_dataset) > self.train_on_recent_points)
+            and self.trained_at_least_once
         ):
             self.ml_potential.train(self.parent_dataset[-self.train_on_recent_points :])
         # otherwise, if partial fitting, partial fit if not training for the first time
-        elif (len(self.parent_dataset) >= self.num_initial_points) and (
-            self.partial_fit
-        ):
+        elif self.trained_at_least_once and (self.partial_fit):
             self.ml_potential.train(self.parent_dataset, partial_dataset)
         # otherwise just train as normal
         else:
             self.ml_potential.train(self.parent_dataset)
+            self.trained_at_least_once = True
 
-        energy_actual = new_data.get_potential_energy(apply_constraint=False)
-        force_actual = new_data.get_forces(apply_constraint=False)
+        energy_actual = new_data.get_potential_energy(apply_constraint=self.constraint)
+        force_actual = new_data.get_forces(apply_constraint=self.constraint)
         force_cons = new_data.get_forces()
         return energy_actual, force_actual, force_cons
 
-    def get_ml_prediction(self, atoms_copy):
+    def get_ml_calc(self):
+        self.ml_potential.reset()
+        return self.ml_potential
+
+    def get_ml_prediction(self, atoms):
         """
         Helper function which takes an atoms object with no calc attached.
         Returns it with an ML potential predicted singlepoint.
         Designed to be overwritten by subclasses (DeltaLearner) that modify ML predictions.
         """
+        atoms_copy = atoms.copy()
         atoms_copy.set_calculator(self.ml_potential)
         (atoms_ML,) = convert_to_singlepoint([atoms_copy])
         return atoms_ML

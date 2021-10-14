@@ -1,7 +1,7 @@
 from al_mlp.online_learner.online_learner import OnlineLearner
 from al_mlp.calcs import DeltaCalc
 from al_mlp.utils import convert_to_singlepoint, subtract_deltas
-from al_mlp.mongo import MongoWrapper
+from al_mlp.logger import Logger
 from al_mlp.utils import compute_with_calc
 from copy import deepcopy
 
@@ -30,17 +30,15 @@ class DeltaLearner(OnlineLearner):
             optional_config=optional_config,
         )
 
-    def init_mongo(self, mongo_db):
-        if mongo_db is not None:
-            self.mongo_wrapper = MongoWrapper(
-                mongo_db["online_learner"],
-                self.learner_params,
-                self.ml_potential,
-                self.parent_calc,
-                self.base_calc,
-            )
-        else:
-            self.mongo_wrapper = None
+    def init_logger(self, mongo_db, optional_config):
+        self.logger = Logger(
+            learner_params=self.learner_params,
+            ml_potential=self.ml_potential,
+            parent_calc=self.parent_calc,
+            base_calc=self.base_calc,
+            mongo_db_collection=mongo_db["online_learner"],
+            optional_config=optional_config,
+        )
 
     def init_refs(self, initial_structure):
         self.parent_ref = initial_structure.copy()
@@ -56,7 +54,12 @@ class DeltaLearner(OnlineLearner):
             self.refs,
         )
 
-    def get_ml_prediction(self, atoms_copy):
+    def get_ml_calc(self):
+        self.ml_potential.reset()
+        self.add_delta_calc.reset()
+        return self.add_delta_calc
+
+    def get_ml_prediction(self, atoms):
         """
         Helper function which takes an atoms object with no calc attached.
         Makes an Ml prediction.
@@ -64,6 +67,7 @@ class DeltaLearner(OnlineLearner):
         Returns it with a delta ML potential predicted singlepoint.
         Designed to be overwritten by DeltaLearner which needs to modify ML predictions.
         """
+        atoms_copy = atoms.copy()
         atoms_copy.set_calculator(self.ml_potential)
         (atoms_with_info,) = convert_to_singlepoint([atoms_copy])
         atoms_copy.set_calculator(self.add_delta_calc)
