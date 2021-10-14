@@ -6,7 +6,6 @@ from flare_pp.sparse_gp import SGP_Wrapper
 from ase.calculators.calculator import Calculator, all_changes
 from flare import struc
 import numpy as np
-import time
 
 
 class FlarePPCalc(Calculator):
@@ -109,13 +108,7 @@ class FlarePPCalc(Calculator):
             properties = self.implemented_properties
 
         # Create structure descriptor.
-        structure_descriptor = Structure(
-            atoms.get_cell(),
-            [self.species_map[x] for x in atoms.get_atomic_numbers()],
-            atoms.get_positions(),
-            self.gp_model.cutoff,
-            self.gp_model.descriptor_calculators,
-        )
+        structure_descriptor = self.get_structure_descriptor(atoms)
 
         #         Predict on structure.
         if self.gp_model.variance_type == "SOR":
@@ -259,3 +252,13 @@ class FlarePPCalc(Calculator):
             self.gp_model.update_db(
                 train_structure, forces, [], energy, mode="all", update_qr=True
             )
+
+    def get_structure_descriptor(self, atoms):
+        structure_descriptor = Structure(
+            atoms.get_cell(),
+            [self.species_map[x] for x in atoms.get_atomic_numbers()],
+            atoms.get_positions(),
+            self.gp_model.cutoff,
+            self.gp_model.descriptor_calculators,
+        )
+        return structure_descriptor
