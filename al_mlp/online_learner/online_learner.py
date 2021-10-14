@@ -42,6 +42,7 @@ class OnlineLearner(Calculator):
 
         self.parent_calls = 0
         self.curr_step = 0
+        self.steps_since_last_query = 0
 
         for image in parent_dataset:
             self.add_data_and_retrain(image)
@@ -91,6 +92,8 @@ class OnlineLearner(Calculator):
 
         self.constraint = self.learner_params.get("train_on_constraint", False)
 
+        self.query_every_n_steps = self.learner_params.get("query_every_n_steps", None)
+
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
 
@@ -114,11 +117,14 @@ class OnlineLearner(Calculator):
             "parent_calls": None,
             "energy_error": None,
             "forces_error": None,
+            "current_step": None,
+            "steps_since_last_query": None,
         }
 
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
         self.curr_step += 1
+        self.steps_since_last_query += 1
 
         self.init_info()
 
@@ -135,6 +141,8 @@ class OnlineLearner(Calculator):
 
         # Record number of parent calls after this calculation
         self.info["parent_calls"] = self.parent_calls
+        self.info["current_step"] = self.curr_step
+        self.info["steps_since_last_query"] = self.steps_since_last_query
 
         # Return the energy/force
         self.results["energy"] = self.info["energy"] = energy
@@ -273,6 +281,10 @@ class OnlineLearner(Calculator):
                     prediction_unsafe = True
             self.positions_queue.put(new_positions)
 
+        if self.query_every_n_steps is not None:
+            if self.steps_since_last_query > self.query_every_n_steps:
+                prediction_unsafe = True
+
         return prediction_unsafe
 
     def parent_verify(self, atoms):
@@ -289,6 +301,7 @@ class OnlineLearner(Calculator):
         return verify
 
     def add_data_and_retrain(self, atoms):
+        self.steps_since_last_query = 0
 
         # don't redo singlepoints if not instructed to reverify and atoms have proper vasp singlepoints attached
         if (
