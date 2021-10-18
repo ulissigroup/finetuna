@@ -250,16 +250,16 @@ def base_replay(replay_func, calc, optimizer):
 def reset_replay(calc, optimizer):
     """Reinitialize hessian from scratch."""
 
-    def reset_func(atoms):
+    def replay_func(atoms):
         return None, None
 
-    base_replay(reset_func, calc, optimizer)
+    base_replay(replay_func, calc, optimizer)
 
 
 def mixed_replay(calc, optimizer):
     """Reinitialize hessian with parent calls and ml everywhere else."""
 
-    def mixed_func(atoms):
+    def replay_func(atoms):
         if atoms.info.get("check", False):
             r = atoms.get_positions().ravel()
             f = atoms.get_forces(apply_constraint=False).ravel()
@@ -270,4 +270,4 @@ def mixed_replay(calc, optimizer):
             f = atoms_copy.get_forces(apply_constraint=False).ravel()
         return r, f
 
-    base_replay(mixed_func, calc, optimizer)
+    base_replay(replay_func, calc, optimizer)
