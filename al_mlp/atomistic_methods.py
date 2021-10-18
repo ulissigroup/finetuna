@@ -237,7 +237,7 @@ def base_replay(replay_func, calc, optimizer):
         # for eligible atoms added to dataset, update the hessian using the replay function
         for atoms in dataset:
             atoms_ml = atoms.copy()
-            atoms_ml.calc = calc.ml_potential
+            atoms_ml.calc = calc.get_ml_calc()
 
             # pass both the base atoms and atoms with the ml calc in case replay function wants either
             r, f = replay_func(atoms, atoms_ml)
