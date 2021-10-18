@@ -55,11 +55,11 @@ def run_relaxation(
 
     if optimizer_str == "BFGS":
         optimizer_alg = BFGS
-        replay_traj_bool = True
+        replay_method = config["relaxation"]["replay_method"]
         maxstep = config["relaxation"]["maxstep"]
     elif optimizer_str == "CG":
         optimizer_alg = SciPyFminCG
-        replay_traj_bool = False
+        replay_method = False
         maxstep = None
     else:
         ValueError("Invalid optimizer name (" + optimizer_str + ") provided")
@@ -75,7 +75,7 @@ def run_relaxation(
     oal_relaxation.run(
         learner,
         filename=dbname,
-        replay_traj=replay_traj_bool,
+        replay_traj=replay_method,
         max_parent_calls=config["relaxation"]["max_parent_calls"],
         online_ml_fmax=config["learner"]["fmax_verify_threshold"],
     )
