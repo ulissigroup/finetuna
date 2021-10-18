@@ -228,12 +228,16 @@ def base_replay(replay_func, calc, optimizer):
         atoms = dataset[0]
         r0 = atoms.get_positions().ravel()
         f0 = atoms.get_forces(apply_constraint=False).ravel()
+        # for eligible atoms added to dataset, update the hessian using the replay function
         for atoms in dataset:
             r, f = replay_func(atoms)
 
-            optimizer.update(r, f, r0, f0)
-            r0 = r
-            f0 = f
+            # if the replay function makes use of this atoms it will return positions r, not None
+            # then update the hessian with this r and f
+            if r is not None:
+                optimizer.update(r, f, r0, f0)
+                r0 = r
+                f0 = f
 
         # set r0 and f0 to last atom in dataset
         # just in case the last r0 and f0 were a while ago
@@ -242,7 +246,7 @@ def base_replay(replay_func, calc, optimizer):
 
 
 def mixed_replay(calc, optimizer):
-    """Reinitialize hessian when there is a parent call based on certain criteria."""
+    """Reinitialize hessian with parent calls and ml everywhere else."""
 
     def mixed_func(atoms):
         if atoms.info.get("check", False):
