@@ -172,6 +172,8 @@ class Relaxation:
                 dyn.attach(mixed_replay, 1, calc, dyn)
             elif replay_traj == "reset":
                 dyn.attach(reset_replay, 1, calc, dyn)
+            elif replay_traj == "parent_only":
+                dyn.attach(parent_only_replay, 1, calc, dyn)
             else:
                 raise ValueError("invalid replay method given")
 
@@ -268,6 +270,21 @@ def mixed_replay(calc, optimizer):
             atoms_copy.calc = calc.ml_potential
             r = atoms_copy.get_positions().ravel()
             f = atoms_copy.get_forces(apply_constraint=False).ravel()
+        return r, f
+
+    base_replay(replay_func, calc, optimizer)
+
+
+def parent_only_replay(calc, optimizer):
+    """Reinitialize hessian with parent calls only."""
+
+    def replay_func(atoms):
+        if atoms.info.get("check", False):
+            r = atoms.get_positions().ravel()
+            f = atoms.get_forces(apply_constraint=False).ravel()
+        else:
+            r = None
+            f = None
         return r, f
 
     base_replay(replay_func, calc, optimizer)
