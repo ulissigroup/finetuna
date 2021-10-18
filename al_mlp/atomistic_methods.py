@@ -251,6 +251,10 @@ def base_replay(replay_func, calc, optimizer):
 
         # set r0 and f0 to last atom in dataset
         # just in case the last r0 and f0 were a while ago
+        if dataset[-1].info.get("check", False) is not True:
+            raise ValueError(
+                "most recent call was not to parent, replay cannot set optimizer"
+            )
         optimizer.r0 = dataset[-1].get_positions().ravel()
         optimizer.f0 = dataset[-1].get_forces(apply_constraint=False).ravel()
 
