@@ -235,8 +235,10 @@ def base_replay(replay_func, calc, optimizer):
             r0 = r
             f0 = f
 
-        optimizer.r0 = r0
-        optimizer.f0 = f0
+        # set r0 and f0 to last atom in dataset
+        # just in case the last r0 and f0 were a while ago
+        optimizer.r0 = dataset[-1].get_positions().ravel()
+        optimizer.f0 = dataset[-1].get_forces(apply_constraint=False).ravel()
 
 
 def mixed_replay(calc, optimizer):
