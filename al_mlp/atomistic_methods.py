@@ -165,8 +165,13 @@ class Relaxation:
         else:
             dyn = self.optimizer(structure, trajectory="{}.traj".format(filename))
 
-        if replay_traj:
-            dyn.attach(replay_trajectory, 1, calc, dyn)
+        if replay_traj is not False:
+            if replay_traj is True:
+                dyn.attach(mixed_replay, 1, calc, dyn)
+            elif replay_traj == "mixed":
+                dyn.attach(mixed_replay, 1, calc, dyn)
+            else:
+                raise ValueError("invalid replay method given")
 
         if max_parent_calls is not None:
             dyn.attach(max_parent_observer, 1, calc, dyn, max_parent_calls)
@@ -204,7 +209,7 @@ def max_parent_observer(calc, optimizer, max_parent_calls):
         optimizer.nsteps = optimizer.max_steps
 
 
-def replay_trajectory(calc, optimizer):
+def mixed_replay(calc, optimizer):
     """Initialize hessian from parent dataset."""
     if calc.info.get("check", False):
         # parent_dataset = calc.parent_dataset
