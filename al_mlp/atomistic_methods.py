@@ -170,6 +170,8 @@ class Relaxation:
                 dyn.attach(mixed_replay, 1, calc, dyn)
             elif replay_traj == "mixed":
                 dyn.attach(mixed_replay, 1, calc, dyn)
+            elif replay_traj == "reset":
+                dyn.attach(reset_replay, 1, calc, dyn)
             else:
                 raise ValueError("invalid replay method given")
 
@@ -243,6 +245,15 @@ def base_replay(replay_func, calc, optimizer):
         # just in case the last r0 and f0 were a while ago
         optimizer.r0 = dataset[-1].get_positions().ravel()
         optimizer.f0 = dataset[-1].get_forces(apply_constraint=False).ravel()
+
+
+def reset_replay(calc, optimizer):
+    """Reinitialize hessian from scratch."""
+
+    def reset_func(atoms):
+        return None, None
+
+    base_replay(reset_func, calc, optimizer)
 
 
 def mixed_replay(calc, optimizer):
