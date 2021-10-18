@@ -174,6 +174,8 @@ class Relaxation:
                 dyn.attach(reset_replay, 1, calc, dyn)
             elif replay_traj == "parent_only":
                 dyn.attach(parent_only_replay, 1, calc, dyn)
+            elif replay_traj == "ml_only":
+                dyn.attach(ml_only_replay, 1, calc, dyn)
             else:
                 raise ValueError("invalid replay method given")
 
@@ -285,6 +287,19 @@ def parent_only_replay(calc, optimizer):
         else:
             r = None
             f = None
+        return r, f
+
+    base_replay(replay_func, calc, optimizer)
+
+
+def ml_only_replay(calc, optimizer):
+    """Reinitialize hessian with current ml calls only."""
+
+    def replay_func(atoms):
+        atoms_copy = atoms.copy()
+        atoms_copy.calc = calc.ml_potential
+        r = atoms_copy.get_positions().ravel()
+        f = atoms_copy.get_forces(apply_constraint=False).ravel()
         return r, f
 
     base_replay(replay_func, calc, optimizer)
