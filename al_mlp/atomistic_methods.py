@@ -209,12 +209,11 @@ def max_parent_observer(calc, optimizer, max_parent_calls):
         optimizer.nsteps = optimizer.max_steps
 
 
-def mixed_replay(calc, optimizer):
-    """Initialize hessian from parent dataset."""
+def base_replay(replay_func, calc, optimizer):
+    """Reinitialize hessian when there is a parent call based on certain criteria."""
     if calc.info.get("check", False):
-        # parent_dataset = calc.parent_dataset
         complete_dataset = calc.complete_dataset
-        # check the parent dataset and only use structures that match the final structure
+        # check the dataset and only use structures that match the final structure
         dataset = []
         if calc.rolling_opt_window is not None:
             if len(complete_dataset) > calc.rolling_opt_window:
@@ -230,14 +229,7 @@ def mixed_replay(calc, optimizer):
         r0 = atoms.get_positions().ravel()
         f0 = atoms.get_forces(apply_constraint=False).ravel()
         for atoms in dataset:
-            if atoms.info.get("check", False):
-                r = atoms.get_positions().ravel()
-                f = atoms.get_forces(apply_constraint=False).ravel()
-            else:
-                atoms_copy = atoms.copy()
-                atoms_copy.calc = calc.ml_potential
-                r = atoms_copy.get_positions().ravel()
-                f = atoms_copy.get_forces(apply_constraint=False).ravel()
+            r, f = replay_func(atoms)
 
             optimizer.update(r, f, r0, f0)
             r0 = r
@@ -245,3 +237,20 @@ def mixed_replay(calc, optimizer):
 
         optimizer.r0 = r0
         optimizer.f0 = f0
+
+
+def mixed_replay(calc, optimizer):
+    """Reinitialize hessian when there is a parent call based on certain criteria."""
+
+    def mixed_func(atoms):
+        if atoms.info.get("check", False):
+            r = atoms.get_positions().ravel()
+            f = atoms.get_forces(apply_constraint=False).ravel()
+        else:
+            atoms_copy = atoms.copy()
+            atoms_copy.calc = calc.ml_potential
+            r = atoms_copy.get_positions().ravel()
+            f = atoms_copy.get_forces(apply_constraint=False).ravel()
+        return r, f
+
+    base_replay(mixed_func, calc, optimizer)
