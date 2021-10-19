@@ -163,6 +163,8 @@ class OnlineLearner(Calculator):
         # If we have less than two data points, uncertainty is not
         # well calibrated so just use DFT
         if len(self.parent_dataset) < self.num_initial_points:
+            atoms_copy.info["check"] = True
+
             energy, forces, constrained_forces = self.add_data_and_retrain(atoms_copy)
             fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
 
@@ -170,8 +172,6 @@ class OnlineLearner(Calculator):
             self.info["parent_energy"] = energy
             self.info["parent_forces"] = str(forces)
             self.info["parent_fmax"] = fmax
-
-            atoms_copy.info["check"] = True
 
             if len(self.parent_dataset) == self.num_initial_points:
                 new_parent_dataset = [
@@ -206,6 +206,8 @@ class OnlineLearner(Calculator):
 
             # If we are extrapolating too far add/retrain
             if need_to_retrain:
+                atoms_copy.info["check"] = True
+
                 energy_ML = energy
                 constrained_forces_ML = constrained_forces
                 # Run DFT, so use that energy/force
@@ -223,7 +225,6 @@ class OnlineLearner(Calculator):
                     constrained_forces - constrained_forces_ML
                 )
 
-                atoms_copy.info["check"] = True
             else:
                 # Otherwise use the ML predicted energies and forces
                 self.info["check"] = False
