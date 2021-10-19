@@ -37,11 +37,7 @@ class FlareCalc(FLARE_Calculator):
             self.species_map[a_numbers[i]] = i
 
     def calculate_gp(self, atoms):
-        structure = Structure(
-            cell=atoms.get_cell(),
-            species=[self.species_map[x] for x in atoms.get_atomic_numbers()],
-            positions=atoms.get_positions(),
-        )
+        structure = self.get_descriptor_from_atoms(atoms)
         super().calculate_gp(structure)
 
         self.results["force_stds"] = self.results["stds"]
@@ -58,15 +54,21 @@ class FlareCalc(FLARE_Calculator):
 
     def train_on_dataset(self, dataset):
         for atoms in dataset:
-            structure = Structure(
-                cell=atoms.get_cell(),
-                species=[self.species_map[x] for x in atoms.get_atomic_numbers()],
-                positions=atoms.get_positions(),
-                forces=atoms.get_forces(),
-                energy=atoms.get_potential_energy(),
+            structure = self.get_descriptor_from_atoms(
+                atoms, energy=atoms.get_potential_energy(), forces=atoms.get_forces()
             )
             self.gp_model.update_db(
                 struc=structure,
                 forces=atoms.get_forces(),
                 energy=atoms.get_potential_energy(),
             )
+
+    def get_descriptor_from_atoms(self, atoms, energy=None, forces=None):
+        structure = Structure(
+            cell=atoms.get_cell(),
+            species=[self.species_map[x] for x in atoms.get_atomic_numbers()],
+            positions=atoms.get_positions(),
+            forces=forces,
+            energy=energy,
+        )
+        return structure
