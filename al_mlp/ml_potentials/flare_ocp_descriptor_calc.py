@@ -41,7 +41,9 @@ class FlareOCPDescriptorCalc(FlareCalc):
         atoms_copy = atoms.copy()
         atoms_copy.calc = atoms.calc
         atoms_copy.positions = e_desc
-        structure = super().get_descriptor_from_atoms(atoms_copy, energy=energy, forces=forces)
+        structure = super().get_descriptor_from_atoms(
+            atoms_copy, energy=energy, forces=forces
+        )
 
         return structure
 
