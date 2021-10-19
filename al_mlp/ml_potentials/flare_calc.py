@@ -41,8 +41,6 @@ class FlareCalc(FLARE_Calculator):
             cell=atoms.get_cell(),
             species=[self.species_map[x] for x in atoms.get_atomic_numbers()],
             positions=atoms.get_positions(),
-            forces=atoms.get_forces(),
-            energy=atoms.get_potential_energy(),
         )
         super().calculate_gp(structure)
 
