@@ -153,7 +153,6 @@ def main(args):
             checkpoint_path=config["ocp"]["checkpoint_path"],
             flare_params=config.get("pyflare", {}),
             initial_images=[initial_structure] + images,
-            par=True,
         )
 
     # use given learner class
