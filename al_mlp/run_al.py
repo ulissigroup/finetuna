@@ -236,3 +236,5 @@ def active_learning(config):
     # close parent_calc (if it needs to be closed, i.e. VaspInteractive)
     if hasattr(parent_calc, "close"):
         parent_calc.close()
+
+    return learner.info
