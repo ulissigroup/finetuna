@@ -170,6 +170,12 @@ class Relaxation:
                 dyn.attach(mixed_replay, 1, calc, dyn)
             elif replay_traj == "mixed":
                 dyn.attach(mixed_replay, 1, calc, dyn)
+            elif replay_traj == "reset":
+                dyn.attach(reset_replay, 1, calc, dyn)
+            elif replay_traj == "parent_only":
+                dyn.attach(parent_only_replay, 1, calc, dyn)
+            elif replay_traj == "ml_only":
+                dyn.attach(ml_only_replay, 1, calc, dyn)
             else:
                 raise ValueError("invalid replay method given")
 
@@ -209,12 +215,11 @@ def max_parent_observer(calc, optimizer, max_parent_calls):
         optimizer.nsteps = optimizer.max_steps
 
 
-def mixed_replay(calc, optimizer):
-    """Initialize hessian from parent dataset."""
+def base_replay(replay_func, calc, optimizer):
+    """Reinitialize hessian when there is a parent call based on certain criteria."""
     if calc.info.get("check", False):
-        # parent_dataset = calc.parent_dataset
         complete_dataset = calc.complete_dataset
-        # check the parent dataset and only use structures that match the final structure
+        # check the dataset and only use structures that match the final structure
         dataset = []
         if calc.rolling_opt_window is not None:
             if len(complete_dataset) > calc.rolling_opt_window:
@@ -229,19 +234,76 @@ def mixed_replay(calc, optimizer):
         atoms = dataset[0]
         r0 = atoms.get_positions().ravel()
         f0 = atoms.get_forces(apply_constraint=False).ravel()
+        # for eligible atoms added to dataset, update the hessian using the replay function
         for atoms in dataset:
-            if atoms.info.get("check", False):
-                r = atoms.get_positions().ravel()
-                f = atoms.get_forces(apply_constraint=False).ravel()
-            else:
-                atoms_copy = atoms.copy()
-                atoms_copy.calc = calc.ml_potential
-                r = atoms_copy.get_positions().ravel()
-                f = atoms_copy.get_forces(apply_constraint=False).ravel()
+            atoms_ml = atoms.copy()
+            atoms_ml.calc = calc.get_ml_calc()
 
-            optimizer.update(r, f, r0, f0)
-            r0 = r
-            f0 = f
+            # pass both the base atoms and atoms with the ml calc in case replay function wants either
+            r, f = replay_func(atoms, atoms_ml)
 
-        optimizer.r0 = r0
-        optimizer.f0 = f0
+            # if the replay function makes use of this atoms it will return positions r, not None
+            # then update the hessian with this r and f
+            if r is not None:
+                optimizer.update(r, f, r0, f0)
+                r0 = r
+                f0 = f
+
+        # set r0 and f0 to last atom in dataset
+        # just in case the last r0 and f0 were a while ago
+        if dataset[-1].info.get("check", False) is not True:
+            raise ValueError(
+                "most recent call was not to parent, replay cannot set optimizer"
+            )
+        optimizer.r0 = dataset[-1].get_positions().ravel()
+        optimizer.f0 = dataset[-1].get_forces(apply_constraint=False).ravel()
+
+
+def reset_replay(calc, optimizer):
+    """Reinitialize hessian from scratch."""
+
+    def replay_func(atoms, atoms_ml):
+        return None, None
+
+    base_replay(replay_func, calc, optimizer)
+
+
+def mixed_replay(calc, optimizer):
+    """Reinitialize hessian with parent calls and ml everywhere else."""
+
+    def replay_func(atoms, atoms_ml):
+        if atoms.info.get("check", False):
+            r = atoms.get_positions().ravel()
+            f = atoms.get_forces(apply_constraint=False).ravel()
+        else:
+            r = atoms_ml.get_positions().ravel()
+            f = atoms_ml.get_forces(apply_constraint=False).ravel()
+        return r, f
+
+    base_replay(replay_func, calc, optimizer)
+
+
+def parent_only_replay(calc, optimizer):
+    """Reinitialize hessian with parent calls only."""
+
+    def replay_func(atoms, atoms_ml):
+        if atoms.info.get("check", False):
+            r = atoms.get_positions().ravel()
+            f = atoms.get_forces(apply_constraint=False).ravel()
+        else:
+            r = None
+            f = None
+        return r, f
+
+    base_replay(replay_func, calc, optimizer)
+
+
+def ml_only_replay(calc, optimizer):
+    """Reinitialize hessian with current ml calls only."""
+
+    def replay_func(atoms, atoms_ml):
+        r = atoms_ml.get_positions().ravel()
+        f = atoms_ml.get_forces(apply_constraint=False).ravel()
+        return r, f
+
+    base_replay(replay_func, calc, optimizer)
