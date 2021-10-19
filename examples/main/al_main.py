@@ -19,6 +19,8 @@ from al_mlp.online_learner.delta_learner import DeltaLearner
 from al_mlp.online_learner.warm_start_learner import WarmStartLearner
 
 from al_mlp.ml_potentials.flare_pp_calc import FlarePPCalc
+from al_mlp.ml_potentials.flare_calc import FlareCalc
+from al_mlp.ml_potentials.flare_ocp_descriptor_calc import FlareOCPDescriptorCalc
 
 from ocpmodels.common.relaxation.ase_utils import OCPCalculator
 
@@ -142,10 +144,15 @@ def main(args):
         # declare ml calc
         ml_potential = FlarePPCalc(config["flare"], [initial_structure] + images)
     elif potential_class == "pyflare":
-        from al_mlp.ml_potentials.flare_calc import FlareCalc
-
         ml_potential = FlareCalc(
             config.get("pyflare", {}), [initial_structure] + images
+        )
+    elif potential_class == "flare_ocp_descriptor":
+        ml_potential = FlareOCPDescriptorCalc(
+            model_path=config["ocp"]["model_path"],
+            checkpoint_path=config["ocp"]["checkpoint_path"],
+            flare_params=config.get("pyflare", {}),
+            initial_images=[initial_structure] + images,
         )
 
     # use given learner class
