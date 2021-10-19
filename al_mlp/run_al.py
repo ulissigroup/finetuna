@@ -72,6 +72,7 @@ def run_relaxation(
         replay_traj=replay_method,
         max_parent_calls=config["relaxation"]["max_parent_calls"],
         online_ml_fmax=config["learner"]["fmax_verify_threshold"],
+        check_final=config["relaxation"].get("check_final", False),
     )
 
     return oal_relaxation
