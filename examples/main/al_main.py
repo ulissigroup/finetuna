@@ -143,7 +143,10 @@ def main(args):
         ml_potential = FlarePPCalc(config["flare"], [initial_structure] + images)
     elif potential_class == "pyflare":
         from al_mlp.ml_potentials.flare_calc import FlareCalc
-        ml_potential = FlareCalc(config.get("pyflare", {}), [initial_structure] + images)
+
+        ml_potential = FlareCalc(
+            config.get("pyflare", {}), [initial_structure] + images
+        )
 
     # use given learner class
     learner_class = config["links"].get("learner_class", "online")
