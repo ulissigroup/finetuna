@@ -128,6 +128,10 @@ def copy_images(images):
     return new_images
 
 
+def get_fmax(forces: np.ndarray):
+    return np.sqrt((forces ** 2).sum(axis=1).max())
+
+
 def write_to_db(database, queried_images, datatype="-", parentE="-", baseE="-"):
     for image in queried_images:
         database.write(
