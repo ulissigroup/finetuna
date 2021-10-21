@@ -88,25 +88,27 @@ class OCPDCalc(Calculator):
         # atoms.info["max_force_stds"] = np.nanmax(self.results["force_stds"])
         return
 
-    def fit(self, parent_energies, parent_forces, parent_descriptors):
+    def fit(self, parent_energies, parent_forces, parent_e_descriptors, parent_f_descriptors):
         """
         fit a new model on the parent dataset,
 
         Args:
             parent_energies: list of the energies to fit on
             parent_forces: list of the forces to fit on
-            parent_descriptors: list of the descriptors to fit on
+            parent_e_descriptors: list of the energy descriptors to fit on
+            parent_f_descriptors: list of the forces descriptors to fit on
         """
         raise NotImplementedError
 
-    def partial_fit(self, new_energies, new_forces, new_descriptors):
+    def partial_fit(self, new_energies, new_forces, new_e_descriptors, new_f_descriptors):
         """
         partial fit the current model on just the new_dataset
 
         Args:
             new_energies: list of just the new energies to partially fit on
             new_forces: list of just the new forces to partially fit on
-            new_descriptors: list of just the new descriptors to partially fit on
+            new_e_descriptors: list of just the new energy descriptors to partially fit on
+            new_f_descriptors: list of just the new forces descriptors to partially fit on
         """
         raise NotImplementedError
 
@@ -129,12 +131,15 @@ class OCPDCalc(Calculator):
     def get_data_from_atoms(self, atoms_dataset: "list[Atoms]"):
         energy_data = []
         forces_data = []
-        descriptor_data = []
+        e_descriptor_data = []
+        f_descriptor_data = []
         for atoms in atoms_dataset:
             energy_data.append(atoms.get_potential_energy())
             forces_data.append(atoms.get_forces())
-            descriptor_data.append(self.get_descriptor(atoms))
-        return energy_data, forces_data, descriptor_data
+            ocp_descriptor = self.get_descriptor(atoms)
+            e_descriptor_data.append(ocp_descriptor[0])
+            f_descriptor_data.append(ocp_descriptor[1])
+        return energy_data, forces_data, e_descriptor_data, f_descriptor_data
 
     def get_descriptor(self, atoms: Atoms):
         """ "
@@ -142,4 +147,5 @@ class OCPDCalc(Calculator):
         """
         ocp_descriptor = self.ocp_describer.gemnet_forward(atoms)
         e_desc = ocp_descriptor[0].detach().numpy().flatten()
-        return e_desc
+        f_desc = ocp_descriptor[1].detach().numpy().flatten()
+        return e_desc, f_desc
