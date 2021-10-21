@@ -19,6 +19,7 @@ from al_mlp.online_learner.warm_start_learner import WarmStartLearner
 from al_mlp.ml_potentials.flare_pp_calc import FlarePPCalc
 from al_mlp.ml_potentials.flare_calc import FlareCalc
 from al_mlp.ml_potentials.flare_ocp_descriptor_calc import FlareOCPDescriptorCalc
+from al_mlp.ml_potentials.gp_ocpd_calc import GPOCPDCalc
 
 from ocpmodels.common.relaxation.ase_utils import OCPCalculator
 
@@ -141,6 +142,12 @@ def active_learning(config):
             checkpoint_path=config["ocp"]["checkpoint_path"],
             flare_params=config.get("pyflare", {}),
             initial_images=[initial_structure] + images,
+        )
+    elif potential_class == "gp_ocpd":
+        ml_potential = GPOCPDCalc(
+            model_path=config["ocp"]["model_path"],
+            checkpoint_path=config["ocp"]["checkpoint_path"],
+            gp_params=config.get("gp", {}),
         )
 
     # use given learner class
