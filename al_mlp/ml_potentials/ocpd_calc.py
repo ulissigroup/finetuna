@@ -74,7 +74,9 @@ class OCPDCalc(Calculator):
             properties = self.implemented_properties
 
         ocp_descriptor = self.ocp_describer.gemnet_forward(atoms)
-        energy, forces, energy_uncertainty, force_uncertainties = self.calculate_ml(ocp_descriptor)
+        energy, forces, energy_uncertainty, force_uncertainties = self.calculate_ml(
+            ocp_descriptor
+        )
 
         self.results["energy"] = energy
         self.results["forces"] = forces
@@ -136,7 +138,7 @@ class OCPDCalc(Calculator):
         return energy_data, forces_data, descriptor_data
 
     def get_descriptor(self, atoms: Atoms):
-        """"
+        """ "
         Overwritable method for getting the ocp descriptor from atoms objects
         """
         ocp_descriptor = self.ocp_describer.gemnet_forward(atoms)
