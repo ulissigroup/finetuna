@@ -225,7 +225,7 @@ class OnlineLearner(Calculator):
                 self.info["parent_fmax"] = fmax
                 self.info["energy_error"] = energy - energy_ML
                 self.info["forces_error"] = np.sum(
-                    constrained_forces - constrained_forces_ML
+                    np.abs(constrained_forces - constrained_forces_ML)
                 )
 
             else:
