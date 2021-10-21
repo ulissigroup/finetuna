@@ -1,4 +1,6 @@
+from collections.abc import Iterable
 from ase.calculators.calculator import Calculator, all_changes
+from ase.atoms import Atoms
 from al_mlp.ocp_descriptor import OCPDescriptor
 import numpy as np
 
@@ -83,25 +85,31 @@ class OCPDCalc(Calculator):
         atoms.info["max_force_stds"] = np.nanmax(self.results["force_stds"])
         return
 
-    def fit(self, parent_dataset):
+    def fit(self, parent_energies, parent_forces, parent_descriptors):
         """
         fit a new model on the parent dataset,
 
         Args:
-            parent_dataset: list of all the descriptors to be trained on
+            parent_energies: list of the energies to fit on
+            parent_forces: list of the forces to fit on
+            parent_descriptors: list of the descriptors to fit on
         """
         raise NotImplementedError
 
-    def partial_fit(self, new_dataset):
+    def partial_fit(self, new_energies, new_forces, new_descriptors):
         """
         partial fit the current model on just the new_dataset
 
         Args:
-            new_dataset: list of just the new descriptors to partially fit on
+            new_energies: list of just the new energies to partially fit on
+            new_forces: list of just the new forces to partially fit on
+            new_descriptors: list of just the new descriptors to partially fit on
         """
         raise NotImplementedError
 
-    def train(self, parent_dataset, new_dataset=None):
+    def train(
+        self, parent_dataset: Iterable[Atoms], new_dataset: Iterable[Atoms] = None
+    ):
         """
         Train the ml model by fitting a new model on the parent dataset,
         or partial fit the current model on just the new_dataset
@@ -113,6 +121,24 @@ class OCPDCalc(Calculator):
         """
         if not self.ml_model or not new_dataset:
             self.init_model()
-            self.fit(parent_dataset)
+            self.fit(self.get_data_from_atoms(parent_dataset))
         else:
-            self.partial_fit(new_dataset)
+            self.partial_fit(self.get_data_from_atoms(new_dataset))
+
+    def get_data_from_atoms(self, atoms_dataset: Iterable[Atoms]):
+        energy_data = []
+        forces_data = []
+        descriptor_data = []
+        for atoms in atoms_dataset:
+            energy_data.append(atoms.get_potential_energy())
+            forces_data.append(atoms.get_forces)
+            descriptor_data.append(self.get_descriptor(atoms))
+        return energy_data, forces_data, descriptor_data
+
+    def get_descriptor(self, atoms: Atoms):
+        """"
+        Overwritable method for getting the ocp descriptor from atoms objects
+        """
+        ocp_descriptor = self.ocp_describer.gemnet_forward(atoms)
+        e_desc = ocp_descriptor[0].detach().numpy()
+        return e_desc
