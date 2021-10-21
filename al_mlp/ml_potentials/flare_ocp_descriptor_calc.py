@@ -17,8 +17,8 @@ class FlareOCPDescriptorCalc(FlareCalc):
         **kwargs
     ):
         self.ocp_describer = OCPDescriptor(
-            config_yml=model_path,
-            checkpoint=checkpoint_path,
+            model_path=model_path,
+            checkpoint_path=checkpoint_path,
         )
 
         super().__init__(
