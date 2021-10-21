@@ -110,9 +110,7 @@ class OCPDCalc(Calculator):
         """
         raise NotImplementedError
 
-    def train(
-        self, parent_dataset: "list[Atoms]", new_dataset: "list[Atoms]" = None
-    ):
+    def train(self, parent_dataset: "list[Atoms]", new_dataset: "list[Atoms]" = None):
         """
         Train the ml model by fitting a new model on the parent dataset,
         or partial fit the current model on just the new_dataset
