@@ -55,7 +55,7 @@ class OCPDCalc(Calculator):
             ocp_descriptor: list object containing the descriptor of the atoms object
 
         Returns:
-            tuple: (energy, forces, [energy_uncertainty, *force_uncertainties])
+            tuple: (energy, forces, energy_uncertainty, force_uncertainties)
         """
         raise NotImplementedError
 
@@ -74,13 +74,13 @@ class OCPDCalc(Calculator):
             properties = self.implemented_properties
 
         ocp_descriptor = self.ocp_describer.gemnet_forward(atoms)
-        energy, forces, uncertainties = self.calculate_ml(ocp_descriptor)
+        energy, forces, energy_uncertainty, force_uncertainties = self.calculate_ml(ocp_descriptor)
 
         self.results["energy"] = energy
         self.results["forces"] = forces
-        self.results["stds"] = uncertainties
-        self.results["force_stds"] = uncertainties[1:]
-        self.results["energy_stds"] = uncertainties[0]
+        self.results["stds"] = [energy_uncertainty, force_uncertainties]
+        self.results["force_stds"] = force_uncertainties
+        self.results["energy_stds"] = energy_uncertainty
         atoms.info["energy_stds"] = self.results["energy_stds"]
         atoms.info["max_force_stds"] = np.nanmax(self.results["force_stds"])
         return
