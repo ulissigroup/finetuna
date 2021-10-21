@@ -19,7 +19,7 @@ class OCPDCalc(Calculator):
     checkpoint_path: str
         path to gemnet model checkpoint, e.g. '/home/jovyan/shared-datasets/OC20/checkpoints/s2ef/gemnet_t_direct_h512_all.pt'
 
-    ml_params: dict
+    mlp_params: dict
         dictionary of parameters to be passed to the ml potential model in init_model()
     """
 
@@ -29,16 +29,16 @@ class OCPDCalc(Calculator):
         self,
         model_path: str,
         checkpoint_path: str,
-        ml_params: dict = {},
+        mlp_params: dict = {},
     ):
         super().__init__()
 
         self.ocp_describer = OCPDescriptor(
-            config_yml=model_path,
-            checkpoint=checkpoint_path,
+            model_path=model_path,
+            checkpoint_path=checkpoint_path,
         )
 
-        self.ml_params = ml_params
+        self.mlp_params = mlp_params
         self.init_model()
 
     def init_model(self):
@@ -73,7 +73,7 @@ class OCPDCalc(Calculator):
         if properties is None:
             properties = self.implemented_properties
 
-        ocp_descriptor = self.ocp_describer.gemnet_forward(atoms)
+        ocp_descriptor = self.get_descriptor(atoms)
         energy, forces, energy_uncertainty, force_uncertainties = self.calculate_ml(
             ocp_descriptor
         )
@@ -84,7 +84,8 @@ class OCPDCalc(Calculator):
         self.results["force_stds"] = force_uncertainties
         self.results["energy_stds"] = energy_uncertainty
         atoms.info["energy_stds"] = self.results["energy_stds"]
-        atoms.info["max_force_stds"] = np.nanmax(self.results["force_stds"])
+        atoms.info["max_force_stds"] = self.results["force_stds"]
+        # atoms.info["max_force_stds"] = np.nanmax(self.results["force_stds"])
         return
 
     def fit(self, parent_energies, parent_forces, parent_descriptors):
@@ -110,7 +111,7 @@ class OCPDCalc(Calculator):
         raise NotImplementedError
 
     def train(
-        self, parent_dataset: Iterable[Atoms], new_dataset: Iterable[Atoms] = None
+        self, parent_dataset: "list[Atoms]", new_dataset: "list[Atoms]" = None
     ):
         """
         Train the ml model by fitting a new model on the parent dataset,
@@ -123,17 +124,17 @@ class OCPDCalc(Calculator):
         """
         if not self.ml_model or not new_dataset:
             self.init_model()
-            self.fit(self.get_data_from_atoms(parent_dataset))
+            self.fit(*self.get_data_from_atoms(parent_dataset))
         else:
-            self.partial_fit(self.get_data_from_atoms(new_dataset))
+            self.partial_fit(*self.get_data_from_atoms(new_dataset))
 
-    def get_data_from_atoms(self, atoms_dataset: Iterable[Atoms]):
+    def get_data_from_atoms(self, atoms_dataset: "list[Atoms]"):
         energy_data = []
         forces_data = []
         descriptor_data = []
         for atoms in atoms_dataset:
             energy_data.append(atoms.get_potential_energy())
-            forces_data.append(atoms.get_forces)
+            forces_data.append(atoms.get_forces())
             descriptor_data.append(self.get_descriptor(atoms))
         return energy_data, forces_data, descriptor_data
 
@@ -142,5 +143,5 @@ class OCPDCalc(Calculator):
         Overwritable method for getting the ocp descriptor from atoms objects
         """
         ocp_descriptor = self.ocp_describer.gemnet_forward(atoms)
-        e_desc = ocp_descriptor[0].detach().numpy()
+        e_desc = ocp_descriptor[0].detach().numpy().flatten()
         return e_desc
