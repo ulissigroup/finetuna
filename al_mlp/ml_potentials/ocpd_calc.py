@@ -18,7 +18,7 @@ class OCPDCalc(Calculator):
         path to gemnet model checkpoint, e.g. '/home/jovyan/shared-datasets/OC20/checkpoints/s2ef/gemnet_t_direct_h512_all.pt'
 
     ml_params: dict
-        dictionary of parameters to be passed to the ml potential model in init_ml()
+        dictionary of parameters to be passed to the ml potential model in init_model()
     """
 
     implemented_properties = ["energy", "forces", "stds"]
@@ -37,9 +37,9 @@ class OCPDCalc(Calculator):
         )
 
         self.ml_params = ml_params
-        self.init_ml()
+        self.init_model()
 
-    def init_ml(self):
+    def init_model(self):
         """
         initialize a new ml model using the stored parameter dictionary
         """
@@ -112,7 +112,7 @@ class OCPDCalc(Calculator):
             new_dataset: list of just the new descriptors to partially fit on
         """
         if not self.ml_model or not new_dataset:
-            self.init_ml()
+            self.init_model()
             self.fit(parent_dataset)
         else:
             self.partial_fit(new_dataset)
