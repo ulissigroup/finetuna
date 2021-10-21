@@ -5,8 +5,7 @@ from ocpmodels.datasets.trajectory_lmdb import data_list_collater
 
 class OCPDescriptor:
     """OCPDescriptor.
-    This class serves as a parent class for calculators that want to inherit methods
-    for generating descriptors from OCP models.
+    This class serves as a helper class for calculators that want to generate descriptors from OCP models.
 
     Parameters
     ----------
