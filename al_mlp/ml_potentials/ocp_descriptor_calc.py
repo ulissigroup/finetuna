@@ -20,6 +20,7 @@ class OCPDCalc(Calculator):
     ml_params: dict
         dictionary of parameters to be passed to the ml potential model in init_ml()
     """
+
     implemented_properties = ["energy", "forces", "stds"]
 
     def __init__(
