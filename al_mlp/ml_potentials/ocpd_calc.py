@@ -88,7 +88,9 @@ class OCPDCalc(Calculator):
         # atoms.info["max_force_stds"] = np.nanmax(self.results["force_stds"])
         return
 
-    def fit(self, parent_energies, parent_forces, parent_e_descriptors, parent_f_descriptors):
+    def fit(
+        self, parent_energies, parent_forces, parent_e_descriptors, parent_f_descriptors
+    ):
         """
         fit a new model on the parent dataset,
 
@@ -100,7 +102,9 @@ class OCPDCalc(Calculator):
         """
         raise NotImplementedError
 
-    def partial_fit(self, new_energies, new_forces, new_e_descriptors, new_f_descriptors):
+    def partial_fit(
+        self, new_energies, new_forces, new_e_descriptors, new_f_descriptors
+    ):
         """
         partial fit the current model on just the new_dataset
 
