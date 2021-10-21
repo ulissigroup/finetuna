@@ -1,5 +1,12 @@
 from sklearn.gaussian_process._gpr import GaussianProcessRegressor
 from al_mlp.ml_potentials.ocpd_calc import OCPDCalc
+from sklearn.gaussian_process.kernels import (
+    ConstantKernel,
+    WhiteKernel,
+    RBF,
+    Matern,
+    RationalQuadratic,
+)
 
 
 class GPOCPDCalc(OCPDCalc):
@@ -14,10 +21,30 @@ class GPOCPDCalc(OCPDCalc):
         self.kernel = None
         if "kernel" in gp_params:
             kernel_dict = gp_params.pop("kernel")
-            if kernel_dict is None:
-                self.kernel = None
-            else:
-                raise ValueError("invalid kernel dict given")
+            if kernel_dict is not None:
+                self.kernel = ConstantKernel(
+                    constant_value=1, constant_value_bounds="fixed"
+                )
+                for key, value in kernel_dict.items():
+                    if key == "ConstantKernel":
+                        new_kernel = ConstantKernel(**value["params"])
+                    elif key == "WhiteKernel":
+                        new_kernel = WhiteKernel(**value["params"])
+                    elif key == "RBF":
+                        new_kernel = RBF(**value["params"])
+                    elif key == "Matern":
+                        new_kernel = Matern(**value["params"])
+                    elif key == "RationalQuadratic":
+                        new_kernel = RationalQuadratic(**value["params"])
+                    else:
+                        raise ValueError("invalid kernel dict given")
+
+                    if value["operation"] == "sum":
+                        self.kernel += new_kernel
+                    elif value["operation"] == "product":
+                        self.kernel *= new_kernel
+                    else:
+                        raise ValueError("no/invalid kernel operation given")
 
         super().__init__(model_path, checkpoint_path, mlp_params=gp_params)
 

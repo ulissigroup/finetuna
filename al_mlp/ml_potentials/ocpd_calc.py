@@ -1,8 +1,6 @@
-from collections.abc import Iterable
 from ase.calculators.calculator import Calculator, all_changes
 from ase.atoms import Atoms
 from al_mlp.ocp_descriptor import OCPDescriptor
-import numpy as np
 
 
 class OCPDCalc(Calculator):
