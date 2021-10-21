@@ -35,6 +35,7 @@ class OnlineLearner(Calculator):
         self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
         self.trained_at_least_once = False
         self.check_final_point = False
+        self.uncertainty_history = []
 
         if mongo_db is None:
             mongo_db = {"online_learner": None}
@@ -63,6 +64,8 @@ class OnlineLearner(Calculator):
         )
         self.stat_uncertain_tol = self.learner_params["stat_uncertain_tol"]
         self.dyn_uncertain_tol = self.learner_params["dyn_uncertain_tol"]
+        self.dyn_avg_steps = self.learner_params.get("dyn_avg_steps", None)
+
         self.suppress_warnings = self.learner_params.get("suppress_warnings", False)
         self.reverify_with_parent = self.learner_params.get(
             "reverify_with_parent", True
@@ -234,7 +237,7 @@ class OnlineLearner(Calculator):
         return energy, forces, fmax
 
     def unsafe_prediction(self, atoms):
-        # Set the desired tolerance based on the current max predcited force or energy
+        # Set the desired tolerance based on the current max predicted force or energy
         if self.uncertainty_metric == "forces":
             uncertainty = atoms.info["max_force_stds"]
             if math.isnan(uncertainty):
@@ -247,6 +250,17 @@ class OnlineLearner(Calculator):
             base_tolerance = energy
         else:
             raise ValueError("invalid uncertainty metric")
+
+        self.uncertainty_history.append(uncertainty)
+
+        # if we are taking the dynamic uncertainty tolerance to be the average of the past n uncertainties,
+        # then calculate that everage and set it as the base tolerance (to be modified by dyn modifier)
+        if self.dyn_avg_steps is not None:
+            base_tolerance = np.mean(
+                self.uncertainty_history[
+                    max(0, len(self.uncertainty_history) - self.dyn_avg_steps) :
+                ]
+            )
 
         if self.tolerance_selection == "min":
             uncertainty_tol = min(
