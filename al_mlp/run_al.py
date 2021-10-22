@@ -10,6 +10,7 @@ from vasp_interactive import VaspInteractive
 from ase.db import connect
 
 from al_mlp.atomistic_methods import Relaxation
+from al_mlp.ml_potentials.nn_ocpd_calc import NNOCPDCalc
 from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
 from al_mlp.utils import calculate_surface_k_points
 from al_mlp.online_learner.online_learner import OnlineLearner
@@ -148,6 +149,13 @@ def active_learning(config):
             model_path=config["ocp"]["model_path"],
             checkpoint_path=config["ocp"]["checkpoint_path"],
             gp_params=config.get("gp", {}),
+        )
+    elif potential_class == "nn_ocpd":
+        ml_potential = NNOCPDCalc(
+            initial_structure,
+            model_path=config["ocp"]["model_path"],
+            checkpoint_path=config["ocp"]["checkpoint_path"],
+            nn_params=config.get("nn", {})
         )
 
     # use given learner class
