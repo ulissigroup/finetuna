@@ -155,7 +155,7 @@ def active_learning(config):
             initial_structure,
             model_path=config["ocp"]["model_path"],
             checkpoint_path=config["ocp"]["checkpoint_path"],
-            nn_params=config.get("nn", {})
+            nn_params=config.get("nn", {}),
         )
 
     # use given learner class

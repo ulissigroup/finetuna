@@ -58,7 +58,11 @@ class NNOCPDCalc(OCPDCalc):
     def calculate_ml(self, ocp_descriptor) -> tuple:
         predictions = []
         for estimator in self.nn_ensemble:
-            predictions.append(estimator(torch.tensor(self.get_unified_descriptor(*ocp_descriptor))).detach().numpy())
+            predictions.append(
+                estimator(torch.tensor(self.get_unified_descriptor(*ocp_descriptor)))
+                .detach()
+                .numpy()
+            )
 
         stds = np.std(predictions, axis=0)
         avgs = np.average(predictions, axis=0)
@@ -78,8 +82,14 @@ class NNOCPDCalc(OCPDCalc):
         unified_labels = []
         unified_descriptors = []
         for i in range(n_data):
-            unified_descriptors.append(self.get_unified_descriptor(parent_e_descriptors[i], parent_f_descriptors[i]))
-            unified_labels.append(self.get_unified_label(parent_energies[i], parent_forces[i]))
+            unified_descriptors.append(
+                self.get_unified_descriptor(
+                    parent_e_descriptors[i], parent_f_descriptors[i]
+                )
+            )
+            unified_labels.append(
+                self.get_unified_label(parent_energies[i], parent_forces[i])
+            )
 
         for j in range(len(self.nn_ensemble)):
             estimator = self.nn_ensemble[j]
@@ -87,7 +97,9 @@ class NNOCPDCalc(OCPDCalc):
             while not self.stopping_criteria(estimator):
                 for i in range(n_data):
                     prediction = estimator(torch.tensor(unified_descriptors[i]))
-                    loss = self.loss_func(prediction, torch.tensor(unified_labels[i]).to(torch.float32))
+                    loss = self.loss_func(
+                        prediction, torch.tensor(unified_labels[i]).to(torch.float32)
+                    )
 
                     loss.backward()
 
