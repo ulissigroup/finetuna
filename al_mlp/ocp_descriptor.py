@@ -99,4 +99,4 @@ class OCPDescriptor:
 
     def get_h(self, atoms):
         self.gemnet_forward(atoms)
-        return self.h
+        return self.h.detach().numpy()
