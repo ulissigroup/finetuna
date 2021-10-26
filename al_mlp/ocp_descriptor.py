@@ -91,4 +91,12 @@ class OCPDescriptor:
             F_st += F
             E_t += E
 
+        self.h = h
+        self.E_t = E_t
+        self.F_st = F_st
+
         return E_t, F_st
+
+    def get_h(self, atoms):
+        self.gemnet_forward(atoms)
+        return self.h
