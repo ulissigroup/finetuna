@@ -144,13 +144,13 @@ def active_learning(config):
             flare_params=config.get("pyflare", {}),
             initial_images=[initial_structure] + images,
         )
-    elif potential_class == "gp_ocpd":
+    elif potential_class == "ocpd_gp":
         ml_potential = OCPDGPCalc(
             model_path=config["ocp"]["model_path"],
             checkpoint_path=config["ocp"]["checkpoint_path"],
             gp_params=config.get("gp", {}),
         )
-    elif potential_class == "nn_ocpd":
+    elif potential_class == "ocpd_nn":
         ml_potential = OCPDNNCalc(
             initial_structure,
             model_path=config["ocp"]["model_path"],
