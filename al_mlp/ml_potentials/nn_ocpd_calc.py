@@ -18,14 +18,14 @@ class NNOCPDCalc(OCPDCalc):
         self.initial_structure = initial_structure
         self.n_atoms = len(self.initial_structure)
 
-        self.n_hidden = nn_params.get("n_hidden", 20)
-        self.n_hidden2 = nn_params.get("n_hidden2", 20)
+        self.n_hidden = nn_params.get("n_hidden", 2)
+        self.n_hidden2 = nn_params.get("n_hidden2", 2)
         self.dropout_prob = nn_params.get("dropout_prob", 0.9)
         self.n_estimators = nn_params.get("n_estimators", 3)
 
         super().__init__(model_path, checkpoint_path, mlp_params=nn_params)
 
-        self.stopping_epoch = self.mlp_params.get("stopping_epoch", 15)
+        self.stopping_epoch = self.mlp_params.get("stopping_epoch", 100)
 
         self.loss_func = nn.MSELoss()
 
@@ -36,10 +36,10 @@ class NNOCPDCalc(OCPDCalc):
         for i in range(self.n_estimators):
             self.nn_ensemble.append(
                 Net(
-                    self.n_atoms,
+                    len(self.get_descriptor(self.initial_structure)),
                     self.n_hidden,
                     self.n_hidden2,
-                    1,
+                    self.n_atoms * 3,
                     self.dropout_prob,
                 )
             )
@@ -53,35 +53,17 @@ class NNOCPDCalc(OCPDCalc):
                     amsgrad=self.mlp_params.get("amsgrad", True),
                 )
             )
-
-        self.f_ensemble = []
-        self.f_optimizers = []
-        for i in range(self.n_estimators):
-            self.f_ensemble.append(
-                Net(
-                    len(self.get_descriptor(self.initial_structure)[1]),
-                    self.n_hidden,
-                    self.n_hidden2,
-                    self.n_atoms * 3,
-                    self.dropout_prob,
-                )
-            )
-            self.f_optimizers.append(
-                torch.optim.AdamW(
-                    self.nn_ensemble[-1].parameters(),
-                    lr=optimizer_params.get("lr", 1e-5),
-                    betas=optimizer_params.get("betas", (0.9, 0.999)),
-                    eps=optimizer_params.get("eps", 1e-6),
-                    weight_decay=optimizer_params.get("weight_decay", 0),
-                    amsgrad=optimizer_params.get("amsgrad", True),
-                )
-            )
+        self.mean_energy = 0
+        self.std_energy = 0
 
     def calculate_ml(self, ocp_descriptor) -> tuple:
+        e_mean = self.mean_energy
+        e_std = self.std_energy
+
         predictions = []
         for estimator in self.nn_ensemble:
             predictions.append(
-                estimator(torch.tensor(ocp_descriptor[0]))
+                estimator(torch.tensor(ocp_descriptor))
                 .detach()
                 .numpy()
             )
@@ -89,27 +71,13 @@ class NNOCPDCalc(OCPDCalc):
         stds = np.std(predictions, axis=0)
         avgs = np.average(predictions, axis=0)
 
-        e_mean = avgs[0]
-        e_std = stds[0].item()
-
-        f_predictions = []
-        for estimator in self.f_ensemble:
-            f_predictions.append(
-                estimator(torch.tensor(ocp_descriptor[-1]))
-                .detach()
-                .numpy()
-            )
-
-        stds = np.std(f_predictions, axis=0)
-        avgs = np.average(f_predictions, axis=0)
-
         f_mean = avgs.reshape(self.n_atoms, 3)
         f_std = np.average(stds).item()
 
         return e_mean, f_mean, e_std, f_std
 
     def fit(
-        self, parent_energies, parent_forces, parent_e_descriptors, parent_f_descriptors
+        self, parent_energies, parent_forces, parent_h_descriptors
     ):
         n_data = len(parent_energies)
 
@@ -120,63 +88,46 @@ class NNOCPDCalc(OCPDCalc):
             while not self.stopping_criteria(estimator):
                 self.epoch_losses.append(0)
                 for i in range(n_data):
-                    prediction = estimator(torch.tensor(parent_e_descriptors[i]))
-                    loss = self.loss_func(
-                        prediction, torch.tensor(np.array([parent_energies[i]])).to(torch.float32)
-                    )
-
-                    self.epoch_losses[-1] += loss.data.item()
-                    # print(str(self.epoch)+"loss: "+str(loss))
-
-                    self.optimizers[j].zero_grad()
-                    loss.backward()
-                    self.optimizers[j].step()
-                if self.epoch%20 == 0:
-                    print(str(self.epoch)+" energy sum_loss: "+str(self.epoch_losses[-1]))
-                self.epoch += 1
-
-        for j in range(len(self.f_ensemble)):
-            estimator = self.f_ensemble[j]
-            self.epoch = 0
-            self.epoch_losses = []
-            while not self.stopping_criteria(estimator):
-                self.epoch_losses.append(0)
-                for i in range(n_data):
-                    prediction = estimator(torch.tensor(parent_f_descriptors[i]))
+                    prediction = estimator(torch.tensor(parent_h_descriptors[i]))
                     loss = self.loss_func(
                         prediction, torch.tensor(parent_forces[i].flatten()).to(torch.float32)
                     )
 
                     self.epoch_losses[-1] += loss.data.item()
-                    # print(str(self.epoch)+"loss: "+str(loss))
 
                     self.optimizers[j].zero_grad()
                     loss.backward()
                     self.optimizers[j].step()
-                if self.epoch%20 == 0:
-                    print(str(self.epoch)+" forces sum_loss: "+str(self.epoch_losses[-1]))
                 self.epoch += 1
+        
+        self.mean_energy = np.average(parent_energies)
+        self.std_energy = np.std(parent_energies)
+
+    def get_data_from_atoms(self, atoms_dataset: "list[Atoms]"):
+        energy_data = []
+        forces_data = []
+        h_data = []
+        for atoms in atoms_dataset:
+            energy_data.append(atoms.get_potential_energy())
+            forces_data.append(atoms.get_forces())
+            h_data.append(self.get_descriptor(atoms))
+        return energy_data, forces_data, h_data
+
+    def get_descriptor(self, atoms: "Atoms"):
+        """ "
+        Overwritable method for getting the ocp descriptor from atoms objects
+        """
+        ocp_descriptor = self.ocp_describer.get_h(atoms)
+        h_desc = ocp_descriptor.flatten()
+        return h_desc
 
     def partial_fit(
         self, new_energies, new_forces, new_e_descriptors, new_f_descriptors
     ):
         raise NotImplementedError
 
-    def get_unified_descriptor(self, e_descriptor, f_descriptor):
-        return np.concatenate((e_descriptor, f_descriptor.flatten()))
-
-    def get_unified_label(self, energy, forces):
-        return np.concatenate((np.array([energy]), forces.flatten()))
-
     def stopping_criteria(self, estimator):
-        # return self.epoch > self.stopping_epoch
-        if len(self.epoch_losses) > 1000:
-            return True
-        if len(self.epoch_losses) < 10:
-            return False
-        if self.epoch_losses[-1] > 1:
-            return False
-        return np.abs(np.mean(self.epoch_losses[-30:-1])-np.mean(self.epoch_losses[-5:-1])) < 0.03
+        return self.epoch > self.stopping_epoch
 
 
 class Net(torch.nn.Module):
