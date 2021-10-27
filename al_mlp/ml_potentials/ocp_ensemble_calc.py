@@ -29,7 +29,7 @@ class OCPEnsembleCalc(MLPCalc):
     executor = None
 
     def __init__(self, amptorch_trainer, n_ensembles):
-        MLPCalc.__init__(self, mlp_params=self.amptorch_trainer.config)
+        MLPCalc.__init__(self, mlp_params=amptorch_trainer.config)
         self.amptorch_trainer = amptorch_trainer
         self.n_ensembles = n_ensembles
 
