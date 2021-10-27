@@ -38,6 +38,14 @@ class FlareCalc(FLARE_Calculator, MLPCalc):
         for i in range(len(a_numbers)):
             self.species_map[a_numbers[i]] = i
 
+    def calculate(self, atoms=None, properties=None, system_changes=...):
+        MLPCalc.calculate(
+            self, atoms=atoms, properties=properties, system_changes=system_changes
+        )
+        return super().calculate(
+            atoms=atoms, properties=properties, system_changes=system_changes
+        )
+
     def calculate_gp(self, atoms):
         structure = self.get_descriptor_from_atoms(atoms)
         super().calculate_gp(structure)
