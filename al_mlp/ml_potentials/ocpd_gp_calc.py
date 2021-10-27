@@ -9,7 +9,7 @@ from sklearn.gaussian_process.kernels import (
 )
 
 
-class GPOCPDCalc(OCPDCalc):
+class OCPDGPCalc(OCPDCalc):
     implemented_properties = ["energy", "forces", "stds"]
 
     def __init__(

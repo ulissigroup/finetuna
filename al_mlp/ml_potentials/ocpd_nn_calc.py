@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 
 
-class NNOCPDCalc(OCPDCalc):
+class OCPDNNCalc(OCPDCalc):
     implemented_properties = ["energy", "forces", "stds"]
 
     def __init__(
