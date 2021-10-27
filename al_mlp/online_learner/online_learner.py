@@ -349,7 +349,7 @@ class OnlineLearner(Calculator):
             )
 
         partial_dataset = self.add_to_dataset(new_data)
-        self.complete_dataset.append(partial_dataset[0])
+        self.complete_dataset.append(new_data)
 
         self.parent_calls += 1
 
