@@ -132,6 +132,25 @@ def get_fmax(forces: np.ndarray):
     return np.sqrt((forces ** 2).sum(axis=1).max())
 
 
+def convert_to_top_k_forces(images, k):
+    images = copy_images(images)
+    singlepoint_images = []
+    for image in images:
+        top_k = np.sqrt((image.get_forces() ** 2).sum(axis=1))
+        threshold = np.partition(top_k, -k)[-k]
+        top_k[top_k < threshold] = 0
+        top_k[top_k >= threshold] = 1
+        top_k_forces = (image.get_forces().T * top_k).T
+
+        sp_calc = sp(
+            atoms=image, energy=float(image.get_potential_energy()), forces=top_k_forces
+        )
+        sp_calc.implemented_properties = ["energy", "forces"]
+        image.set_calculator(sp_calc)
+        singlepoint_images.append(image)
+    return singlepoint_images
+
+
 def write_to_db(database, queried_images, datatype="-", parentE="-", baseE="-"):
     for image in queried_images:
         database.write(
