@@ -3,22 +3,23 @@ from flare_pp._C_flare import Structure, NormalizedDotProduct, B2, SquaredExpone
 
 # from flare_pp.sparse_gp_calculator import SGP_Calculator
 from flare_pp.sparse_gp import SGP_Wrapper
-from ase.calculators.calculator import Calculator, all_changes
+from ase.calculators.calculator import all_changes
 from flare import struc
 import numpy as np
 
+from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
 
-class FlarePPCalc(Calculator):
+
+class FlarePPCalc(MLPCalc):
 
     implemented_properties = ["energy", "forces", "stress", "stds"]
 
     def __init__(self, mlp_params, initial_images):
-        super().__init__()
+        MLPCalc.__init__(self, mlp_params=mlp_params)
         self.gp_model = None
         self.results = {}
         self.use_mapping = False
         self.mgp_model = None
-        self.mlp_params = mlp_params
         self.initial_images = initial_images
         self.init_species_map()
         self.update_gp_mode = self.mlp_params.get("update_gp_mode", "all")
@@ -100,12 +101,9 @@ class FlarePPCalc(Calculator):
             stress, uncertainties.
         """
 
-        super().calculate(
-            atoms=atoms, properties=properties, system_changes=system_changes
+        MLPCalc.calculate(
+            self, atoms=atoms, properties=properties, system_changes=system_changes
         )
-
-        if properties is None:
-            properties = self.implemented_properties
 
         # Create structure descriptor.
         structure_descriptor = self.get_structure_descriptor(atoms)

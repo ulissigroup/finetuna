@@ -1,7 +1,7 @@
 import numpy as np
-from ase.calculators.calculator import Calculator
 import random
 import copy
+from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
 from amptorch.trainer import AtomsTrainer
 from al_mlp.ml_potentials.bootstrap import non_bootstrap_ensemble
 import torch
@@ -13,7 +13,7 @@ __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
 
 
-class AmptorchEnsembleCalc(Calculator):
+class AmptorchEnsembleCalc(MLPCalc):
     """Atomistics Machine-Learning Potential (AMP) ASE calculator
     Parameters
     ----------
@@ -31,9 +31,8 @@ class AmptorchEnsembleCalc(Calculator):
     executor = None
 
     def __init__(self, amptorch_trainer, n_ensembles):
-        Calculator.__init__(self)
+        MLPCalc.__init__(self, mlp_params=self.amptorch_trainer.config)
         self.amptorch_trainer = amptorch_trainer
-        self.mlp_params = self.amptorch_trainer.config
         self.n_ensembles = n_ensembles
 
     def calculate_stats(self, energies, forces):
@@ -57,7 +56,9 @@ class AmptorchEnsembleCalc(Calculator):
         )
 
     def calculate(self, atoms, properties, system_changes):
-        Calculator.calculate(self, atoms, properties, system_changes)
+        MLPCalc.calculate(
+            self, atoms=atoms, properties=properties, system_changes=system_changes
+        )
         energies = []
         forces = []
         for calc in self.trained_calcs:

@@ -3,8 +3,10 @@ from flare.gp import GaussianProcess
 from flare.struc import Structure
 import numpy as np
 
+from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
 
-class FlareCalc(FLARE_Calculator):
+
+class FlareCalc(FLARE_Calculator, MLPCalc):
 
     implemented_properties = ["energy", "forces", "stress", "stds"]
 
@@ -19,7 +21,7 @@ class FlareCalc(FLARE_Calculator):
     ):
         self.initial_images = initial_images
         self.init_species_map()
-        self.mlp_params = flare_params
+        MLPCalc.__init__(self, mlp_params=flare_params)
         super().__init__(
             None, mgp_model=mgp_model, par=par, use_mapping=use_mapping, **kwargs
         )

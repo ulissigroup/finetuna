@@ -1,9 +1,10 @@
-from ase.calculators.calculator import Calculator, all_changes
+from ase.calculators.calculator import all_changes
 from ase.atoms import Atoms
+from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
 from al_mlp.ocp_descriptor import OCPDescriptor
 
 
-class OCPDCalc(Calculator):
+class OCPDCalc(MLPCalc):
     """
     Open Catalyst Project Descriptor Calculator.
     This class serves as a parent class for calculators that want to inherit calculate() and train()
@@ -29,14 +30,13 @@ class OCPDCalc(Calculator):
         checkpoint_path: str,
         mlp_params: dict = {},
     ):
-        super().__init__()
+        MLPCalc.__init__(self, mlp_params=mlp_params)
 
         self.ocp_describer = OCPDescriptor(
             model_path=model_path,
             checkpoint_path=checkpoint_path,
         )
 
-        self.mlp_params = mlp_params
         self.init_model()
 
     def init_model(self):
@@ -64,12 +64,9 @@ class OCPDCalc(Calculator):
         Args:
             atoms: ase Atoms object
         """
-        super().calculate(
-            atoms=atoms, properties=properties, system_changes=system_changes
+        MLPCalc.calculate(
+            self, atoms=atoms, properties=properties, system_changes=system_changes
         )
-
-        if properties is None:
-            properties = self.implemented_properties
 
         ocp_descriptor = self.get_descriptor(atoms)
         energy, forces, energy_uncertainty, force_uncertainties = self.calculate_ml(
