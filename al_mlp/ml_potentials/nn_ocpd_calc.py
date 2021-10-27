@@ -31,7 +31,6 @@ class NNOCPDCalc(OCPDCalc):
 
     def init_model(self):
         self.ml_model = True
-        optimizer_params = self.mlp_params.get("optimizer", {})
         self.nn_ensemble = []
         self.optimizers = []
         for i in range(self.n_estimators):
@@ -47,11 +46,11 @@ class NNOCPDCalc(OCPDCalc):
             self.optimizers.append(
                 torch.optim.AdamW(
                     self.nn_ensemble[-1].parameters(),
-                    lr=optimizer_params.get("lr", 5e-2),
-                    betas=optimizer_params.get("betas", (0.9, 0.999)),
-                    eps=optimizer_params.get("eps", 1e-6),
-                    weight_decay=optimizer_params.get("weight_decay", 0),
-                    amsgrad=optimizer_params.get("amsgrad", True),
+                    lr=self.mlp_params.get("lr", 1e-3),
+                    betas=self.mlp_params.get("betas", (0.9, 0.999)),
+                    eps=self.mlp_params.get("eps", 1e-6),
+                    weight_decay=self.mlp_params.get("weight_decay", 0),
+                    amsgrad=self.mlp_params.get("amsgrad", True),
                 )
             )
 
