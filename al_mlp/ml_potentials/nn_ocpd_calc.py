@@ -51,13 +51,13 @@ class NNOCPDCalc(OCPDCalc):
         optimizer_class = self.mlp_params.get("optimizer", "AdamW")
         if optimizer_class == "AdamW":
             optimizer = torch.optim.AdamW(
-                    self.nn_ensemble[-1].parameters(),
-                    lr=self.mlp_params.get("lr", 1e-3),
-                    betas=self.mlp_params.get("betas", (0.9, 0.999)),
-                    eps=self.mlp_params.get("eps", 1e-6),
-                    weight_decay=self.mlp_params.get("weight_decay", 0),
-                    amsgrad=self.mlp_params.get("amsgrad", True),
-                )
+                self.nn_ensemble[-1].parameters(),
+                lr=self.mlp_params.get("lr", 1e-3),
+                betas=self.mlp_params.get("betas", (0.9, 0.999)),
+                eps=self.mlp_params.get("eps", 1e-6),
+                weight_decay=self.mlp_params.get("weight_decay", 0),
+                amsgrad=self.mlp_params.get("amsgrad", True),
+            )
         elif optimizer_class == "SGD":
             optimizer = torch.optim.SGD(
                 self.nn_ensemble[-1].parameters(),
@@ -68,7 +68,6 @@ class NNOCPDCalc(OCPDCalc):
                 nesterov=self.mlp_params.get("nesterov", False),
             )
         return optimizer
-        
 
     def calculate_ml(self, ocp_descriptor) -> tuple:
         e_mean = self.mean_energy
@@ -76,11 +75,7 @@ class NNOCPDCalc(OCPDCalc):
 
         predictions = []
         for estimator in self.nn_ensemble:
-            predictions.append(
-                estimator(torch.tensor(ocp_descriptor))
-                .detach()
-                .numpy()
-            )
+            predictions.append(estimator(torch.tensor(ocp_descriptor)).detach().numpy())
 
         stds = np.std(predictions, axis=0)
         avgs = np.average(predictions, axis=0)
@@ -90,9 +85,7 @@ class NNOCPDCalc(OCPDCalc):
 
         return e_mean, f_mean, e_std, f_std
 
-    def fit(
-        self, parent_energies, parent_forces, parent_h_descriptors
-    ):
+    def fit(self, parent_energies, parent_forces, parent_h_descriptors):
         n_data = len(parent_energies)
 
         for j in range(len(self.nn_ensemble)):
@@ -104,7 +97,8 @@ class NNOCPDCalc(OCPDCalc):
                 for i in range(n_data):
                     prediction = estimator(torch.tensor(parent_h_descriptors[i]))
                     loss = self.loss_func(
-                        prediction, torch.tensor(parent_forces[i].flatten()).to(torch.float32)
+                        prediction,
+                        torch.tensor(parent_forces[i].flatten()).to(torch.float32),
                     )
 
                     self.epoch_losses[-1] += loss.data.item()
@@ -113,7 +107,7 @@ class NNOCPDCalc(OCPDCalc):
                     loss.backward()
                     self.optimizers[j].step()
                 self.epoch += 1
-        
+
         self.mean_energy = np.average(parent_energies)
         self.std_energy = np.std(parent_energies)
 
