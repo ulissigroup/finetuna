@@ -43,8 +43,14 @@ class NNOCPDCalc(OCPDCalc):
                     self.dropout_prob,
                 )
             )
-            self.optimizers.append(
-                torch.optim.AdamW(
+            self.optimizers.append(self.init_optimizer())
+        self.mean_energy = 0
+        self.std_energy = 0
+
+    def init_optimizer(self):
+        optimizer_class = self.mlp_params.get("optimizer", "AdamW")
+        if optimizer_class == "AdamW":
+            optimizer = torch.optim.AdamW(
                     self.nn_ensemble[-1].parameters(),
                     lr=self.mlp_params.get("lr", 1e-3),
                     betas=self.mlp_params.get("betas", (0.9, 0.999)),
@@ -52,9 +58,17 @@ class NNOCPDCalc(OCPDCalc):
                     weight_decay=self.mlp_params.get("weight_decay", 0),
                     amsgrad=self.mlp_params.get("amsgrad", True),
                 )
+        elif optimizer_class == "SGD":
+            optimizer = torch.optim.SGD(
+                self.nn_ensemble[-1].parameters(),
+                lr=self.mlp_params.get("lr", 1e-3),
+                momentum=self.mlp_params.get("momentum", 0),
+                dampening=self.mlp_params.get("dampening", 0),
+                weight_decay=self.mlp_params.get("weight_decay", 0),
+                nesterov=self.mlp_params.get("nesterov", False),
             )
-        self.mean_energy = 0
-        self.std_energy = 0
+        return optimizer
+        
 
     def calculate_ml(self, ocp_descriptor) -> tuple:
         e_mean = self.mean_energy
