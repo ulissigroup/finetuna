@@ -3,7 +3,7 @@ import numpy as np
 from ase.calculators.calculator import Calculator
 from ase.calculators.singlepoint import SinglePointCalculator
 from al_mlp.logger import Logger
-from al_mlp.utils import convert_to_singlepoint
+from al_mlp.utils import convert_to_singlepoint, convert_to_top_k_forces
 import time
 import math
 import ase.db
@@ -96,6 +96,9 @@ class OnlineLearner(Calculator):
         self.constraint = self.learner_params.get("train_on_constraint", False)
 
         self.query_every_n_steps = self.learner_params.get("query_every_n_steps", None)
+        self.train_on_top_k_forces = self.learner_params.get(
+            "train_on_top_k_forces", None
+        )
 
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
@@ -348,8 +351,19 @@ class OnlineLearner(Calculator):
                 + str(end - start)
             )
 
-        partial_dataset = self.add_to_dataset(new_data)
+        # add to complete dataset (for atomistic methods optimizer replay)
         self.complete_dataset.append(new_data)
+
+        # before adding to parent (training) dataset, convert to top k forces if applicable
+        if self.train_on_top_k_forces is not None:
+            training_data = convert_to_top_k_forces(
+                new_data, self.train_on_top_k_forces
+            )
+        else:
+            training_data = new_data
+
+        # add to parent dataset (for training) and return partial dataset (for partial fit)
+        partial_dataset = self.add_to_dataset(training_data)
 
         self.parent_calls += 1
 
