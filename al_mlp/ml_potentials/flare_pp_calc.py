@@ -55,7 +55,6 @@ class FlarePPCalc(MLPCalc):
             self.kernel = SquaredExponential(
                 self.mlp_params["sigma"], self.mlp_params["ls"]
             )
-        radial_hyps = [0.0, self.mlp_params["cutoff"]]
         settings = [len(self.species_map), 12, 3]
 
         descriptor_names = self.mlp_params.get("descriptor", ["B2"])
@@ -66,25 +65,34 @@ class FlarePPCalc(MLPCalc):
                     B2(
                         self.mlp_params["radial_basis"],
                         self.mlp_params["cutoff_function"],
-                        radial_hyps,
+                        [0.0, self.mlp_params["cutoff"]],
                         self.mlp_params["cutoff_hyps"],
                         settings,
                     )
                 )
-            # elif descriptor_name == "B3":
-            #     self.descriptor_list.append(
-            #         B3(
-            #             self.mlp_params["radial_basis"],
-            #             self.mlp_params["cutoff_function"],
-            #             radial_hyps,
-            #             self.mlp_params["cutoff_hyps"],
-            #             settings,
-            #         )
-            #     )
+            elif descriptor_name == "B3":
+                self.descriptor_list.append(
+                    B3(
+                        self.mlp_params["radial_basis"],
+                        self.mlp_params["cutoff_function"],
+                        [0.0, self.mlp_params["B3cutoff"]],
+                        self.mlp_params["cutoff_hyps"],
+                        settings,
+                    )
+                )
             elif descriptor_name == "FourBody":
                 self.descriptor_list.append(
                     FourBody(
-                        self.mlp_params["cutoff"],  # cutoff, double
+                        self.mlp_params["FourBodycutoff"],  # cutoff, double
+                        len(self.species_map),  # n_species, int
+                        self.mlp_params["cutoff_function"],  # cutoff_name, string
+                        self.mlp_params["cutoff_hyps"],  # cutoff_hyps, vector[double]
+                    )
+                )
+            elif descriptor_name == "ThreeBodyWide":
+                self.descriptor_list.append(
+                    FourBody(
+                        self.mlp_params["ThreeBodyWidecutoff"],  # cutoff, double
                         len(self.species_map),  # n_species, int
                         self.mlp_params["cutoff_function"],  # cutoff_name, string
                         self.mlp_params["cutoff_hyps"],  # cutoff_hyps, vector[double]
