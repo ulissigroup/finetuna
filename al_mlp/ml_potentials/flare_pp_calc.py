@@ -6,6 +6,7 @@ from flare_pp._C_flare import (
     SquaredExponential,
     B3,
     FourBody,
+    ThreeBodyWide
 )
 
 # from flare_pp.sparse_gp_calculator import SGP_Calculator
@@ -91,7 +92,7 @@ class FlarePPCalc(MLPCalc):
                 )
             elif descriptor_name == "ThreeBodyWide":
                 self.descriptor_list.append(
-                    FourBody(
+                    ThreeBodyWide(
                         self.mlp_params["ThreeBodyWidecutoff"],  # cutoff, double
                         len(self.species_map),  # n_species, int
                         self.mlp_params["cutoff_function"],  # cutoff_name, string
