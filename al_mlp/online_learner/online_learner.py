@@ -356,8 +356,8 @@ class OnlineLearner(Calculator):
 
         # before adding to parent (training) dataset, convert to top k forces if applicable
         if self.train_on_top_k_forces is not None:
-            training_data = convert_to_top_k_forces(
-                new_data, self.train_on_top_k_forces
+            [training_data] = convert_to_top_k_forces(
+                [new_data], self.train_on_top_k_forces
             )
         else:
             training_data = new_data
