@@ -6,7 +6,7 @@ from flare_pp._C_flare import (
     SquaredExponential,
     B3,
     FourBody,
-    ThreeBodyWide
+    ThreeBodyWide,
 )
 
 # from flare_pp.sparse_gp_calculator import SGP_Calculator
