@@ -1,25 +1,33 @@
 # import flare_pp._C_flare as flare_pp
-from flare_pp._C_flare import Structure, NormalizedDotProduct, B2, SquaredExponential
+from flare_pp._C_flare import (
+    Structure,
+    NormalizedDotProduct,
+    B2,
+    SquaredExponential,
+    B3,
+    FourBody,
+    ThreeBodyWide,
+)
 
 # from flare_pp.sparse_gp_calculator import SGP_Calculator
 from flare_pp.sparse_gp import SGP_Wrapper
-from ase.calculators.calculator import Calculator, all_changes
+from ase.calculators.calculator import all_changes
 from flare import struc
 import numpy as np
-import time
+
+from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
 
 
-class FlarePPCalc(Calculator):
+class FlarePPCalc(MLPCalc):
 
     implemented_properties = ["energy", "forces", "stress", "stds"]
 
     def __init__(self, mlp_params, initial_images):
-        super().__init__()
+        MLPCalc.__init__(self, mlp_params=mlp_params)
         self.gp_model = None
         self.results = {}
         self.use_mapping = False
         self.mgp_model = None
-        self.mlp_params = mlp_params
         self.initial_images = initial_images
         self.init_species_map()
         self.update_gp_mode = self.mlp_params.get("update_gp_mode", "all")
@@ -48,15 +56,52 @@ class FlarePPCalc(Calculator):
             self.kernel = SquaredExponential(
                 self.mlp_params["sigma"], self.mlp_params["ls"]
             )
-        radial_hyps = [0.0, self.mlp_params["cutoff"]]
         settings = [len(self.species_map), 12, 3]
-        self.B2calc = B2(
-            self.mlp_params["radial_basis"],
-            self.mlp_params["cutoff_function"],
-            radial_hyps,
-            self.mlp_params["cutoff_hyps"],
-            settings,
-        )
+
+        descriptor_names = self.mlp_params.get("descriptor", ["B2"])
+        self.descriptor_list = []
+        for descriptor_name in descriptor_names:
+            if descriptor_name == "B2":
+                self.descriptor_list.append(
+                    B2(
+                        self.mlp_params["radial_basis"],
+                        self.mlp_params["cutoff_function"],
+                        [0.0, self.mlp_params["cutoff"]],
+                        self.mlp_params["cutoff_hyps"],
+                        settings,
+                    )
+                )
+            elif descriptor_name == "B3":
+                self.descriptor_list.append(
+                    B3(
+                        self.mlp_params["radial_basis"],
+                        self.mlp_params["cutoff_function"],
+                        [0.0, self.mlp_params["B3cutoff"]],
+                        self.mlp_params["cutoff_hyps"],
+                        settings,
+                    )
+                )
+            elif descriptor_name == "FourBody":
+                self.descriptor_list.append(
+                    FourBody(
+                        self.mlp_params["FourBodycutoff"],  # cutoff, double
+                        len(self.species_map),  # n_species, int
+                        self.mlp_params["cutoff_function"],  # cutoff_name, string
+                        self.mlp_params["cutoff_hyps"],  # cutoff_hyps, vector[double]
+                    )
+                )
+            elif descriptor_name == "ThreeBodyWide":
+                self.descriptor_list.append(
+                    ThreeBodyWide(
+                        self.mlp_params["ThreeBodyWidecutoff"],  # cutoff, double
+                        len(self.species_map),  # n_species, int
+                        self.mlp_params["cutoff_function"],  # cutoff_name, string
+                        self.mlp_params["cutoff_hyps"],  # cutoff_hyps, vector[double]
+                    )
+                )
+            else:
+                raise ValueError("Invalid FLARE pp descriptor provided")
+
         if self.kernel_type == "SquaredExponential":
             bounds = [
                 self.mlp_params.get("bounds", {}).get("sigma", (None, None)),
@@ -77,7 +122,7 @@ class FlarePPCalc(Calculator):
 
         self.gp_model = SGP_Wrapper(
             [self.kernel],
-            [self.B2calc],
+            self.descriptor_list,
             self.mlp_params["cutoff"],
             self.mlp_params["sigma_e"],
             self.mlp_params["sigma_f"],
@@ -91,7 +136,7 @@ class FlarePPCalc(Calculator):
             opt_method=self.opt_method,
             bounds=bounds,
         )
-        self.gp_model.descriptor_calcs = [self.B2calc]
+        self.gp_model.descriptor_calcs = self.descriptor_list
         self.gp_model.kernels = [self.kernel]
 
     # TODO: Figure out why this is called twice per MD step.
@@ -101,21 +146,12 @@ class FlarePPCalc(Calculator):
             stress, uncertainties.
         """
 
-        super().calculate(
-            atoms=atoms, properties=properties, system_changes=system_changes
+        MLPCalc.calculate(
+            self, atoms=atoms, properties=properties, system_changes=system_changes
         )
-
-        if properties is None:
-            properties = self.implemented_properties
 
         # Create structure descriptor.
-        structure_descriptor = Structure(
-            atoms.get_cell(),
-            [self.species_map[x] for x in atoms.get_atomic_numbers()],
-            atoms.get_positions(),
-            self.gp_model.cutoff,
-            self.gp_model.descriptor_calculators,
-        )
+        structure_descriptor = self.get_structure_descriptor(atoms)
 
         #         Predict on structure.
         if self.gp_model.variance_type == "SOR":
@@ -259,3 +295,13 @@ class FlarePPCalc(Calculator):
             self.gp_model.update_db(
                 train_structure, forces, [], energy, mode="all", update_qr=True
             )
+
+    def get_structure_descriptor(self, atoms):
+        structure_descriptor = Structure(
+            atoms.get_cell(),
+            [self.species_map[x] for x in atoms.get_atomic_numbers()],
+            atoms.get_positions(),
+            self.gp_model.cutoff,
+            self.gp_model.descriptor_calculators,
+        )
+        return structure_descriptor

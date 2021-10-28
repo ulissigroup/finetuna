@@ -3,7 +3,7 @@ import numpy as np
 from ase.calculators.calculator import Calculator
 from ase.calculators.singlepoint import SinglePointCalculator
 from al_mlp.logger import Logger
-from al_mlp.utils import convert_to_singlepoint
+from al_mlp.utils import convert_to_singlepoint, convert_to_top_k_forces
 import time
 import math
 import ase.db
@@ -35,6 +35,7 @@ class OnlineLearner(Calculator):
         self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
         self.trained_at_least_once = False
         self.check_final_point = False
+        self.uncertainty_history = []
 
         if mongo_db is None:
             mongo_db = {"online_learner": None}
@@ -63,6 +64,8 @@ class OnlineLearner(Calculator):
         )
         self.stat_uncertain_tol = self.learner_params["stat_uncertain_tol"]
         self.dyn_uncertain_tol = self.learner_params["dyn_uncertain_tol"]
+        self.dyn_avg_steps = self.learner_params.get("dyn_avg_steps", None)
+
         self.suppress_warnings = self.learner_params.get("suppress_warnings", False)
         self.reverify_with_parent = self.learner_params.get(
             "reverify_with_parent", True
@@ -93,6 +96,9 @@ class OnlineLearner(Calculator):
         self.constraint = self.learner_params.get("train_on_constraint", False)
 
         self.query_every_n_steps = self.learner_params.get("query_every_n_steps", None)
+        self.train_on_top_k_forces = self.learner_params.get(
+            "train_on_top_k_forces", None
+        )
 
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
@@ -234,7 +240,7 @@ class OnlineLearner(Calculator):
         return energy, forces, fmax
 
     def unsafe_prediction(self, atoms):
-        # Set the desired tolerance based on the current max predcited force or energy
+        # Set the desired tolerance based on the current max predicted force or energy
         if self.uncertainty_metric == "forces":
             uncertainty = atoms.info["max_force_stds"]
             if math.isnan(uncertainty):
@@ -247,6 +253,17 @@ class OnlineLearner(Calculator):
             base_tolerance = energy
         else:
             raise ValueError("invalid uncertainty metric")
+
+        self.uncertainty_history.append(uncertainty)
+
+        # if we are taking the dynamic uncertainty tolerance to be the average of the past n uncertainties,
+        # then calculate that everage and set it as the base tolerance (to be modified by dyn modifier)
+        if self.dyn_avg_steps is not None:
+            base_tolerance = np.mean(
+                self.uncertainty_history[
+                    max(0, len(self.uncertainty_history) - self.dyn_avg_steps) :
+                ]
+            )
 
         if self.tolerance_selection == "min":
             uncertainty_tol = min(
@@ -334,8 +351,19 @@ class OnlineLearner(Calculator):
                 + str(end - start)
             )
 
-        partial_dataset = self.add_to_dataset(new_data)
-        self.complete_dataset.append(partial_dataset[0])
+        # add to complete dataset (for atomistic methods optimizer replay)
+        self.complete_dataset.append(new_data)
+
+        # before adding to parent (training) dataset, convert to top k forces if applicable
+        if self.train_on_top_k_forces is not None:
+            [training_data] = convert_to_top_k_forces(
+                [new_data], self.train_on_top_k_forces
+            )
+        else:
+            training_data = new_data
+
+        # add to parent dataset (for training) and return partial dataset (for partial fit)
+        partial_dataset = self.add_to_dataset(training_data)
 
         self.parent_calls += 1
 
