@@ -3,6 +3,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 import numpy as np
+import copy
 
 
 class OCPDNNCalc(OCPDCalc):
@@ -18,10 +19,11 @@ class OCPDNNCalc(OCPDCalc):
         self.initial_structure = initial_structure
         self.n_atoms = len(self.initial_structure)
 
-        self.n_hidden = nn_params.get("n_hidden", 2)
-        self.n_hidden2 = nn_params.get("n_hidden2", 2)
-        self.dropout_prob = nn_params.get("dropout_prob", 0.9)
+        self.n_hidden = nn_params.get("n_hidden", 2000)
+        self.n_hidden2 = nn_params.get("n_hidden2", 200)
+        self.dropout_prob = nn_params.get("dropout_prob", 0)
         self.n_estimators = nn_params.get("n_estimators", 3)
+        self.verbose = nn_params.get("verbose", True)
 
         super().__init__(model_path, checkpoint_path, mlp_params=nn_params)
 
@@ -33,6 +35,7 @@ class OCPDNNCalc(OCPDCalc):
         self.ml_model = True
         self.nn_ensemble = []
         self.optimizers = []
+        self.schedulers = []
         for i in range(self.n_estimators):
             self.nn_ensemble.append(
                 Net(
@@ -43,7 +46,7 @@ class OCPDNNCalc(OCPDCalc):
                     self.dropout_prob,
                 )
             )
-            self.optimizers.append(self.init_optimizer())
+            self.init_optimizer()
         self.mean_energy = 0
         self.std_energy = 0
 
@@ -67,7 +70,14 @@ class OCPDNNCalc(OCPDCalc):
                 weight_decay=self.mlp_params.get("weight_decay", 0),
                 nesterov=self.mlp_params.get("nesterov", False),
             )
-        return optimizer
+        self.optimizers.append(optimizer)
+
+        scheduler_class = self.mlp_params.get("scheduler", None)
+        if scheduler_class == "ReduceLROnPlateau":
+            scheduler_dict = self.mlp_params.get("scheduler_dict", {})
+            self.schedulers.append(
+                torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, **scheduler_dict)
+            )
 
     def calculate_ml(self, ocp_descriptor) -> tuple:
         e_mean = self.mean_energy
@@ -75,13 +85,18 @@ class OCPDNNCalc(OCPDCalc):
 
         predictions = []
         for estimator in self.nn_ensemble:
-            predictions.append(estimator(torch.tensor(ocp_descriptor)).detach().numpy())
+            prediction = estimator(torch.tensor(ocp_descriptor)).detach().numpy()
+            constraint_array  = np.ones((self.n_atoms,3))
+            constraint_array[self.initial_structure.constraints[0].index] = np.zeros((3,))
+            constraint_array = constraint_array.flatten()
+            prediction = np.multiply(constraint_array, prediction)
+            predictions.append(prediction)
 
         stds = np.std(predictions, axis=0)
         avgs = np.average(predictions, axis=0)
 
         f_mean = avgs.reshape(self.n_atoms, 3)
-        f_std = np.average(stds).item()
+        f_std = np.average(np.delete(stds.reshape(self.n_atoms, 3), self.initial_structure.constraints[0].index, axis=0)).item()
 
         return e_mean, f_mean, e_std, f_std
 
@@ -91,23 +106,77 @@ class OCPDNNCalc(OCPDCalc):
         for j in range(len(self.nn_ensemble)):
             estimator = self.nn_ensemble[j]
             self.epoch = 0
-            self.epoch_losses = []
+            best_loss = np.Inf
+            best_model = copy.deepcopy(estimator)
+            epoch_losses = []
+
+            if self.verbose:
+                print("*loss(" + str(j) + "," + str(self.epoch) + "): " + str("Inf"))
+                check = True
+                for param in estimator.hidden1.parameters():
+                    # print(param)
+                    if check:
+                        check = False
+                        old_param = param
+                    print(param.detach().numpy().sum())
+                for param in estimator.hidden2.parameters():
+                    print(param.detach().numpy().sum())
+
             while not self.stopping_criteria(estimator):
-                self.epoch_losses.append(0)
+                epoch_losses.append(0)
                 for i in range(n_data):
                     prediction = estimator(torch.tensor(parent_h_descriptors[i]))
+                    constraint_array  = np.ones((self.n_atoms,3))
+                    constraint_array[self.initial_structure.constraints[0].index] = np.zeros((3,))
+                    constraint_tensor = torch.tensor(constraint_array.flatten()).to(torch.float32)
                     loss = self.loss_func(
-                        prediction,
+                        prediction*constraint_tensor,
                         torch.tensor(parent_forces[i].flatten()).to(torch.float32),
                     )
-
-                    self.epoch_losses[-1] += loss.data.item()
 
                     self.optimizers[j].zero_grad()
                     loss.backward()
                     self.optimizers[j].step()
+
+                    epoch_losses[-1] += loss.data.item()
+                if self.schedulers:
+                    self.schedulers[j].step(epoch_losses[-1])
+                    if self.verbose:
+                        print("lr: "+str(self.optimizers[j].param_groups[0]['lr']))
+                        print("")
+                        print("") 
                 self.epoch += 1
 
+                loss_str = ""
+                if epoch_losses[-1] < best_loss:
+                    best_loss = epoch_losses[-1]
+                    best_model = copy.deepcopy(estimator)
+                    loss_str += "*"
+                loss_str += (
+                    "loss("
+                    + str(j)
+                    + ","
+                    + str(self.epoch)
+                    + "): "
+                    + str(epoch_losses[-1])
+                )
+                if self.verbose:
+                    print(loss_str)
+                    check = True
+                    for param in estimator.hidden1.parameters():
+                        # print(param)
+                        if check:
+                            check = False
+                            param_diff = old_param-param
+                            old_param = param
+                        print(param.detach().numpy().sum())
+                    for param in estimator.hidden2.parameters():
+                        print(param.detach().numpy().sum())
+                    print("")
+                    print("")
+            self.nn_ensemble[j] = best_model
+
+        # energy predictions are irrelevant for active learning so just take the mean
         self.mean_energy = np.average(parent_energies)
         self.std_energy = np.std(parent_energies)
 
@@ -150,11 +219,7 @@ class Net(torch.nn.Module):
         torch.nn.init.xavier_uniform_(self.hidden2.weight)
 
     def forward(self, x):
-        x = self.hidden1(x)
-        x = self.dropout(x)
-        x = F.relu(x)  # activation function for hidden layer
-        x = self.hidden2(x)
-        x = self.dropout(x)
-        x = F.relu(x)  # activation function for hidden layer
-        x = self.predict(x)  # linear output
+        x = F.silu(self.hidden1(x))  # activation function for hidden layer
+        x = F.silu(self.hidden2(x))  # activation function for hidden layer
+        x = self.dropout(self.predict(x))
         return x
