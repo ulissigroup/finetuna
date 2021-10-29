@@ -214,9 +214,7 @@ def sub_fit(
         for i in range(n_data):
             prediction = estimator(torch.tensor(parent_h_descriptors[i]))
             constraint_array = np.ones((n_atoms, 3))
-            constraint_array[constraints_index] = np.zeros(
-                (3,)
-            )
+            constraint_array[constraints_index] = np.zeros((3,))
             constraint_tensor = torch.tensor(constraint_array.flatten()).to(
                 torch.float32
             )
