@@ -4,6 +4,7 @@ from torch import nn
 import torch.nn.functional as F
 import numpy as np
 import copy
+from multiprocessing import Pool
 
 
 class OCPDNNCalc(OCPDCalc):
@@ -28,6 +29,9 @@ class OCPDNNCalc(OCPDCalc):
         super().__init__(model_path, checkpoint_path, mlp_params=nn_params)
 
         self.stopping_epoch = self.mlp_params.get("stopping_epoch", 100)
+        self.parallel = self.mlp_params.get("parallel", False)
+        if self.parallel:
+            self.process_pool = Pool(self.parallel)
 
         self.loss_func = nn.MSELoss()
 
@@ -86,8 +90,10 @@ class OCPDNNCalc(OCPDCalc):
         predictions = []
         for estimator in self.nn_ensemble:
             prediction = estimator(torch.tensor(ocp_descriptor)).detach().numpy()
-            constraint_array  = np.ones((self.n_atoms,3))
-            constraint_array[self.initial_structure.constraints[0].index] = np.zeros((3,))
+            constraint_array = np.ones((self.n_atoms, 3))
+            constraint_array[self.initial_structure.constraints[0].index] = np.zeros(
+                (3,)
+            )
             constraint_array = constraint_array.flatten()
             prediction = np.multiply(constraint_array, prediction)
             predictions.append(prediction)
@@ -96,85 +102,51 @@ class OCPDNNCalc(OCPDCalc):
         avgs = np.average(predictions, axis=0)
 
         f_mean = avgs.reshape(self.n_atoms, 3)
-        f_std = np.average(np.delete(stds.reshape(self.n_atoms, 3), self.initial_structure.constraints[0].index, axis=0)).item()
+        f_std = np.average(
+            np.delete(
+                stds.reshape(self.n_atoms, 3),
+                self.initial_structure.constraints[0].index,
+                axis=0,
+            )
+        ).item()
 
         return e_mean, f_mean, e_std, f_std
 
     def fit(self, parent_energies, parent_forces, parent_h_descriptors):
-        n_data = len(parent_energies)
-
-        for j in range(len(self.nn_ensemble)):
+        args_list = []
+        for j in range(self.n_estimators):
+            parent_energies_copy = copy.deepcopy(parent_energies)
+            parent_forces_copy = copy.deepcopy(parent_forces)
+            parent_h_descriptors_copy = copy.deepcopy(parent_h_descriptors)
             estimator = self.nn_ensemble[j]
-            self.epoch = 0
-            best_loss = np.Inf
-            best_model = copy.deepcopy(estimator)
-            epoch_losses = []
-
-            if self.verbose:
-                print("*loss(" + str(j) + "," + str(self.epoch) + "): " + str("Inf"))
-                check = True
-                for param in estimator.hidden1.parameters():
-                    # print(param)
-                    if check:
-                        check = False
-                        old_param = param
-                    print(param.detach().numpy().sum())
-                for param in estimator.hidden2.parameters():
-                    print(param.detach().numpy().sum())
-
-            while not self.stopping_criteria(estimator):
-                epoch_losses.append(0)
-                for i in range(n_data):
-                    prediction = estimator(torch.tensor(parent_h_descriptors[i]))
-                    constraint_array  = np.ones((self.n_atoms,3))
-                    constraint_array[self.initial_structure.constraints[0].index] = np.zeros((3,))
-                    constraint_tensor = torch.tensor(constraint_array.flatten()).to(torch.float32)
-                    loss = self.loss_func(
-                        prediction*constraint_tensor,
-                        torch.tensor(parent_forces[i].flatten()).to(torch.float32),
-                    )
-
-                    self.optimizers[j].zero_grad()
-                    loss.backward()
-                    self.optimizers[j].step()
-
-                    epoch_losses[-1] += loss.data.item()
-                if self.schedulers:
-                    self.schedulers[j].step(epoch_losses[-1])
-                    if self.verbose:
-                        print("lr: "+str(self.optimizers[j].param_groups[0]['lr']))
-                        print("")
-                        print("") 
-                self.epoch += 1
-
-                loss_str = ""
-                if epoch_losses[-1] < best_loss:
-                    best_loss = epoch_losses[-1]
-                    best_model = copy.deepcopy(estimator)
-                    loss_str += "*"
-                loss_str += (
-                    "loss("
-                    + str(j)
-                    + ","
-                    + str(self.epoch)
-                    + "): "
-                    + str(epoch_losses[-1])
+            optimizer = self.optimizers[j]
+            if self.schedulers:
+                scheduler = self.schedulers[j]
+            else:
+                scheduler = None
+            args_list.append(
+                (
+                    j,
+                    parent_energies_copy,
+                    parent_forces_copy,
+                    parent_h_descriptors_copy,
+                    estimator,
+                    optimizer,
+                    scheduler,
+                    self.verbose,
+                    self.stopping_epoch,
+                    self.n_atoms,
+                    self.initial_structure.constraints[0].index,
+                    self.loss_func,
                 )
-                if self.verbose:
-                    print(loss_str)
-                    check = True
-                    for param in estimator.hidden1.parameters():
-                        # print(param)
-                        if check:
-                            check = False
-                            param_diff = old_param-param
-                            old_param = param
-                        print(param.detach().numpy().sum())
-                    for param in estimator.hidden2.parameters():
-                        print(param.detach().numpy().sum())
-                    print("")
-                    print("")
-            self.nn_ensemble[j] = best_model
+            )
+
+        if self.parallel:
+            results_iterator = self.process_pool.starmap(sub_fit, args_list)
+            self.nn_ensemble = [model for model in results_iterator]
+        else:
+            for j in range(self.n_estimators):
+                self.nn_ensemble[j] = sub_fit(*args_list[j])
 
         # energy predictions are irrelevant for active learning so just take the mean
         self.mean_energy = np.average(parent_energies)
@@ -203,8 +175,90 @@ class OCPDNNCalc(OCPDCalc):
     ):
         raise NotImplementedError
 
-    def stopping_criteria(self, estimator):
-        return self.epoch > self.stopping_epoch
+
+def sub_fit(
+    j,
+    parent_energies,
+    parent_forces,
+    parent_h_descriptors,
+    estimator,
+    optimizer,
+    scheduler,
+    verbose,
+    stopping_epoch,
+    n_atoms,
+    constraints_index,
+    loss_function,
+):
+    n_data = len(parent_energies)
+
+    epoch = 0
+    best_loss = np.Inf
+    best_model = copy.deepcopy(estimator)
+    epoch_losses = []
+
+    if verbose:
+        print("*loss(" + str(j) + "," + str(epoch) + "): " + str("Inf"))
+        check = True
+        for param in estimator.hidden1.parameters():
+            # print(param)
+            if check:
+                check = False
+                old_param = param
+            print(param.detach().numpy().sum())
+        for param in estimator.hidden2.parameters():
+            print(param.detach().numpy().sum())
+
+    while not epoch > stopping_epoch:
+        epoch_losses.append(0)
+        for i in range(n_data):
+            prediction = estimator(torch.tensor(parent_h_descriptors[i]))
+            constraint_array = np.ones((n_atoms, 3))
+            constraint_array[constraints_index] = np.zeros(
+                (3,)
+            )
+            constraint_tensor = torch.tensor(constraint_array.flatten()).to(
+                torch.float32
+            )
+            loss = loss_function(
+                prediction * constraint_tensor,
+                torch.tensor(parent_forces[i].flatten()).to(torch.float32),
+            )
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            epoch_losses[-1] += loss.data.item()
+        if scheduler:
+            scheduler.step(epoch_losses[-1])
+        if verbose:
+            print("lr: " + str(optimizer.param_groups[0]["lr"]))
+            print("")
+            print("")
+        epoch += 1
+
+        loss_str = ""
+        if epoch_losses[-1] < best_loss:
+            best_loss = epoch_losses[-1]
+            best_model = copy.deepcopy(estimator)
+            loss_str += "*"
+        loss_str += "loss(" + str(j) + "," + str(epoch) + "): " + str(epoch_losses[-1])
+        if verbose:
+            print(loss_str)
+            check = True
+            for param in estimator.hidden1.parameters():
+                # print(param)
+                if check:
+                    check = False
+                    param_diff = old_param - param
+                    old_param = param
+                print(param.detach().numpy().sum())
+            for param in estimator.hidden2.parameters():
+                print(param.detach().numpy().sum())
+            print("")
+            print("")
+    return best_model
 
 
 class Net(torch.nn.Module):
