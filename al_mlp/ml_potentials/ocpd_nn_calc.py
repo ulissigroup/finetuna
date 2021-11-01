@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 import copy
 from multiprocessing import Pool
+from ase.atoms import Atoms
 
 
 class OCPDNNCalc(OCPDCalc):
@@ -206,15 +207,10 @@ def sub_fit(
 
     if verbose:
         print("*loss(" + str(j) + "," + str(epoch) + "): " + str("Inf"))
-        check = True
-        for param in estimator.hidden1.parameters():
-            # print(param)
-            if check:
-                check = False
-                old_param = param
-            print(param.detach().numpy().sum())
-        for param in estimator.hidden2.parameters():
-            print(param.detach().numpy().sum())
+        # for param in estimator.hidden1.parameters():
+        #     print(param.detach().numpy().sum())
+        # for param in estimator.hidden2.parameters():
+        #     print(param.detach().numpy().sum())
 
     while not epoch > stopping_epoch:
         epoch_losses.append(0)
@@ -237,32 +233,31 @@ def sub_fit(
             epoch_losses[-1] += loss.data.item()
         if scheduler:
             scheduler.step(epoch_losses[-1])
-        if verbose:
-            print("lr: " + str(optimizer.param_groups[0]["lr"]))
-            print("")
-            print("")
         epoch += 1
 
-        loss_str = ""
+        loss_str = " "
         if epoch_losses[-1] < best_loss:
             best_loss = epoch_losses[-1]
             best_model = copy.deepcopy(estimator)
-            loss_str += "*"
-        loss_str += "loss(" + str(j) + "," + str(epoch) + "): " + str(epoch_losses[-1])
-        if verbose:
+            loss_str = "*"
+        loss_str += (
+            "loss("
+            + str(j)
+            + ","
+            + str(epoch)
+            + "): "
+            + str(epoch_losses[-1])
+            + ",\tlr: "
+            + str(optimizer.param_groups[0]["lr"])
+        )
+
+        if verbose and epoch % 100 == 0:
             print(loss_str)
-            check = True
-            for param in estimator.hidden1.parameters():
-                # print(param)
-                if check:
-                    check = False
-                    param_diff = old_param - param
-                    old_param = param
-                print(param.detach().numpy().sum())
-            for param in estimator.hidden2.parameters():
-                print(param.detach().numpy().sum())
-            print("")
-            print("")
+            # for param in estimator.hidden1.parameters():
+            #     print(param.detach().numpy().sum())
+            # for param in estimator.hidden2.parameters():
+            #     print(param.detach().numpy().sum())
+
     return best_model
 
 
