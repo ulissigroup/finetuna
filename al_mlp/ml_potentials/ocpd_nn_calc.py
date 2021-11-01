@@ -87,13 +87,16 @@ class OCPDNNCalc(OCPDCalc):
         e_mean = self.mean_energy
         e_std = self.std_energy
 
+        if self.initial_structure.constraints:
+            constraints_index = self.initial_structure.constraints[0].index
+        else:
+            constraints_index = []
+
         predictions = []
         for estimator in self.nn_ensemble:
             prediction = estimator(torch.tensor(ocp_descriptor)).detach().numpy()
             constraint_array = np.ones((self.n_atoms, 3))
-            constraint_array[self.initial_structure.constraints[0].index] = np.zeros(
-                (3,)
-            )
+            constraint_array[constraints_index] = np.zeros((3,))
             constraint_array = constraint_array.flatten()
             prediction = np.multiply(constraint_array, prediction)
             predictions.append(prediction)
@@ -105,7 +108,7 @@ class OCPDNNCalc(OCPDCalc):
         f_std = np.average(
             np.delete(
                 stds.reshape(self.n_atoms, 3),
-                self.initial_structure.constraints[0].index,
+                constraints_index,
                 axis=0,
             )
         ).item()
@@ -120,6 +123,10 @@ class OCPDNNCalc(OCPDCalc):
             parent_h_descriptors_copy = copy.deepcopy(parent_h_descriptors)
             estimator = self.nn_ensemble[j]
             optimizer = self.optimizers[j]
+            if self.initial_structure.constraints:
+                constraints_index = self.initial_structure.constraints[0].index
+            else:
+                constraints_index = []
             if self.schedulers:
                 scheduler = self.schedulers[j]
             else:
@@ -136,7 +143,7 @@ class OCPDNNCalc(OCPDCalc):
                     self.verbose,
                     self.stopping_epoch,
                     self.n_atoms,
-                    self.initial_structure.constraints[0].index,
+                    constraints_index,
                     self.loss_func,
                 )
             )
