@@ -33,7 +33,6 @@ class SpinconvFinetunerCalc(FinetunerCalc):
 
     def init_model(self):
         self.model_class = "Spinconv"
-        self.ml_model = True
 
         self.ocp_calc = OCPCalculator(
             config_yml=self.model_path,
@@ -50,3 +49,5 @@ class SpinconvFinetunerCalc(FinetunerCalc):
             if param.requires_grad:
                 if "force_output_block" not in name:
                     param.requires_grad = False
+
+        FinetunerCalc.init_model(self)

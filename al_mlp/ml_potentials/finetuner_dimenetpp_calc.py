@@ -33,7 +33,6 @@ class DimenetppFinetunerCalc(FinetunerCalc):
 
     def init_model(self):
         self.model_class = "Dimenetpp"
-        self.ml_model = True
 
         self.ocp_calc = OCPCalculator(
             config_yml=self.model_path,
@@ -50,3 +49,5 @@ class DimenetppFinetunerCalc(FinetunerCalc):
             if param.requires_grad:
                 if "output_blocks.3" not in name:
                     param.requires_grad = False
+
+        FinetunerCalc.init_model(self)

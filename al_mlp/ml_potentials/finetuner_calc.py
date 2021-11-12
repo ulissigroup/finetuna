@@ -38,9 +38,11 @@ class FinetunerCalc(MLPCalc):
 
     def init_model(self):
         """
-        initialize a new self.ocp_calc ml model using the stored parameter dictionary
+        To be overwritten and then called by subclass.
+        Initialize a new self.ocp_calc ml model using the stored parameter dictionary
         """
-        raise NotImplementedError
+        self.ml_model = True
+        self.ocp_calc.trainer.train_dataset = GenericDB()
 
     def calculate_ml(self, atoms, properties, system_changes) -> tuple:
         """
@@ -131,9 +133,7 @@ class FinetunerCalc(MLPCalc):
         graphs_list_dataset = GraphsListDataset(graphs_list)
         data_loader = self.ocp_calc.trainer.get_dataloader(
             graphs_list_dataset,
-            self.ocp_calc.trainer.get_sampler(
-                graphs_list_dataset, self.batch_size, shuffle=False
-            ),
+            self.ocp_calc.trainer.get_sampler(graphs_list_dataset, 1, shuffle=False),
         )
 
         return data_loader
@@ -149,3 +149,11 @@ class GraphsListDataset(Dataset):
     def __getitem__(self, idx):
         graph = self.graphs_list[idx]
         return graph
+
+
+class GenericDB:
+    def __init__(self):
+        pass
+
+    def close_db(self):
+        pass
