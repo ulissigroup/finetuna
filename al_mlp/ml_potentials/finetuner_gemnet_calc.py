@@ -1,10 +1,5 @@
 from ocpmodels.common.relaxation.ase_utils import OCPCalculator
 from al_mlp.ml_potentials.finetuner_calc import FinetunerCalc
-from ocpmodels.models.gemnet.layers.interaction_block import (
-    InteractionBlockTripletsOnly as interaction_block,
-)
-from ocpmodels.models.gemnet.layers.atom_update_block import OutputBlock
-import torch
 
 
 class GemnetFinetunerCalc(FinetunerCalc):
