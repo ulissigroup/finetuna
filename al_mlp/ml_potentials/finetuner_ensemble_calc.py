@@ -73,12 +73,15 @@ class FinetunerEnsembleCalc(FinetunerCalc):
 
     def init_model(self):
         self.model_class = "Ensemble"
+        self.ml_model = True
 
         for finetuner in self.finetuner_calcs:
             finetuner.init_model()
 
-    def train_ocp(self, train_loader):
+    def train_ocp(self, dataset):
         for finetuner in self.finetuner_calcs:
+            self.ocp_calc = finetuner.ocp_calc
+            train_loader = self.get_data_from_atoms(dataset)
             finetuner.ocp_calc.trainer.train_loader = train_loader
             finetuner.ocp_calc.trainer.train()
 

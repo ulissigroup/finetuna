@@ -31,11 +31,10 @@ class FinetunerCalc(MLPCalc):
     ):
         MLPCalc.__init__(self, mlp_params=mlp_params)
 
+        self.ml_model = False
         self.max_neighbors = self.mlp_params.get("max_neighbors", 50)
         self.cutoff = self.mlp_params.get("cutoff", 6)
         self.energy_training = self.mlp_params.get("energy_training", False)
-
-        self.init_model()
 
     def init_model(self):
         """
@@ -100,14 +99,13 @@ class FinetunerCalc(MLPCalc):
         self.train_counter = 0
         if not self.ml_model or not new_dataset:
             self.init_model()
-            train_loader = self.get_data_from_atoms(parent_dataset)
-            self.train_ocp(train_loader)
+            self.train_ocp(parent_dataset)
         else:
-            train_loader = self.get_data_from_atoms(new_dataset)
-            self.train_ocp(train_loader)
+            self.train_ocp(new_dataset)
 
-    def train_ocp(self, train_loader):
+    def train_ocp(self, dataset):
         "overwritable if doing ensembling of ocp calcs"
+        train_loader = self.get_data_from_atoms(dataset)
         self.ocp_calc.trainer.train_loader = train_loader
         self.ocp_calc.trainer.train()
 

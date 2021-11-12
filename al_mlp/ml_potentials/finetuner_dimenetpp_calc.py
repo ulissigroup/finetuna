@@ -33,6 +33,8 @@ class DimenetppFinetunerCalc(FinetunerCalc):
 
     def init_model(self):
         self.model_class = "Dimenetpp"
+        self.ml_model = True
+
         self.ocp_calc = OCPCalculator(
             config_yml=self.model_path,
             checkpoint=self.checkpoint_path,
