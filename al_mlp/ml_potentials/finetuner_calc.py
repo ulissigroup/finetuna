@@ -3,6 +3,7 @@ from ase.atoms import Atoms
 from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
 from torch.utils.data import Dataset
 from ocpmodels.preprocessing import AtomsToGraphs
+import sys, os
 
 
 class FinetunerCalc(MLPCalc):
@@ -103,7 +104,10 @@ class FinetunerCalc(MLPCalc):
         """
         self.train_counter = 0
         if not self.ml_model or not new_dataset:
+            sys.stdout = open(os.devnull, "w")
             self.init_model()
+            sys.stdout = sys.__stdout__
+
             self.train_ocp(parent_dataset)
         else:
             self.train_ocp(new_dataset)
