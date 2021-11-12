@@ -33,6 +33,7 @@ class FinetunerCalc(MLPCalc):
 
         self.max_neighbors = self.mlp_params.get("max_neighbors", 50)
         self.cutoff = self.mlp_params.get("cutoff", 6)
+        self.energy_training = self.mlp_params.get("energy_training", False)
 
         self.init_model()
 

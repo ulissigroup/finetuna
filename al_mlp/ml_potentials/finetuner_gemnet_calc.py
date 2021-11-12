@@ -45,6 +45,9 @@ class GemnetFinetunerCalc(FinetunerCalc):
             max_neighbors=self.max_neighbors,
         )
 
+        if not self.energy_training:
+            self.ocp_calc.trainer.config["optim"]["energy_coefficient"] = 0
+
         # freeze certain weights within the loaded model
         for name, param in self.ocp_calc.trainer.model.named_parameters():
             if param.requires_grad:
