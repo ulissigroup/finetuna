@@ -44,6 +44,9 @@ class FinetunerCalc(MLPCalc):
         self.ml_model = True
         self.ocp_calc.trainer.train_dataset = GenericDB()
 
+        self.ocp_calc.trainer.step = 0
+        self.ocp_calc.trainer.epoch = 0
+
     def calculate_ml(self, atoms, properties, system_changes) -> tuple:
         """
         Give ml model the ocp_descriptor to calculate properties : energy, forces, uncertainties.
@@ -118,10 +121,10 @@ class FinetunerCalc(MLPCalc):
         a2g = AtomsToGraphs(
             max_neigh=self.max_neighbors,
             radius=self.cutoff,
-            r_energy=False,
-            r_forces=False,
-            r_distances=False,
-            r_edges=False,
+            r_energy=True,
+            r_forces=True,
+            r_distances=True,
+            r_edges=True,
         )
 
         graphs_list = [a2g.convert(atoms) for atoms in dataset]

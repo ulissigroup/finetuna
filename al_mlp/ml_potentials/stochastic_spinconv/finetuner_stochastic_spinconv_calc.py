@@ -16,7 +16,7 @@ class FinetunerStochasticSpinconvCalc(FinetunerSpinconvCalc):
     Parameters
     ----------
     model_path: str
-        path to Spinconv model config, e.g. '/home/jovyan/working/ocp-modeling-dev/adeesh/configs/temp/spinconv_uncertainty.yml'
+        path to Spinconv model config, e.g. '/home/jovyan/working/al_mlp/al_mlp/ml_potentials/stochastic_spinconv/stochastic_spinconv.yml'
 
     checkpoint_path: str
         path to Spinconv model checkpoint, e.g. '/home/jovyan/shared-scratch/adeesh/uncertainty/spcv-2M-uncertainty-cp.pt'
@@ -57,9 +57,11 @@ class FinetunerStochasticSpinconvCalc(FinetunerSpinconvCalc):
         data_object = self.ocp_calc.a2g.convert(atoms)
         batch = data_list_collater([data_object])
 
-        energy, forces, forces_uncertainty = self.ocp_calc.trainer.model([batch])
+        energy, forces = self.ocp_calc.trainer.model([batch])
         e_mean = energy.detach().numpy()[0][0]
         f_mean = forces.detach().numpy()
+
+        forces_uncertainty = self.ocp_calc.trainer.model.module.forces_uncertainty
         f_stds = forces_uncertainty.detach().numpy()
 
         e_std = 0

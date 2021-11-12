@@ -220,7 +220,7 @@ class spinconv(BaseModel):
 
         if self.otf_graph:
             edge_index, cell_offsets, neighbors = radius_graph_pbc(
-                data, self.cutoff, 100, data.pos.device
+                data, self.cutoff, 100
             )
             data.edge_index = edge_index
             data.cell_offsets = cell_offsets
@@ -380,10 +380,11 @@ class spinconv(BaseModel):
                     data.batch,
                 )
 
+        self.forces_uncertainty = forces_uncertainty
         if not self.regress_forces:
             return energy
         else:
-            return energy, forces, forces_uncertainty
+            return energy, forces
 
     def _compute_EF_random_rotations(
         self,
