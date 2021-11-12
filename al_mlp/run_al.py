@@ -21,6 +21,7 @@ from al_mlp.ml_potentials.flare_calc import FlareCalc
 from al_mlp.ml_potentials.flare_ocp_descriptor_calc import FlareOCPDescriptorCalc
 from al_mlp.ml_potentials.ocpd_gp_calc import OCPDGPCalc
 from al_mlp.ml_potentials.ocpd_nn_calc import OCPDNNCalc
+from al_mlp.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
 
 from ocpmodels.common.relaxation.ase_utils import OCPCalculator
 
@@ -156,6 +157,13 @@ def active_learning(config):
             model_path=config["ocp"]["model_path"],
             checkpoint_path=config["ocp"]["checkpoint_path"],
             nn_params=config.get("nn", {}),
+        )
+    elif potential_class == "finetuner_ensemble":
+        ml_potential = FinetunerEnsembleCalc(
+            model_classes=["links"]["model_class_list"],
+            model_paths=config["links"]["model_path_list"],
+            checkpoint_paths=config["links"]["checkpoint_path_list"],
+            mlp_params=config.get("finetuner", {}),
         )
 
     # use given learner class
