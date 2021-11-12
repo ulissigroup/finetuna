@@ -161,7 +161,7 @@ def active_learning(config):
             checkpoint_path=config["ocp"]["checkpoint_path"],
             nn_params=config.get("nn", {}),
         )
-    elif potential_class == "finetuner_ensemble":
+    elif potential_class == "ft_en":
         ml_potential = FinetunerEnsembleCalc(
             model_classes=config["links"]["model_class_list"],
             model_paths=config["links"]["model_path_list"],
