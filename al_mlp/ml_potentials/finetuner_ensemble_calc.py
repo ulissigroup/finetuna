@@ -62,6 +62,9 @@ class FinetunerEnsembleCalc(FinetunerCalc):
             )
 
         self.ml_model = False
+        if "tuner" not in mlp_params:
+            mlp_params["tuner"] = {}
+        self.ensemble_method = mlp_params["tuner"].get("ensemble_method", "mean")
         MLPCalc.__init__(self, mlp_params=mlp_params)
 
     def init_model(self):
@@ -95,8 +98,14 @@ class FinetunerEnsembleCalc(FinetunerCalc):
             energy_list.append(finetuner.ocp_calc.results["energy"])
             forces_list.append(finetuner.ocp_calc.results["forces"])
 
-        e_mean = np.mean(energy_list)
-        f_mean = np.mean(forces_list, axis=0)
+        if self.ensemble_method == "mean":
+            e_mean = np.mean(energy_list)
+            f_mean = np.mean(forces_list, axis=0)
+        elif self.ensemble_method == "leader":
+            e_mean = energy_list[0]
+            f_mean = forces_list[0]
+        else:
+            raise ValueError("invalid ensemble method provided")
 
         self.train_counter += 1
         e_std = np.std(energy_list)
