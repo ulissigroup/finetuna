@@ -131,9 +131,15 @@ class FinetunerCalc(MLPCalc):
             graph.sid = 0
 
         graphs_list_dataset = GraphsListDataset(graphs_list)
+
+        train_sampler = self.ocp_calc.trainer.get_sampler(
+            graphs_list_dataset, 1, shuffle=False
+        )
+        self.ocp_calc.trainer.train_sampler = train_sampler
+
         data_loader = self.ocp_calc.trainer.get_dataloader(
             graphs_list_dataset,
-            self.ocp_calc.trainer.get_sampler(graphs_list_dataset, 1, shuffle=False),
+            train_sampler,
         )
 
         return data_loader
