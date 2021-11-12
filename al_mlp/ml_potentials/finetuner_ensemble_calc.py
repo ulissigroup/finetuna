@@ -1,6 +1,7 @@
 from al_mlp.ml_potentials.finetuner_calc import FinetunerCalc
 from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
 import numpy as np
+import copy
 
 
 class FinetunerEnsembleCalc(FinetunerCalc):
@@ -57,7 +58,7 @@ class FinetunerEnsembleCalc(FinetunerCalc):
                     model_name=self.model_classes[i],
                     model_path=self.model_paths[i],
                     checkpoint_path=self.checkpoint_paths[i],
-                    mlp_params=mlp_params,
+                    mlp_params=copy.deepcopy(mlp_params),
                 )
             )
 
