@@ -4,32 +4,56 @@ from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
 from torch.utils.data import Dataset
 from ocpmodels.preprocessing import AtomsToGraphs
 import sys, os
+from ocpmodels.common.relaxation.ase_utils import OCPCalculator
 
 
 class FinetunerCalc(MLPCalc):
     """
     Open Catalyst Project Finetuner/Transfer learning calculator.
-    This class serves as a parent class for calculators that want to instantiate one of the ocp models for finetuning.
-    Child classes must implement the init_model function for their given model, keeping unfrozen whichever weights they want finetuned.
+    This class serves as a parent class for calculators that want to use ensembling on one of the ocp models for finetuning.
+    On its own this class instantiates one ocp model with a simulated uncertainty.
 
-    By default simply ticks up a counter to simulate std uncertainty metric
-    Ensemble calcs implementing uncertainty should also overwrite train_ocp() and calculate_ml()
+    By default simply ticks up a counter to simulate std uncertainty metric.
+    Ensemble child class calcs implementing uncertainty should overwrite train_ocp() and calculate_ml(), as well as init_calc to init each calc.
 
     Parameters
     ----------
-    ocp_calc: OCPCalculator
-        a constructed OCPCalculator object using some pretrained checkpoint file and a model yaml file
+    model_name: str
+        can be one of: ["gemnet", "spinconv", "dimenetpp"]
+
+    model_path: str
+        path to gemnet model config, e.g. '/home/jovyan/working/ocp/configs/s2ef/all/gemnet/gemnet-dT.yml'
+        path to spinconv model config, e.g. '/home/jovyan/working/ocp/configs/s2ef/all/spinconv/spinconv_force.yml'
+        path to dimenetpp model config, e.g. '/home/jovyan/working/ocp/configs/s2ef/all/dimenet_plus_plus/dpp_forceonly.yml'
+
+    checkpoint_path: str
+        path to gemnet model checkpoint, e.g. '/home/jovyan/shared-datasets/OC20/checkpoints/s2ef/gemnet_t_direct_h512_all.pt'
+        path to spinconv model checkpoint, e.g. '/home/jovyan/shared-datasets/OC20/checkpoints/s2ef/spinconv_force_centric_all.pt'
+        path to dimenetpp model checkpoint, e.g. '/home/jovyan/shared-datasets/OC20/checkpoints/s2ef/dimenetpp_all_forceonly.pt'
 
     mlp_params: dict
         dictionary of parameters to be passed to be used for initialization of the model/calculator
+        should include a 'tuner' key containing a dict with the config specific to this class
+        all other keys simply overwrite dicts in the give model_path yml file
     """
 
     implemented_properties = ["energy", "forces", "stds"]
 
     def __init__(
         self,
+        model_name: str,
+        model_path: str,
+        checkpoint_path: str,
         mlp_params: dict = {},
     ):
+
+        if model_name not in ["gemnet", "spinconv", "dimenetpp"]:
+            raise ValueError("Invalid model name provided")
+
+        self.model_name = model_name
+        self.model_path = model_path
+        self.checkpoint_path = checkpoint_path
+
         MLPCalc.__init__(self, mlp_params=mlp_params)
 
         self.ml_model = False
@@ -39,11 +63,38 @@ class FinetunerCalc(MLPCalc):
 
     def init_model(self):
         """
-        To be overwritten and then called by subclass.
         Initialize a new self.ocp_calc ml model using the stored parameter dictionary
         """
+        # choose blocks to unfreeze based on model
+        if self.model_name == "gemnet":
+            unfreeze_blocks = "out_blocks.3"
+        elif self.model_name == "spinconv":
+            unfreeze_blocks = "force_output_block"
+        elif self.model_name == "dimenetpp":
+            unfreeze_blocks = "output_blocks.3"
+        if "unfreeze_blocks" in self.mlp_params.get("tuner", {}):
+            unfreeze_blocks = self.mlp_params["tuner"]["unfreeze_blocks"]
+
+        sys.stdout = open(os.devnull, "w")
+        self.ocp_calc = OCPCalculator(
+            config_yml=self.model_path,
+            checkpoint=self.checkpoint_path,
+            cutoff=self.cutoff,
+            max_neighbors=self.max_neighbors,
+        )
+        sys.stdout = sys.__stdout__
+
+        # freeze certain weights within the loaded model
+        for name, param in self.ocp_calc.trainer.model.named_parameters():
+            if param.requires_grad:
+                if unfreeze_blocks not in name:
+                    param.requires_grad = False
+
         self.ml_model = True
         self.ocp_calc.trainer.train_dataset = GenericDB()
+
+        if not self.energy_training:
+            self.ocp_calc.trainer.config["optim"]["energy_coefficient"] = 0
 
         self.ocp_calc.trainer.step = 0
         self.ocp_calc.trainer.epoch = 0
@@ -51,6 +102,7 @@ class FinetunerCalc(MLPCalc):
     def calculate_ml(self, atoms, properties, system_changes) -> tuple:
         """
         Give ml model the ocp_descriptor to calculate properties : energy, forces, uncertainties.
+        overwritable if doing ensembling of ocp calcs
 
         Args:
             ocp_descriptor: list object containing the descriptor of the atoms object
@@ -104,16 +156,15 @@ class FinetunerCalc(MLPCalc):
         """
         self.train_counter = 0
         if not self.ml_model or not new_dataset:
-            sys.stdout = open(os.devnull, "w")
             self.init_model()
-            sys.stdout = sys.__stdout__
-
             self.train_ocp(parent_dataset)
         else:
             self.train_ocp(new_dataset)
 
     def train_ocp(self, dataset):
-        "overwritable if doing ensembling of ocp calcs"
+        """
+        Overwritable if doing ensembling of ocp calcs
+        """
         train_loader = self.get_data_from_atoms(dataset)
         self.ocp_calc.trainer.train_loader = train_loader
         self.ocp_calc.trainer.train()

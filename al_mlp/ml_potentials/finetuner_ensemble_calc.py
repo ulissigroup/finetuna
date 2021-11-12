@@ -1,7 +1,5 @@
 from al_mlp.ml_potentials.finetuner_calc import FinetunerCalc
-from al_mlp.ml_potentials.finetuner_gemnet_calc import GemnetFinetunerCalc
-from al_mlp.ml_potentials.finetuner_spinconv_calc import SpinconvFinetunerCalc
-from al_mlp.ml_potentials.finetuner_dimenetpp_calc import DimenetppFinetunerCalc
+from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
 import numpy as np
 
 
@@ -54,25 +52,20 @@ class FinetunerEnsembleCalc(FinetunerCalc):
 
         self.finetuner_calcs = []
         for i in range(len(self.model_classes)):
-            if self.model_classes[i] == "Gemnet":
-                finetuner = GemnetFinetunerCalc
-            elif self.model_classes[i] == "Spinconv":
-                finetuner = SpinconvFinetunerCalc
-            elif self.model_classes[i] == "Dimenetpp":
-                finetuner = DimenetppFinetunerCalc
-
             self.finetuner_calcs.append(
-                finetuner(
+                FinetunerCalc(
+                    model_name=self.model_classes[i],
                     model_path=self.model_paths[i],
                     checkpoint_path=self.checkpoint_paths[i],
                     mlp_params=mlp_params,
                 )
             )
 
-        FinetunerCalc.__init__(self, mlp_params=mlp_params)
+        self.ml_model = False
+        MLPCalc.__init__(self, mlp_params=mlp_params)
 
     def init_model(self):
-        self.model_class = "Ensemble"
+        self.model_name = "ensemble"
         self.ml_model = True
 
         for finetuner in self.finetuner_calcs:
@@ -81,7 +74,7 @@ class FinetunerEnsembleCalc(FinetunerCalc):
     def train_ocp(self, dataset):
         for finetuner in self.finetuner_calcs:
             self.ocp_calc = finetuner.ocp_calc
-            train_loader = self.get_data_from_atoms(dataset)
+            train_loader = finetuner.get_data_from_atoms(dataset)
             finetuner.ocp_calc.trainer.train_loader = train_loader
             finetuner.ocp_calc.trainer.train()
 
