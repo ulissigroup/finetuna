@@ -46,5 +46,5 @@ class DimenetppFinetunerCalc(FinetunerCalc):
         # freeze certain weights within the loaded model
         for name, param in self.ocp_calc.trainer.model.named_parameters():
             if param.requires_grad:
-                if "output_blocks.3" not in name and "output_blocks.2" not in name:
+                if "output_blocks.3" not in name:
                     param.requires_grad = False
