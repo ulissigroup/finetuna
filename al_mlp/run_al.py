@@ -22,6 +22,9 @@ from al_mlp.ml_potentials.flare_ocp_descriptor_calc import FlareOCPDescriptorCal
 from al_mlp.ml_potentials.ocpd_gp_calc import OCPDGPCalc
 from al_mlp.ml_potentials.ocpd_nn_calc import OCPDNNCalc
 from al_mlp.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
+from al_mlp.ml_potentials.stochastic_spinconv.finetuner_stochastic_spinconv_calc import (
+    FinetunerStochasticSpinconvCalc,
+)
 
 from ocpmodels.common.relaxation.ase_utils import OCPCalculator
 
@@ -163,6 +166,12 @@ def active_learning(config):
             model_classes=config["links"]["model_class_list"],
             model_paths=config["links"]["model_path_list"],
             checkpoint_paths=config["links"]["checkpoint_path_list"],
+            mlp_params=config.get("finetuner", {}),
+        )
+    elif potential_class == "ft_ss":
+        ml_potential = FinetunerStochasticSpinconvCalc(
+            model_path=config["ocp"]["model_path"],
+            checkpoint_path=config["ocp"]["checkpoint_path"],
             mlp_params=config.get("finetuner", {}),
         )
 
