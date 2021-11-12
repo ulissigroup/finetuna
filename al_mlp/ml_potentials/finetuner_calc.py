@@ -5,6 +5,9 @@ from torch.utils.data import Dataset
 from ocpmodels.preprocessing import AtomsToGraphs
 import sys, os
 from ocpmodels.common.relaxation.ase_utils import OCPCalculator
+import yaml
+from al_mlp.job_creator import merge_dict
+import copy
 
 
 class FinetunerCalc(MLPCalc):
@@ -54,12 +57,25 @@ class FinetunerCalc(MLPCalc):
         self.model_path = model_path
         self.checkpoint_path = checkpoint_path
 
-        MLPCalc.__init__(self, mlp_params=mlp_params)
+        if "tuner" not in mlp_params:
+            mlp_params["tuner"] = {}
+        config = yaml.safe_load(open(self.model_path, "r"))
+        if "includes" in config:
+            for include in config["includes"]:
+                # Change the path based on absolute path of config_yml
+                path = os.path.join(self.model_path.split("configs")[0], include)
+                include_config = yaml.safe_load(open(path, "r"))
+                config.update(include_config)
+        config = merge_dict(config, mlp_params)
+
+        MLPCalc.__init__(self, mlp_params=config)
 
         self.ml_model = False
-        self.max_neighbors = self.mlp_params.get("max_neighbors", 50)
-        self.cutoff = self.mlp_params.get("cutoff", 6)
-        self.energy_training = self.mlp_params.get("energy_training", False)
+        self.max_neighbors = self.mlp_params["tuner"].get("max_neighbors", 50)
+        self.cutoff = self.mlp_params["tuner"].get("cutoff", 6)
+        self.energy_training = self.mlp_params["tuner"].get("energy_training", False)
+        if not self.energy_training:
+            self.mlp_params["optim"]["energy_coefficient"] = 0
 
     def init_model(self):
         """
@@ -72,12 +88,12 @@ class FinetunerCalc(MLPCalc):
             unfreeze_blocks = "force_output_block"
         elif self.model_name == "dimenetpp":
             unfreeze_blocks = "output_blocks.3"
-        if "unfreeze_blocks" in self.mlp_params.get("tuner", {}):
+        if "unfreeze_blocks" in self.mlp_params["tuner"]:
             unfreeze_blocks = self.mlp_params["tuner"]["unfreeze_blocks"]
 
         sys.stdout = open(os.devnull, "w")
         self.ocp_calc = OCPCalculator(
-            config_yml=self.model_path,
+            config_yml=copy.deepcopy(self.mlp_params),
             checkpoint=self.checkpoint_path,
             cutoff=self.cutoff,
             max_neighbors=self.max_neighbors,
@@ -92,9 +108,6 @@ class FinetunerCalc(MLPCalc):
 
         self.ml_model = True
         self.ocp_calc.trainer.train_dataset = GenericDB()
-
-        if not self.energy_training:
-            self.ocp_calc.trainer.config["optim"]["energy_coefficient"] = 0
 
         self.ocp_calc.trainer.step = 0
         self.ocp_calc.trainer.epoch = 0
