@@ -179,13 +179,6 @@ class OnlineLearner(Calculator):
             self.info["parent_forces"] = str(forces)
             self.info["parent_fmax"] = fmax
 
-            if len(self.parent_dataset) == self.num_initial_points:
-                new_parent_dataset = [
-                    self.parent_dataset[i] for i in self.initial_points_to_keep
-                ]
-                self.parent_dataset = new_parent_dataset
-                self.num_initial_points = len(self.parent_dataset)
-
         else:
             atoms_ML = self.get_ml_prediction(atoms_copy)
             self.complete_dataset.append(atoms_ML)
@@ -336,6 +329,7 @@ class OnlineLearner(Calculator):
                     "Assuming Atoms object Singlepoint is precalculated (to turn this behavior off: set 'reverify_with_parent' to True)"
                 )
             new_data = atoms
+
         # if verifying (or reverifying) do the singlepoints, and record the time parent calls takes
         else:
             print("OnlineLearner: Parent calculation required")
@@ -367,22 +361,41 @@ class OnlineLearner(Calculator):
 
         self.parent_calls += 1
 
-        # retrain the ml potential
-        # if training only on recent points, and have trained before, then check if dataset has become long enough to train on subset
-        if (
-            (self.train_on_recent_points is not None)
-            and (len(self.parent_dataset) > self.train_on_recent_points)
-            and self.trained_at_least_once
-        ):
-            self.ml_potential.train(self.parent_dataset[-self.train_on_recent_points :])
-        # otherwise, if partial fitting, partial fit if not training for the first time
-        elif self.trained_at_least_once and (self.partial_fit):
-            self.ml_potential.train(self.parent_dataset, partial_dataset)
-        # otherwise just train as normal
-        else:
+        # retrain the ml potential only if there is more than enough data that the ml potential may be used
+        if len(self.parent_dataset) > self.num_initial_points:
+            # if training only on recent points, and have trained before, then check if dataset has become long enough to train on subset
+            if (
+                self.trained_at_least_once
+                and (self.train_on_recent_points is not None)
+                and (len(self.parent_dataset) > self.train_on_recent_points)
+            ):
+                self.ml_potential.train(
+                    self.parent_dataset[-self.train_on_recent_points :]
+                )
+            # otherwise, if partial fitting, partial fit if not training for the first time
+            elif (
+                self.trained_at_least_once
+                and (self.train_on_recent_points is None)
+                and (self.partial_fit)
+            ):
+                self.ml_potential.train(self.parent_dataset, partial_dataset)
+            # otherwise just train as normal
+            else:
+                self.ml_potential.train(self.parent_dataset)
+                self.trained_at_least_once = True
+
+        # if the data requirement has just been met: train for the first time on only the initial points to keep
+        elif len(self.parent_dataset) == self.num_initial_points:
+            new_parent_dataset = [
+                self.parent_dataset[i] for i in self.initial_points_to_keep
+            ]
+            self.parent_dataset = new_parent_dataset
+            self.num_initial_points = len(self.parent_dataset)
+
             self.ml_potential.train(self.parent_dataset)
             self.trained_at_least_once = True
 
+        # set the energy and force results of the parent calculator and return them
         energy_actual = new_data.get_potential_energy(apply_constraint=self.constraint)
         force_actual = new_data.get_forces(apply_constraint=self.constraint)
         force_cons = new_data.get_forces()
