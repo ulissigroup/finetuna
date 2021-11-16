@@ -173,7 +173,7 @@ class FinetunerCalc(MLPCalc):
         """
         self.train_counter = 0
         if not self.ml_model or not new_dataset:
-            self.init_model()
+            self.init_model(len(parent_dataset))
             self.train_ocp(parent_dataset)
         else:
             self.train_ocp(new_dataset)
