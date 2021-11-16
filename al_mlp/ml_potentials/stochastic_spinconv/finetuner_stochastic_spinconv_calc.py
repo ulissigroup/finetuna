@@ -39,7 +39,7 @@ class FinetunerStochasticSpinconvCalc(FinetunerCalc):
 
     def calculate_ml(self, atoms, properties, system_changes) -> tuple:
         """
-        Give ml model atoms object by calling ocp_calc to calculate properties : energy, forces, uncertainties.
+        Give ml model atoms object by calling ocp trainer to calculate properties : energy, forces, uncertainties.
 
         Args:
             ocp_descriptor: list object containing the descriptor of the atoms object
@@ -49,14 +49,14 @@ class FinetunerStochasticSpinconvCalc(FinetunerCalc):
         """
         self.train_counter += 1
 
-        data_object = self.ocp_calc.a2g.convert(atoms)
+        data_object = self.trainer.a2g.convert(atoms)
         batch = data_list_collater([data_object])
 
-        energy, forces = self.ocp_calc.trainer.model([batch])
+        energy, forces = self.trainer.model([batch])
         e_mean = energy.detach().numpy()[0][0]
         f_mean = forces.detach().numpy()
 
-        forces_uncertainty = self.ocp_calc.trainer.model.module.forces_uncertainty
+        forces_uncertainty = self.trainer.model.module.forces_uncertainty
         f_stds = forces_uncertainty.detach().numpy()
 
         e_std = 0

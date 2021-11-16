@@ -4,7 +4,6 @@ from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
 from torch.utils.data import Dataset
 from ocpmodels.preprocessing import AtomsToGraphs
 import sys, os
-from ocpmodels.common.relaxation.ase_utils import OCPCalculator
 import yaml
 from al_mlp.job_creator import merge_dict
 import copy
@@ -103,7 +102,7 @@ class FinetunerCalc(MLPCalc):
 
     def init_model(self, batch_size):
         """
-        Initialize a new self.ocp_calc ml model using the stored parameter dictionary
+        Initialize a new self.trainer containing an ocp ml model using the stored parameter dictionary
         """
         # choose blocks to unfreeze based on model
         if self.model_name == "gemnet":
@@ -120,7 +119,7 @@ class FinetunerCalc(MLPCalc):
         config_dict["optim"]["eval_batch_size"] = batch_size
 
         sys.stdout = open(os.devnull, "w")
-        self.ocp_calc = OCPCalculator(
+        self.trainer = Trainer(
             config_yml=config_dict,
             checkpoint=self.checkpoint_path,
             cutoff=self.cutoff,
@@ -129,16 +128,16 @@ class FinetunerCalc(MLPCalc):
         sys.stdout = sys.__stdout__
 
         # freeze certain weights within the loaded model
-        for name, param in self.ocp_calc.trainer.model.named_parameters():
+        for name, param in self.trainer.model.named_parameters():
             if param.requires_grad:
                 if unfreeze_blocks not in name:
                     param.requires_grad = False
 
         self.ml_model = True
-        self.ocp_calc.trainer.train_dataset = GenericDB()
+        self.trainer.train_dataset = GenericDB()
 
-        self.ocp_calc.trainer.step = 0
-        self.ocp_calc.trainer.epoch = 0
+        self.trainer.step = 0
+        self.trainer.epoch = 0
 
     def calculate_ml(self, atoms, properties, system_changes) -> tuple:
         """
@@ -151,9 +150,7 @@ class FinetunerCalc(MLPCalc):
         Returns:
             tuple: (energy, forces, energy_uncertainty, force_uncertainties)
         """
-        self.ocp_calc.calculate(atoms, properties, system_changes)
-        e_mean = self.ocp_calc.results["energy"]
-        f_mean = self.ocp_calc.results["forces"]
+        e_mean, f_mean = self.trainer.get_atoms_prediction(atoms)
 
         self.train_counter += 1
         e_std = f_std = self.train_counter * 0.01
@@ -215,11 +212,11 @@ class FinetunerCalc(MLPCalc):
 
     def train_ocp(self, dataset):
         """
-        Overwritable if doing ensembling of ocp calcs
+        Overwritable if doing ensembling of ocp models
         """
         train_loader = self.get_data_from_atoms(dataset)
-        self.ocp_calc.trainer.train_loader = train_loader
-        self.ocp_calc.trainer.train()
+        self.trainer.train_loader = train_loader
+        self.trainer.train()
 
     def get_data_from_atoms(self, dataset):
         """
@@ -242,12 +239,10 @@ class FinetunerCalc(MLPCalc):
 
         graphs_list_dataset = GraphsListDataset(graphs_list)
 
-        train_sampler = self.ocp_calc.trainer.get_sampler(
-            graphs_list_dataset, 1, shuffle=False
-        )
-        self.ocp_calc.trainer.train_sampler = train_sampler
+        train_sampler = self.trainer.get_sampler(graphs_list_dataset, 1, shuffle=False)
+        self.trainer.train_sampler = train_sampler
 
-        data_loader = self.ocp_calc.trainer.get_dataloader(
+        data_loader = self.trainer.get_dataloader(
             graphs_list_dataset,
             train_sampler,
         )

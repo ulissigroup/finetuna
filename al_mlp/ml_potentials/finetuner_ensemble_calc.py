@@ -77,10 +77,10 @@ class FinetunerEnsembleCalc(FinetunerCalc):
 
     def train_ocp(self, dataset):
         for finetuner in self.finetuner_calcs:
-            self.ocp_calc = finetuner.ocp_calc
+            self.trainer = finetuner.trainer
             train_loader = finetuner.get_data_from_atoms(dataset)
-            finetuner.ocp_calc.trainer.train_loader = train_loader
-            finetuner.ocp_calc.trainer.train()
+            finetuner.trainer.train_loader = train_loader
+            finetuner.trainer.train()
 
     def calculate_ml(self, atoms, properties, system_changes) -> tuple:
         """
@@ -95,9 +95,9 @@ class FinetunerEnsembleCalc(FinetunerCalc):
         energy_list = []
         forces_list = []
         for finetuner in self.finetuner_calcs:
-            finetuner.ocp_calc.calculate(atoms, properties, system_changes)
-            energy_list.append(finetuner.ocp_calc.results["energy"])
-            forces_list.append(finetuner.ocp_calc.results["forces"])
+            energy, forces = finetuner.trainer.get_atoms_prediction(atoms)
+            energy_list.append(energy)
+            forces_list.append(forces)
 
         if self.ensemble_method == "mean":
             e_mean = np.mean(energy_list)
