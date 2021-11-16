@@ -60,18 +60,16 @@ class FinetunerCalc(MLPCalc):
 
         if "optimizer" in mlp_params.get("optim", {}):
             checkpoint = torch.load(checkpoint_path, map_location=torch.device("cpu"))
-            if "optimizer" in checkpoint:
-                raise ValueError(
-                    str(checkpoint_path)
-                    + "\n^this checkpoint contains optimizer information, please load the .pt file, delete the optimizer,"
-                    + " save it again as a .pt file, and try again so that the the given optimizer config will be loaded"
-                )
-            if "scheduler" in checkpoint:
-                raise ValueError(
-                    str(checkpoint_path)
-                    + "\n^this checkpoint contains scheduler information, please load the .pt file, delete the optimizer,"
-                    + " save it again as a .pt file, and try again so that the the given optimizer config will be loaded"
-                )
+            for key in ["optimizer", "scheduler", "ema", "amp"]:
+                if key in checkpoint and checkpoint[key] is not None:
+                    raise ValueError(
+                        str(checkpoint_path)
+                        + "\n^this checkpoint contains "
+                        + str(key)
+                        + " information, please load the .pt file, delete the "
+                        + str(key)
+                        + " dictionary, save it again as a .pt file, and try again so that the the given optimizer config will be loaded"
+                    )
 
         self.model_name = model_name
         self.model_path = model_path
