@@ -68,12 +68,12 @@ class FinetunerEnsembleCalc(FinetunerCalc):
         self.ensemble_method = mlp_params["tuner"].get("ensemble_method", "mean")
         MLPCalc.__init__(self, mlp_params=mlp_params)
 
-    def init_model(self):
+    def init_model(self, batch_size):
         self.model_name = "ensemble"
         self.ml_model = True
 
         for finetuner in self.finetuner_calcs:
-            finetuner.init_model()
+            finetuner.init_model(batch_size)
 
     def train_ocp(self, dataset):
         for finetuner in self.finetuner_calcs:

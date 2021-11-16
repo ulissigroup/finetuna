@@ -77,7 +77,7 @@ class FinetunerCalc(MLPCalc):
         if not self.energy_training:
             self.mlp_params["optim"]["energy_coefficient"] = 0
 
-    def init_model(self):
+    def init_model(self, batch_size):
         """
         Initialize a new self.ocp_calc ml model using the stored parameter dictionary
         """
@@ -91,9 +91,13 @@ class FinetunerCalc(MLPCalc):
         if "unfreeze_blocks" in self.mlp_params["tuner"]:
             unfreeze_blocks = self.mlp_params["tuner"]["unfreeze_blocks"]
 
+        config_dict = copy.deepcopy(self.mlp_params)
+        config_dict["optim"]["batch_size"] = batch_size
+        config_dict["optim"]["eval_batch_size"] = batch_size
+
         sys.stdout = open(os.devnull, "w")
         self.ocp_calc = OCPCalculator(
-            config_yml=copy.deepcopy(self.mlp_params),
+            config_yml=config_dict,
             checkpoint=self.checkpoint_path,
             cutoff=self.cutoff,
             max_neighbors=self.max_neighbors,
