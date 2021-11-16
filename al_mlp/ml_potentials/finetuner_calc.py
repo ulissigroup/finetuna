@@ -8,6 +8,7 @@ from ocpmodels.common.relaxation.ase_utils import OCPCalculator
 import yaml
 from al_mlp.job_creator import merge_dict
 import copy
+import time
 
 
 class FinetunerCalc(MLPCalc):
@@ -174,7 +175,18 @@ class FinetunerCalc(MLPCalc):
         self.train_counter = 0
         if not self.ml_model or not new_dataset:
             self.init_model(len(parent_dataset))
+            start = time.time()
             self.train_ocp(parent_dataset)
+            end = time.time()
+            print(
+                "Time to train "
+                + str(self.model_name)
+                + " on "
+                + str(len(parent_dataset))
+                + " pts: "
+                + str(end - start)
+                + " seconds"
+            )
         else:
             self.train_ocp(new_dataset)
 
