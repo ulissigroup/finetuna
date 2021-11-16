@@ -12,6 +12,7 @@ import torch
 from ocpmodels.trainers.forces_trainer import ForcesTrainer
 from ocpmodels.datasets.trajectory_lmdb import data_list_collater
 from ocpmodels.common.utils import setup_imports, setup_logging
+from ocpmodels.common import distutils
 import logging
 
 
@@ -341,9 +342,6 @@ class Trainer(ForcesTrainer):
             r_distances=False,
         )
 
-    def _backward(self, loss):
-        return super()._backward(loss)
-
     def get_atoms_prediction(self, atoms):
         data_object = self.a2g.convert(atoms)
         batch = data_list_collater([data_object])
@@ -353,3 +351,142 @@ class Trainer(ForcesTrainer):
         energy = predictions["energy"].item()
         forces = predictions["forces"].cpu().numpy()
         return energy, forces
+
+    def train(self, disable_eval_tqdm=False):
+        eval_every = self.config["optim"].get("eval_every", len(self.train_loader))
+        checkpoint_every = self.config["optim"].get("checkpoint_every", eval_every)
+        primary_metric = self.config["task"].get(
+            "primary_metric", self.evaluator.task_primary_metric[self.name]
+        )
+        self.best_val_metric = 1e9 if "mae" in primary_metric else -1.0
+        self.metrics = {}
+
+        # Calculate start_epoch from step instead of loading the epoch number
+        # to prevent inconsistencies due to different batch size in checkpoint.
+        start_epoch = self.step // len(self.train_loader)
+
+        for epoch_int in range(start_epoch, self.config["optim"]["max_epochs"]):
+            self.train_sampler.set_epoch(epoch_int)
+            skip_steps = self.step % len(self.train_loader)
+            train_loader_iter = iter(self.train_loader)
+
+            for i in range(skip_steps, len(self.train_loader)):
+                self.epoch = epoch_int + (i + 1) / len(self.train_loader)
+                self.step = epoch_int * len(self.train_loader) + i + 1
+                self.model.train()
+
+                # Get a batch.
+                batch = next(train_loader_iter)
+
+                if self.config["optim"]["optimizer"] == "LBFGS":
+
+                    def closure():
+                        self.optimizer.zero_grad()
+                        with torch.cuda.amp.autocast(enabled=self.scaler is not None):
+                            out = self._forward(batch)
+                            loss = self._compute_loss(out, batch)
+                        loss.backward()
+                        return loss
+
+                    self.optimizer.step(closure)
+
+                    self.optimizer.zero_grad()
+                    with torch.cuda.amp.autocast(enabled=self.scaler is not None):
+                        out = self._forward(batch)
+                        loss = self._compute_loss(out, batch)
+
+                else:
+                    # Forward, loss, backward.
+                    with torch.cuda.amp.autocast(enabled=self.scaler is not None):
+                        out = self._forward(batch)
+                        loss = self._compute_loss(out, batch)
+                    loss = self.scaler.scale(loss) if self.scaler else loss
+                    self._backward(loss)
+
+                scale = self.scaler.get_scale() if self.scaler else 1.0
+
+                # Compute metrics.
+                self.metrics = self._compute_metrics(
+                    out,
+                    batch,
+                    self.evaluator,
+                    self.metrics,
+                )
+                self.metrics = self.evaluator.update(
+                    "loss", loss.item() / scale, self.metrics
+                )
+
+                # Log metrics.
+                log_dict = {k: self.metrics[k]["metric"] for k in self.metrics}
+                log_dict.update(
+                    {
+                        "lr": self.scheduler.get_lr(),
+                        "epoch": self.epoch,
+                        "step": self.step,
+                    }
+                )
+                if (
+                    self.step % self.config["cmd"]["print_every"] == 0
+                    and distutils.is_master()
+                    and not self.is_hpo
+                ):
+                    log_str = ["{}: {:.2e}".format(k, v) for k, v in log_dict.items()]
+                    logging.info(", ".join(log_str))
+                    self.metrics = {}
+
+                if self.logger is not None:
+                    self.logger.log(
+                        log_dict,
+                        step=self.step,
+                        split="train",
+                    )
+
+                if checkpoint_every != -1 and self.step % checkpoint_every == 0:
+                    self.save(checkpoint_file="checkpoint.pt", training_state=True)
+
+                # Evaluate on val set every `eval_every` iterations.
+                if self.step % eval_every == 0:
+                    if self.val_loader is not None:
+                        val_metrics = self.validate(
+                            split="val",
+                            disable_tqdm=disable_eval_tqdm,
+                        )
+                        self.update_best(
+                            primary_metric,
+                            val_metrics,
+                            disable_eval_tqdm=disable_eval_tqdm,
+                        )
+                        if self.is_hpo:
+                            self.hpo_update(
+                                self.epoch,
+                                self.step,
+                                self.metrics,
+                                val_metrics,
+                            )
+
+                    if self.config["task"].get("eval_relaxations", False):
+                        if "relax_dataset" not in self.config["task"]:
+                            logging.warning(
+                                "Cannot evaluate relaxations, relax_dataset not specified"
+                            )
+                        else:
+                            self.run_relaxations()
+
+                if self.scheduler.scheduler_type == "ReduceLROnPlateau":
+                    if self.step % eval_every == 0:
+                        self.scheduler.step(
+                            metrics=val_metrics[primary_metric]["metric"],
+                        )
+                else:
+                    self.scheduler.step()
+
+            torch.cuda.empty_cache()
+
+            if checkpoint_every == -1:
+                self.save(checkpoint_file="checkpoint.pt", training_state=True)
+
+        self.train_dataset.close_db()
+        if "val_dataset" in self.config:
+            self.val_dataset.close_db()
+        if "test_dataset" in self.config:
+            self.test_dataset.close_db()
