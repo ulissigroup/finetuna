@@ -9,6 +9,7 @@ import yaml
 from al_mlp.job_creator import merge_dict
 import copy
 import time
+import torch
 
 
 class FinetunerCalc(MLPCalc):
@@ -54,12 +55,28 @@ class FinetunerCalc(MLPCalc):
         if model_name not in ["gemnet", "spinconv", "dimenetpp"]:
             raise ValueError("Invalid model name provided")
 
+        if "optimizer" in mlp_params.get("optim", {}):
+            checkpoint = torch.load(checkpoint_path, map_location=torch.device("cpu"))
+            if "optimizer" in checkpoint:
+                raise ValueError(
+                    str(checkpoint_path)
+                    + "\n^this checkpoint contains optimizer information, please load the .pt file, delete the optimizer,"
+                    + " save it again as a .pt file, and try again so that the the given optimizer config will be loaded"
+                )
+            if "scheduler" in checkpoint:
+                raise ValueError(
+                    str(checkpoint_path)
+                    + "\n^this checkpoint contains scheduler information, please load the .pt file, delete the optimizer,"
+                    + " save it again as a .pt file, and try again so that the the given optimizer config will be loaded"
+                )
+
         self.model_name = model_name
         self.model_path = model_path
         self.checkpoint_path = checkpoint_path
 
         if "tuner" not in mlp_params:
             mlp_params["tuner"] = {}
+
         config = yaml.safe_load(open(self.model_path, "r"))
         if "includes" in config:
             for include in config["includes"]:
@@ -67,6 +84,8 @@ class FinetunerCalc(MLPCalc):
                 path = os.path.join(self.model_path.split("configs")[0], include)
                 include_config = yaml.safe_load(open(path, "r"))
                 config.update(include_config)
+        if "optimizer" in mlp_params.get("optim", {}):
+            config.pop("optim", None)
         config = merge_dict(config, mlp_params)
 
         MLPCalc.__init__(self, mlp_params=config)
