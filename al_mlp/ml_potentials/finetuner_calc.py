@@ -14,6 +14,7 @@ from ocpmodels.datasets.trajectory_lmdb import data_list_collater
 from ocpmodels.common.utils import setup_imports, setup_logging
 from ocpmodels.common import distutils
 import logging
+import numpy as np
 
 
 class FinetunerCalc(MLPCalc):
@@ -179,7 +180,12 @@ class FinetunerCalc(MLPCalc):
         self.results["force_stds"] = force_uncertainties
         self.results["energy_stds"] = energy_uncertainty
         atoms.info["energy_stds"] = self.results["energy_stds"]
-        atoms.info["max_force_stds"] = self.results["force_stds"]
+
+        force_uncertainty = np.average(
+            np.abs(np.divide(force_uncertainties, forces))
+        ).item()
+
+        atoms.info["max_force_stds"] = force_uncertainty
         # atoms.info["max_force_stds"] = np.nanmax(self.results["force_stds"])
         return
 

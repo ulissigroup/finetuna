@@ -60,6 +60,5 @@ class FinetunerStochasticSpinconvCalc(FinetunerCalc):
         f_stds = forces_uncertainty.detach().numpy()
 
         e_std = 0
-        f_std = np.average(f_stds).item()
 
-        return e_mean, f_mean, e_std, f_std
+        return e_mean, f_mean, e_std, f_stds

@@ -112,6 +112,4 @@ class FinetunerEnsembleCalc(FinetunerCalc):
         e_std = np.std(energy_list)
         f_stds = np.std(forces_list, axis=0)
 
-        f_std = np.average(f_stds).item()
-
-        return e_mean, f_mean, e_std, f_std
+        return e_mean, f_mean, e_std, f_stds
