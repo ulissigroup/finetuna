@@ -122,7 +122,9 @@ class OnlineLearner(Calculator):
             "tolerance": None,
             "parent_calls": None,
             "energy_error": None,
+            "relative_energy_error": None,
             "forces_error": None,
+            "relative_forces_error": None,
             "current_step": None,
             "steps_since_last_query": None,
         }
@@ -220,8 +222,15 @@ class OnlineLearner(Calculator):
                 self.info["parent_forces"] = str(forces)
                 self.info["parent_fmax"] = fmax
                 self.info["energy_error"] = energy - energy_ML
+                self.info["relative_energy_error"] = (energy - energy_ML) / energy
                 self.info["forces_error"] = np.sum(
                     np.abs(constrained_forces - constrained_forces_ML)
+                )
+                self.info["relative_forces_error"] = np.sum(
+                    np.divide(
+                        np.abs(constrained_forces - constrained_forces_ML),
+                        np.abs(constrained_forces),
+                    )
                 )
 
             else:
