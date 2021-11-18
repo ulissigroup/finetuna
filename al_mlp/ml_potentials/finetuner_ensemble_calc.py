@@ -77,10 +77,7 @@ class FinetunerEnsembleCalc(FinetunerCalc):
 
     def train_ocp(self, dataset):
         for finetuner in self.finetuner_calcs:
-            self.trainer = finetuner.trainer
-            train_loader = finetuner.get_data_from_atoms(dataset)
-            finetuner.trainer.train_loader = train_loader
-            finetuner.trainer.train()
+            finetuner.train_ocp(dataset)
 
     def calculate_ml(self, atoms, properties, system_changes) -> tuple:
         """
