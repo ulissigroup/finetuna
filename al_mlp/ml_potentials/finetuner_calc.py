@@ -262,7 +262,7 @@ class FinetunerCalc(MLPCalc):
 
         train_loader = self.get_data_from_atoms(dataset)
         self.trainer.train_loader = train_loader
-        self.trainer.train()
+        self.trainer.train(disable_eval_tqdm=True)
 
     def get_data_from_atoms(self, dataset):
         """
