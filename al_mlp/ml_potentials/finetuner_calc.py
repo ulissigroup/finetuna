@@ -202,20 +202,22 @@ class FinetunerCalc(MLPCalc):
         self.train_counter = 0
         if not self.ml_model or not new_dataset:
             self.init_model(len(parent_dataset))
-            start = time.time()
-            self.train_ocp(parent_dataset)
-            end = time.time()
-            print(
-                "Time to train "
-                + str(self.model_name)
-                + " on "
-                + str(len(parent_dataset))
-                + " pts: "
-                + str(end - start)
-                + " seconds"
-            )
+            dataset = parent_dataset
         else:
-            self.train_ocp(new_dataset)
+            dataset = new_dataset
+
+        start = time.time()
+        self.train_ocp(dataset)
+        end = time.time()
+        print(
+            "Time to train "
+            + str(self.model_name)
+            + " on "
+            + str(len(dataset))
+            + " pts: "
+            + str(end - start)
+            + " seconds"
+        )
 
     def train_ocp(self, dataset):
         """
