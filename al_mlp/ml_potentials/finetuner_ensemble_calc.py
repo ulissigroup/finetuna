@@ -2,6 +2,7 @@ from al_mlp.ml_potentials.finetuner_calc import FinetunerCalc
 from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
 import numpy as np
 import copy
+import time
 
 
 class FinetunerEnsembleCalc(FinetunerCalc):
@@ -77,7 +78,18 @@ class FinetunerEnsembleCalc(FinetunerCalc):
 
     def train_ocp(self, dataset):
         for finetuner in self.finetuner_calcs:
+            start = time.time()
             finetuner.train_ocp(dataset)
+            end = time.time()
+            print(
+                "Time to train "
+                + str(finetuner.model_name)
+                + " on "
+                + str(len(dataset))
+                + " pts: "
+                + str(end - start)
+                + " seconds"
+            )
 
     def calculate_ml(self, atoms, properties, system_changes) -> tuple:
         """
