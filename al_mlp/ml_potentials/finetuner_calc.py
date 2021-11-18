@@ -101,6 +101,7 @@ class FinetunerCalc(MLPCalc):
             self.mlp_params["optim"]["energy_coefficient"] = 0
         if "num_threads" in self.mlp_params["tuner"]:
             torch.set_num_threads(self.mlp_params["tuner"]["num_threads"])
+        self.validation_split = self.mlp_params["tuner"].get("validation_split", None)
 
     def init_model(self, batch_size):
         """
@@ -244,6 +245,21 @@ class FinetunerCalc(MLPCalc):
         """
         Overwritable if doing ensembling of ocp models
         """
+        if self.validation_split is not None:
+            val_indices = []
+            for i in self.validation_split:
+                val_indices.append(i % len(dataset))
+            temp_dataset = []
+            valset = []
+            for i in range(len(dataset)):
+                if i in val_indices:
+                    valset.append(dataset[i])
+                else:
+                    temp_dataset.append(dataset[i])
+            dataset = temp_dataset
+            val_loader = self.get_data_from_atoms(valset)
+            self.trainer.val_loader = val_loader
+
         train_loader = self.get_data_from_atoms(dataset)
         self.trainer.train_loader = train_loader
         self.trainer.train()
