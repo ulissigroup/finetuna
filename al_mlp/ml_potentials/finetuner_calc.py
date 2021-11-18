@@ -181,11 +181,32 @@ class FinetunerCalc(MLPCalc):
         self.results["energy_stds"] = energy_uncertainty
         atoms.info["energy_stds"] = self.results["energy_stds"]
 
-        force_uncertainty = np.average(
-            np.abs(np.divide(force_uncertainties, forces))
+        if atoms.constraints:
+            constraints_index = atoms.constraints[0].index
+        else:
+            constraints_index = []
+
+        abs_force_uncertainty = np.average(
+            np.abs(
+                np.delete(
+                    force_uncertainties,
+                    constraints_index,
+                    axis=0,
+                )
+            )
         ).item()
 
-        atoms.info["max_force_stds"] = force_uncertainty
+        avg_forces = np.average(
+            np.abs(
+                np.delete(
+                    forces,
+                    constraints_index,
+                    axis=0,
+                )
+            )
+        ).item()
+
+        atoms.info["max_force_stds"] = abs_force_uncertainty / avg_forces
         # atoms.info["max_force_stds"] = np.nanmax(self.results["force_stds"])
         return
 
