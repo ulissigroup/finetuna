@@ -285,7 +285,9 @@ class FinetunerCalc(MLPCalc):
 
         graphs_list_dataset = GraphsListDataset(graphs_list)
 
-        train_sampler = self.trainer.get_sampler(graphs_list_dataset, 1, shuffle=False)
+        train_sampler = self.trainer.get_sampler(
+            graphs_list_dataset, len(dataset), shuffle=False
+        )
         self.trainer.train_sampler = train_sampler
 
         data_loader = self.trainer.get_dataloader(
