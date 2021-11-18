@@ -226,12 +226,31 @@ class OnlineLearner(Calculator):
                 self.info["forces_error"] = np.sum(
                     np.abs(constrained_forces - constrained_forces_ML)
                 )
-                self.info["relative_forces_error"] = np.sum(
-                    np.divide(
-                        np.abs(constrained_forces - constrained_forces_ML),
-                        np.abs(constrained_forces),
-                    )
-                )
+
+                if atoms.constraints:
+                    constraints_index = atoms.constraints[0].index
+                else:
+                    constraints_index = []
+                self.info["relative_forces_error"] = np.divide(
+                    np.sum(
+                        np.abs(
+                            np.delete(
+                                constrained_forces - constrained_forces_ML,
+                                constraints_index,
+                                axis=0,
+                            )
+                        )
+                    ),
+                    np.sum(
+                        np.abs(
+                            np.delete(
+                                constrained_forces,
+                                constraints_index,
+                                axis=0,
+                            )
+                        )
+                    ),
+                ).item()
 
             else:
                 # Otherwise use the ML predicted energies and forces
