@@ -108,7 +108,12 @@ def active_learning(config):
     if "kpts" not in config["vasp"]:
         config["vasp"]["kpts"] = calculate_surface_k_points(initial_structure)
 
-    dbname = "flare_" + str(initial_structure.get_chemical_formula()) + "_oal"
+    dbname = (
+        str(config["links"]["ml_potential"])
+        + "_"
+        + str(initial_structure.get_chemical_formula())
+        + "_oal"
+    )
     oal_initial_structure = initial_structure
 
     # declare parent calc
