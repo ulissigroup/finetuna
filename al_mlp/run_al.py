@@ -115,9 +115,9 @@ def active_learning(config):
     # begin setting up parent calc
     parent_str = config["links"].get("parent_calc", "vasp")
     # calculate kpts
-    if "kpts" not in config["vasp"] and (
+    if (
         parent_str == "vasp" or parent_str == "vasp_interactive"
-    ):
+    ) and "kpts" not in config["vasp"]:
         config["vasp"]["kpts"] = calculate_surface_k_points(initial_structure)
     # declare parent calc
     if parent_str == "vasp":
