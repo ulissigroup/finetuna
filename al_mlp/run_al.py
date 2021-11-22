@@ -104,10 +104,6 @@ def active_learning(config):
     else:
         print("no recording to mongo db")
 
-    # calculate kpts
-    if "kpts" not in config["vasp"]:
-        config["vasp"]["kpts"] = calculate_surface_k_points(initial_structure)
-
     dbname = (
         str(config["links"]["ml_potential"])
         + "_"
@@ -116,8 +112,14 @@ def active_learning(config):
     )
     oal_initial_structure = initial_structure
 
-    # declare parent calc
+    # begin setting up parent calc
     parent_str = config["links"].get("parent_calc", "vasp")
+    # calculate kpts
+    if "kpts" not in config["vasp"] and (
+        parent_str == "vasp" or parent_str == "vasp_interactive"
+    ):
+        config["vasp"]["kpts"] = calculate_surface_k_points(initial_structure)
+    # declare parent calc
     if parent_str == "vasp":
         parent_calc = Vasp(**config["vasp"])
     elif parent_str == "vasp_interactive":
