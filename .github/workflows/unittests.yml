@@ -30,6 +30,7 @@ jobs:
         cd /home/jovyan/amptorch
         python setup.py install
         git clone https://github.com/Open-Catalyst-Project/ocp
+        touch /home/jovyan/ocp/ocpmodels/models/gemnet/__init__.py
         cd /home/jovyan/ocp
         pip install -e .
         cd $CWD
