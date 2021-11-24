@@ -29,16 +29,8 @@ jobs:
         git clone https://github.com/ulissigroup/amptorch
         cd /home/jovyan/amptorch
         python setup.py install
+        cd /home/jovyan
         git clone https://github.com/Open-Catalyst-Project/ocp
-        cd /home/jovyan/ocp
-        ls
-        cd ocpmodels
-        ls
-        cd models
-        ls
-        cd gemnet
-        ls
-        touch /home/jovyan/ocp/ocpmodels/models/gemnet/__init__.py
         cd /home/jovyan/ocp
         pip install -e .
         cd $CWD
