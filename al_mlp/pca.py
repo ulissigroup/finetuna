@@ -297,7 +297,7 @@ class TrajPCA:
         self.standard_scaler = StandardScaler()
         transformed = self.standard_scaler.fit_transform(sub_array)
 
-        self.pca = PCA(n_components=10)
+        self.pca = PCA(n_components=2)
         principal_components = self.pca.fit_transform(transformed)
 
     def analyze_image(self, image):

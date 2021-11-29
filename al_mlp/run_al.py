@@ -21,6 +21,10 @@ from al_mlp.ml_potentials.flare_calc import FlareCalc
 from al_mlp.ml_potentials.flare_ocp_descriptor_calc import FlareOCPDescriptorCalc
 from al_mlp.ml_potentials.ocpd_gp_calc import OCPDGPCalc
 from al_mlp.ml_potentials.ocpd_nn_calc import OCPDNNCalc
+from al_mlp.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
+from al_mlp.ml_potentials.stochastic_spinconv.finetuner_stochastic_spinconv_calc import (
+    FinetunerStochasticSpinconvCalc,
+)
 
 from ocpmodels.common.relaxation.ase_utils import OCPCalculator
 
@@ -100,15 +104,22 @@ def active_learning(config):
     else:
         print("no recording to mongo db")
 
-    # calculate kpts
-    if "kpts" not in config["vasp"]:
-        config["vasp"]["kpts"] = calculate_surface_k_points(initial_structure)
-
-    dbname = "flare_" + str(initial_structure.get_chemical_formula()) + "_oal"
+    dbname = (
+        str(config["links"]["ml_potential"])
+        + "_"
+        + str(initial_structure.get_chemical_formula())
+        + "_oal"
+    )
     oal_initial_structure = initial_structure
 
-    # declare parent calc
+    # begin setting up parent calc
     parent_str = config["links"].get("parent_calc", "vasp")
+    # calculate kpts
+    if (
+        parent_str == "vasp" or parent_str == "vasp_interactive"
+    ) and "kpts" not in config["vasp"]:
+        config["vasp"]["kpts"] = calculate_surface_k_points(initial_structure)
+    # declare parent calc
     if parent_str == "vasp":
         parent_calc = Vasp(**config["vasp"])
     elif parent_str == "vasp_interactive":
@@ -156,6 +167,19 @@ def active_learning(config):
             model_path=config["ocp"]["model_path"],
             checkpoint_path=config["ocp"]["checkpoint_path"],
             nn_params=config.get("nn", {}),
+        )
+    elif potential_class == "ft_en":
+        ml_potential = FinetunerEnsembleCalc(
+            model_classes=config["ocp"]["model_class_list"],
+            model_paths=config["ocp"]["model_path_list"],
+            checkpoint_paths=config["ocp"]["checkpoint_path_list"],
+            mlp_params=config.get("finetuner", {}),
+        )
+    elif potential_class == "ft_ss":
+        ml_potential = FinetunerStochasticSpinconvCalc(
+            model_path=config["ocp"]["model_path"],
+            checkpoint_path=config["ocp"]["checkpoint_path"],
+            mlp_params=config.get("finetuner", {}),
         )
 
     # use given learner class

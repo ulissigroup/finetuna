@@ -103,6 +103,26 @@ class OnlineLearner(Calculator):
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
 
+    def set_query_reason(self, reason: str):
+        if reason == "final":
+            self.info["query"] = -2  # Set to -2 if querying final point
+        elif reason == "pretrain":
+            self.info["query"] = -1  # Set to -1 if querying before training
+        elif reason == "noquery":
+            self.info["query"] = 0  # Set to 0 if not querying
+        elif reason == "threshold":
+            self.info["query"] = 1  # Set to 1 if querying b/c force is below threshold
+        elif reason == "static":
+            self.info["query"] = 2  # Set to 2 if querying b/c of static tolerance
+        elif reason == "dynamic":
+            self.info["query"] = 3  # Set to 3 if querying b/c of dynamic tolerance
+        elif reason == "position":
+            self.info["query"] = 4  # Set to 4 if querying b/c positions not changed
+        elif reason == "nsteps":
+            self.info["query"] = 5  # Set to 5 if querying b/c it has been n steps
+        else:
+            raise ValueError("invalid query reason given (" + str(reason) + ")")
+
     def init_info(self):
         self.info = {
             "check": None,
@@ -122,9 +142,12 @@ class OnlineLearner(Calculator):
             "tolerance": None,
             "parent_calls": None,
             "energy_error": None,
+            "relative_energy_error": None,
             "forces_error": None,
+            "relative_forces_error": None,
             "current_step": None,
             "steps_since_last_query": None,
+            "query": None,
         }
 
     def calculate(self, atoms, properties, system_changes):
@@ -178,13 +201,7 @@ class OnlineLearner(Calculator):
             self.info["parent_energy"] = energy
             self.info["parent_forces"] = str(forces)
             self.info["parent_fmax"] = fmax
-
-            if len(self.parent_dataset) == self.num_initial_points:
-                new_parent_dataset = [
-                    self.parent_dataset[i] for i in self.initial_points_to_keep
-                ]
-                self.parent_dataset = new_parent_dataset
-                self.num_initial_points = len(self.parent_dataset)
+            self.set_query_reason("pretrain")
 
         else:
             atoms_ML = self.get_ml_prediction(atoms_copy)
@@ -200,9 +217,9 @@ class OnlineLearner(Calculator):
             self.info["ml_fmax"] = fmax
 
             # Check if we are extrapolating too far
-            need_to_retrain = self.unsafe_prediction(atoms_ML) or self.parent_verify(
-                atoms_ML
-            )
+            unsafe_bool = self.unsafe_prediction(atoms_ML)
+            verify_bool = self.parent_verify(atoms_ML)
+            need_to_retrain = unsafe_bool or verify_bool
 
             self.info["force_uncertainty"] = atoms_ML.info["max_force_stds"]
             self.info["energy_uncertainty"] = atoms_ML.info.get("energy_stds", None)
@@ -227,13 +244,40 @@ class OnlineLearner(Calculator):
                 self.info["parent_forces"] = str(forces)
                 self.info["parent_fmax"] = fmax
                 self.info["energy_error"] = energy - energy_ML
+                self.info["relative_energy_error"] = (energy - energy_ML) / energy
                 self.info["forces_error"] = np.sum(
                     np.abs(constrained_forces - constrained_forces_ML)
                 )
 
+                if atoms.constraints:
+                    constraints_index = atoms.constraints[0].index
+                else:
+                    constraints_index = []
+                self.info["relative_forces_error"] = np.divide(
+                    np.sum(
+                        np.abs(
+                            np.delete(
+                                constrained_forces - constrained_forces_ML,
+                                constraints_index,
+                                axis=0,
+                            )
+                        )
+                    ),
+                    np.sum(
+                        np.abs(
+                            np.delete(
+                                constrained_forces,
+                                constraints_index,
+                                axis=0,
+                            )
+                        )
+                    ),
+                ).item()
+
             else:
                 # Otherwise use the ML predicted energies and forces
                 self.info["check"] = False
+                self.set_query_reason("noquery")
 
                 atoms_copy.info["check"] = False
 
@@ -280,6 +324,12 @@ class OnlineLearner(Calculator):
 
         prediction_unsafe = uncertainty > uncertainty_tol
 
+        if uncertainty > uncertainty_tol:
+            if uncertainty > atoms.info["dyn_uncertain_tol"]:
+                self.set_query_reason("dynamic")
+            if uncertainty > atoms.info["stat_uncertain_tol"]:
+                self.set_query_reason("static")
+
         # check if positions have changed enough in the past n steps
         if self.no_position_change_steps is not None:
             new_positions = atoms.get_positions()
@@ -297,11 +347,19 @@ class OnlineLearner(Calculator):
                         + " steps, check with parent"
                     )
                     prediction_unsafe = True
+                    self.set_query_reason("position")
             self.positions_queue.put(new_positions)
 
         if self.query_every_n_steps is not None:
             if self.steps_since_last_query > self.query_every_n_steps:
+                print(
+                    str(self.steps_since_last_query)
+                    + " steps since last query, querying every "
+                    + str(self.query_every_n_steps)
+                    + " so check with parent"
+                )
                 prediction_unsafe = True
+                self.set_query_reason("nsteps")
 
         return prediction_unsafe
 
@@ -313,9 +371,11 @@ class OnlineLearner(Calculator):
         if fmax <= self.fmax_verify_threshold:
             verify = True
             print("Force below threshold: check with parent")
+            self.set_query_reason("threshold")
         if self.check_final_point:
             verify = True
             print("checking final point")
+            self.set_query_reason("final")
         return verify
 
     def add_data_and_retrain(self, atoms):
@@ -336,6 +396,7 @@ class OnlineLearner(Calculator):
                     "Assuming Atoms object Singlepoint is precalculated (to turn this behavior off: set 'reverify_with_parent' to True)"
                 )
             new_data = atoms
+
         # if verifying (or reverifying) do the singlepoints, and record the time parent calls takes
         else:
             print("OnlineLearner: Parent calculation required")
@@ -367,22 +428,41 @@ class OnlineLearner(Calculator):
 
         self.parent_calls += 1
 
-        # retrain the ml potential
-        # if training only on recent points, and have trained before, then check if dataset has become long enough to train on subset
-        if (
-            (self.train_on_recent_points is not None)
-            and (len(self.parent_dataset) > self.train_on_recent_points)
-            and self.trained_at_least_once
-        ):
-            self.ml_potential.train(self.parent_dataset[-self.train_on_recent_points :])
-        # otherwise, if partial fitting, partial fit if not training for the first time
-        elif self.trained_at_least_once and (self.partial_fit):
-            self.ml_potential.train(self.parent_dataset, partial_dataset)
-        # otherwise just train as normal
-        else:
+        # retrain the ml potential only if there is more than enough data that the ml potential may be used
+        if len(self.parent_dataset) > self.num_initial_points:
+            # if training only on recent points, and have trained before, then check if dataset has become long enough to train on subset
+            if (
+                self.trained_at_least_once
+                and (self.train_on_recent_points is not None)
+                and (len(self.parent_dataset) > self.train_on_recent_points)
+            ):
+                self.ml_potential.train(
+                    self.parent_dataset[-self.train_on_recent_points :]
+                )
+            # otherwise, if partial fitting, partial fit if not training for the first time
+            elif (
+                self.trained_at_least_once
+                and (self.train_on_recent_points is None)
+                and (self.partial_fit)
+            ):
+                self.ml_potential.train(self.parent_dataset, partial_dataset)
+            # otherwise just train as normal
+            else:
+                self.ml_potential.train(self.parent_dataset)
+                self.trained_at_least_once = True
+
+        # if the data requirement has just been met: train for the first time on only the initial points to keep
+        elif len(self.parent_dataset) == self.num_initial_points:
+            new_parent_dataset = [
+                self.parent_dataset[i] for i in self.initial_points_to_keep
+            ]
+            self.parent_dataset = new_parent_dataset
+            self.num_initial_points = len(self.parent_dataset)
+
             self.ml_potential.train(self.parent_dataset)
             self.trained_at_least_once = True
 
+        # set the energy and force results of the parent calculator and return them
         energy_actual = new_data.get_potential_energy(apply_constraint=self.constraint)
         force_actual = new_data.get_forces(apply_constraint=self.constraint)
         force_cons = new_data.get_forces()

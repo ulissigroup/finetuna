@@ -217,7 +217,7 @@ def max_parent_observer(calc, optimizer, max_parent_calls):
 
 def base_replay(replay_func, calc, optimizer):
     """Reinitialize hessian when there is a parent call based on certain criteria."""
-    if calc.info.get("check", False):
+    if calc.info.get("check", False) and (calc.info.get("query") != -1):
         complete_dataset = calc.complete_dataset
         # check the dataset and only use structures that match the final structure
         dataset = []
