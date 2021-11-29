@@ -3,6 +3,7 @@ from ase.calculators.mixing import LinearCombinationCalculator
 from ase.calculators.calculator import Calculator
 from ase.calculators.calculator import PropertyNotImplementedError
 import copy
+import numpy as np
 
 
 class DeltaCalc(LinearCombinationCalculator):
@@ -38,6 +39,18 @@ class DeltaCalc(LinearCombinationCalculator):
 
         super().__init__(calcs, weights, atoms)
         self.refs = refs
+        self.diff_ref = False
+        if (
+            not self.refs[0].get_chemical_symbols()
+            == self.refs[1].get_chemical_symbols()
+        ):
+            self.ref1_idx = np.array(
+                [
+                    atom.symbol in self.refs[1].get_chemical_symbols()
+                    for atom in self.refs[0]
+                ]
+            )
+            self.diff_ref = True
         self.mode = mode
         self.parent_results = calcs[0].results
         self.base_results = calcs[1].results
@@ -54,11 +67,26 @@ class DeltaCalc(LinearCombinationCalculator):
             raise ValueError("calc[0] and refs[0] calc are the same")
         if self.calcs[1] is self.refs[1].calc:
             raise ValueError("calc[1] and refs[1] calc are the same")
+        if self.diff_ref:
+            if atoms is not None:
+                self.atoms = atoms.copy()
+            atoms_list = [atoms, atoms[self.ref1_idx]]
+            for atoms, calc in zip(atoms_list, self.calcs):
+                if calc.calculation_required(atoms, ["energy", "forces"]):
+                    calc.calculate(atoms, ["energy", "forces"], system_changes)
+            self.results["energy"] = (
+                self.calcs[0].results["energy"] - self.calcs[1].results["energy"]
+            )
 
-        super().calculate(atoms, properties, system_changes)
+        else:
+            super().calculate(atoms, properties, system_changes)
         self.parent_results = self.calcs[0].results
         self.base_results = self.calcs[1].results
-
+        if self.diff_ref:
+            zeros = np.zeros(self.parent_results["forces"].shape)
+            zeros[self.ref1_idx] = self.base_results["forces"]
+            self.base_results["forces"] = zeros
+            properties = ["energy"]
         shared_properties = list(
             set(self.parent_results).intersection(self.base_results)
         )
