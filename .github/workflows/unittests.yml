@@ -13,6 +13,8 @@ jobs:
 
     container:
       image: docker://ulissigroup/kubeflow_vasp:amptorch_ocp
+      volumes:
+        - /home/jovyan/shared-scratch:/home/jovyan/shared-scratch
       credentials:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
