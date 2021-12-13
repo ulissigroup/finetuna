@@ -109,13 +109,18 @@ class FinetunerCalc(MLPCalc):
         """
         # choose blocks to unfreeze based on model
         if self.model_name == "gemnet":
-            unfreeze_blocks = "out_blocks.3"
+            unfreeze_blocks = ["out_blocks.3"]
         elif self.model_name == "spinconv":
-            unfreeze_blocks = "force_output_block"
+            unfreeze_blocks = ["force_output_block"]
         elif self.model_name == "dimenetpp":
-            unfreeze_blocks = "output_blocks.3"
+            unfreeze_blocks = ["output_blocks.3"]
         if "unfreeze_blocks" in self.mlp_params["tuner"]:
-            unfreeze_blocks = self.mlp_params["tuner"]["unfreeze_blocks"]
+            if isinstance(self.mlp_params["tuner"]["unfreeze_blocks"], list):
+                unfreeze_blocks = self.mlp_params["tuner"]["unfreeze_blocks"]
+            elif isinstance(self.mlp_params["tuner"]["unfreeze_blocks"], str):
+                unfreeze_blocks = [self.mlp_params["tuner"]["unfreeze_blocks"]]
+            else:
+                raise ValueError("invalid unfreeze_blocks parameter given")
 
         config_dict = copy.deepcopy(self.mlp_params)
         config_dict["optim"]["batch_size"] = batch_size
@@ -133,8 +138,9 @@ class FinetunerCalc(MLPCalc):
         # freeze certain weights within the loaded model
         for name, param in self.trainer.model.named_parameters():
             if param.requires_grad:
-                if unfreeze_blocks not in name:
-                    param.requires_grad = False
+                for block_name in unfreeze_blocks:
+                    if block_name not in name:
+                        param.requires_grad = False
 
         self.ml_model = True
         self.trainer.train_dataset = GenericDB()
