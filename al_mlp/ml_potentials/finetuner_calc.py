@@ -103,28 +103,23 @@ class FinetunerCalc(MLPCalc):
             torch.set_num_threads(self.mlp_params["tuner"]["num_threads"])
         self.validation_split = self.mlp_params["tuner"].get("validation_split", None)
 
-    def init_model(self, batch_size):
-        """
-        Initialize a new self.trainer containing an ocp ml model using the stored parameter dictionary
-        """
-        # choose blocks to unfreeze based on model
+        # init block/weight freezing
         if self.model_name == "gemnet":
-            unfreeze_blocks = ["out_blocks.3"]
+            self.unfreeze_blocks = ["out_blocks.3"]
         elif self.model_name == "spinconv":
-            unfreeze_blocks = ["force_output_block"]
+            self.unfreeze_blocks = ["force_output_block"]
         elif self.model_name == "dimenetpp":
-            unfreeze_blocks = ["output_blocks.3"]
+            self.unfreeze_blocks = ["output_blocks.3"]
         if "unfreeze_blocks" in self.mlp_params["tuner"]:
             if isinstance(self.mlp_params["tuner"]["unfreeze_blocks"], list):
-                unfreeze_blocks = self.mlp_params["tuner"]["unfreeze_blocks"]
+                self.unfreeze_blocks = self.mlp_params["tuner"]["unfreeze_blocks"]
             elif isinstance(self.mlp_params["tuner"]["unfreeze_blocks"], str):
-                unfreeze_blocks = [self.mlp_params["tuner"]["unfreeze_blocks"]]
+                self.unfreeze_blocks = [self.mlp_params["tuner"]["unfreeze_blocks"]]
             else:
                 raise ValueError("invalid unfreeze_blocks parameter given")
 
+        # init trainer
         config_dict = copy.deepcopy(self.mlp_params)
-        config_dict["optim"]["batch_size"] = batch_size
-        config_dict["optim"]["eval_batch_size"] = batch_size
 
         sys.stdout = open(os.devnull, "w")
         self.trainer = Trainer(
@@ -135,12 +130,23 @@ class FinetunerCalc(MLPCalc):
         )
         sys.stdout = sys.__stdout__
 
-        # freeze certain weights within the loaded model
+    def init_model(self):
+        """
+        Initialize a new self.trainer containing an ocp ml model using the stored parameter dictionary
+        """
+        sys.stdout = open(os.devnull, "w")
+        self.trainer.load_checkpoint(self.checkpoint_path)
+        sys.stdout = sys.__stdout__
+
+        # first freeze all weights within the loaded model
         for name, param in self.trainer.model.named_parameters():
             if param.requires_grad:
-                for block_name in unfreeze_blocks:
-                    if block_name not in name:
-                        param.requires_grad = False
+                param.requires_grad = False
+        # then unfreeze certain weights within the loaded model
+        for name, param in self.trainer.model.named_parameters():
+            for block_name in self.unfreeze_blocks:
+                if block_name in name:
+                    param.requires_grad = True
 
         self.ml_model = True
         self.trainer.train_dataset = GenericDB()
@@ -229,7 +235,7 @@ class FinetunerCalc(MLPCalc):
         """
         self.train_counter = 0
         if not self.ml_model or not new_dataset:
-            self.init_model(len(parent_dataset))
+            self.init_model()
             dataset = parent_dataset
         else:
             dataset = new_dataset
