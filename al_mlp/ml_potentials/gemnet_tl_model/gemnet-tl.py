@@ -130,7 +130,7 @@ class GemNetT(torch.nn.Module):
         activation: str = "swish",
         scale_file: Optional[str] = None,
         freeze: bool = False,
-        after_freeze_numblocks: int = 1,
+        after_freeze_numblocks: int = 0,
         inverse_distance: bool = False,
     ):
         super().__init__()
@@ -261,13 +261,6 @@ class GemNetT(torch.nn.Module):
         ]
 
         if self.freeze:
-            # for param in self.parameters():
-            # param.requires_grad = False
-            for name, param in self.named_parameters():
-                if param.requires_grad:
-                    if "out_blocks.3" not in name:
-                        param.requires_grad = False
-
             self.after_freeze_IB = torch.nn.ModuleList(
                 [
                     interaction_block(
