@@ -414,7 +414,9 @@ class Trainer(ForcesTrainer):
         return energy, forces
 
     def train(self, disable_eval_tqdm=False):
-        eval_every = self.config["optim"].get("eval_every", len(self.train_loader))
+        eval_every = self.config["optim"].get("eval_every", None)
+        if eval_every is None:
+            eval_every = len(self.train_loader)
         checkpoint_every = self.config["optim"].get("checkpoint_every", eval_every)
         primary_metric = self.config["task"].get(
             "primary_metric", self.evaluator.task_primary_metric[self.name]
