@@ -38,7 +38,7 @@ class WarmStartLearner(OnlineLearner):
             optional_config=optional_config,
         )
 
-    def get_energy_and_forces(self, atoms):
+    def get_energy_and_forces(self, atoms, precalculated=False):
         if self.warming_up:
             # Make a copy of the atoms with ensemble energies as a SP
             atoms_copy = atoms.copy()
@@ -59,7 +59,9 @@ class WarmStartLearner(OnlineLearner):
 
             if fmax < self.fmax_verify_threshold:
                 self.warming_up = False
-                energy, forces, fmax = super().get_energy_and_forces(atoms)
+                energy, forces, fmax = super().get_energy_and_forces(
+                    atoms, precalculated=precalculated
+                )
             return energy, forces, fmax
         else:
-            return super().get_energy_and_forces(atoms)
+            return super().get_energy_and_forces(atoms, precalculated=precalculated)
