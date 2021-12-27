@@ -46,7 +46,7 @@ class OnlineLearner(Calculator):
         self.steps_since_last_query = 0
 
         for image in parent_dataset:
-            self.add_data_and_retrain(image)
+            self.get_energy_and_forces(image, precalculated=True)
 
     def init_logger(self, mongo_db, optional_config):
         self.logger = Logger(
@@ -155,9 +155,9 @@ class OnlineLearner(Calculator):
         self.curr_step += 1
         self.steps_since_last_query += 1
 
-        self.init_info()
-
         energy, forces, fmax = self.get_energy_and_forces(atoms)
+        self.results["energy"] = energy
+        self.results["forces"] = forces
 
         # Print a statement about the uncertainty
         uncertainty_statement = "uncertainty: "
@@ -168,26 +168,17 @@ class OnlineLearner(Calculator):
         uncertainty_statement += ", tolerance: " + str(self.info["tolerance"])
         print(uncertainty_statement)
 
-        # Record number of parent calls after this calculation
-        self.info["parent_calls"] = self.parent_calls
-        self.info["current_step"] = self.curr_step
-        self.info["steps_since_last_query"] = self.steps_since_last_query
-
-        # Return the energy/force
-        self.results["energy"] = self.info["energy"] = energy
-        self.results["forces"] = forces
-        self.info["forces"] = str(forces)
-        self.info["fmax"] = fmax
-
-        extra_info = {}
-        if self.trained_at_least_once:
-            extra_info = self.logger.get_extra_info(
-                atoms, self.get_ml_calc(), self.info["check"]
-            )
-        self.logger.write(atoms, self.info, extra_info=extra_info)
-
-    def get_energy_and_forces(self, atoms):
+    def get_energy_and_forces(self, atoms, precalculated=False):
+        # copy the atoms object (original only used to obtain indices of constraints and for precalculated images)
         atoms_copy = atoms.copy()
+
+        # initialize info dict before doing anything else, such as setting a query reason
+        self.init_info()
+
+        # if adding precalculated atoms to parent dataset and trajectory
+        if precalculated:
+            atoms_copy.calc = atoms.calc
+            self.set_query_reason("pretrain")
 
         # If we have less than two data points, uncertainty is not
         # well calibrated so just use DFT
@@ -219,7 +210,7 @@ class OnlineLearner(Calculator):
             # Check if we are extrapolating too far
             unsafe_bool = self.unsafe_prediction(atoms_ML)
             verify_bool = self.parent_verify(atoms_ML)
-            need_to_retrain = unsafe_bool or verify_bool
+            need_to_retrain = unsafe_bool or verify_bool or precalculated
 
             self.info["force_uncertainty"] = atoms_ML.info["max_force_stds"]
             self.info["energy_uncertainty"] = atoms_ML.info.get("energy_stds", None)
@@ -280,6 +271,23 @@ class OnlineLearner(Calculator):
                 self.set_query_reason("noquery")
 
                 atoms_copy.info["check"] = False
+
+        # Record number of parent calls after this calculation
+        self.info["parent_calls"] = self.parent_calls
+        self.info["current_step"] = self.curr_step
+        self.info["steps_since_last_query"] = self.steps_since_last_query
+
+        # Return the energy/force
+        self.info["energy"] = energy
+        self.info["forces"] = str(forces)
+        self.info["fmax"] = fmax
+
+        extra_info = {}
+        if self.trained_at_least_once:
+            extra_info = self.logger.get_extra_info(
+                atoms, self.get_ml_calc(), self.info["check"]
+            )
+        self.logger.write(atoms, self.info, extra_info=extra_info)
 
         return energy, forces, fmax
 
