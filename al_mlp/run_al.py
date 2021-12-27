@@ -86,7 +86,8 @@ def run_relaxation(
 
 def active_learning(config):
     initial_traj = Trajectory(config["links"]["traj"])
-    initial_structure = initial_traj[0]
+    initial_index = config["links"].get("initial_index", 0)
+    initial_structure = initial_traj[initial_index]
     images = []
 
     if "images_path" in config["links"] and config["links"]["images_path"] is not None:
