@@ -100,6 +100,10 @@ class OnlineLearner(Calculator):
             "train_on_top_k_forces", None
         )
 
+        self.store_complete_dataset = self.learner_params.get(
+            "store_complete_dataset", False
+        )
+
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
 
@@ -196,7 +200,6 @@ class OnlineLearner(Calculator):
 
         else:
             atoms_ML = self.get_ml_prediction(atoms_copy)
-            self.complete_dataset.append(atoms_ML)
 
             # Get ML potential predicted energies and forces
             energy = atoms_ML.get_potential_energy(apply_constraint=self.constraint)
@@ -267,6 +270,9 @@ class OnlineLearner(Calculator):
 
             else:
                 # Otherwise use the ML predicted energies and forces
+                if self.store_complete_dataset or len(self.complete_dataset) == 0:
+                    self.complete_dataset.append(atoms_ML)
+
                 self.info["check"] = False
                 self.set_query_reason("noquery")
 
@@ -421,7 +427,8 @@ class OnlineLearner(Calculator):
             )
 
         # add to complete dataset (for atomistic methods optimizer replay)
-        self.complete_dataset.append(new_data)
+        if self.store_complete_dataset or len(self.complete_dataset) == 0:
+            self.complete_dataset.append(new_data)
 
         # before adding to parent (training) dataset, convert to top k forces if applicable
         if self.train_on_top_k_forces is not None:

@@ -168,14 +168,19 @@ class Relaxation:
         if replay_traj is not False:
             if replay_traj is True:
                 dyn.attach(mixed_replay, 1, calc, dyn)
+                calc.store_complete_dataset = True
             elif replay_traj == "mixed":
                 dyn.attach(mixed_replay, 1, calc, dyn)
+                calc.store_complete_dataset = True
             elif replay_traj == "reset":
                 dyn.attach(reset_replay, 1, calc, dyn)
+                calc.store_complete_dataset = False
             elif replay_traj == "parent_only":
                 dyn.attach(parent_only_replay, 1, calc, dyn)
+                calc.store_complete_dataset = True
             elif replay_traj == "ml_only":
                 dyn.attach(ml_only_replay, 1, calc, dyn)
+                calc.store_complete_dataset = True
             else:
                 raise ValueError("invalid replay method given")
 
