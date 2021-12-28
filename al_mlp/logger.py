@@ -152,13 +152,16 @@ class Logger:
         # increment step
         self.step += 1
 
-    def get_extra_info(self, atoms: Atoms, ml_potential: Calculator, check: bool):
+    def get_pca(self, atoms: Atoms):
         extra_info = {}
         if self.pca_quantify:
             pca_x, pca_y = self.pca_analyzer.analyze_image(atoms)
             extra_info["pca_x"] = pca_x
             extra_info["pca_y"] = pca_y
-            pass
+        return extra_info
+
+    def get_uncertainty(self, ml_potential: Calculator, check: bool):
+        extra_info = {}
         if self.uncertainty_quantify and check:
             force_scores, energy_scores = quantify_uncertainty(
                 self.parent_traj, ml_potential

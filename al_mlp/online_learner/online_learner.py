@@ -289,9 +289,10 @@ class OnlineLearner(Calculator):
         self.info["fmax"] = fmax
 
         extra_info = {}
+        extra_info.update(self.logger.get_pca(atoms))
         if self.trained_at_least_once:
-            extra_info = self.logger.get_extra_info(
-                atoms, self.get_ml_calc(), self.info["check"]
+            extra_info.update(
+                self.logger.get_uncertainty(self.get_ml_calc(), self.info["check"])
             )
         self.logger.write(atoms, self.info, extra_info=extra_info)
 
