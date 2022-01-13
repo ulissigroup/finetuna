@@ -29,7 +29,7 @@ suite.addTests(loader.loadTestsFromModule(offline_uncertainty_CuNP))
 suite.addTests(loader.loadTestsFromModule(delta_CuNP))
 
 suite.addTests(loader.loadTestsFromModule(online_flare_CuNP))
-suite.addTests(loader.loadTestsFromModule(online_ft_CuNP))
+# suite.addTests(loader.loadTestsFromModule(online_ft_CuNP))
 
 # Deprecated below, call using pytest instead
 # initialize a runner, pass it your suite and run it
