@@ -73,7 +73,7 @@ def offline_neb(images, parent_calc, iter=4, intermediate_images=3):
     base_calc = MultiMorse(neb_images, cutoff, combo="mean")
     # base_calc = Dummy(images)
 
-    # define learner_params OfflineActiveLearner
+    # define learner_params OfflineDeltaLearner
 
     learner_params = {
         "atomistic_method": NEBcalc(

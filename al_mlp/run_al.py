@@ -10,7 +10,7 @@ from vasp_interactive import VaspInteractive
 from ase.db import connect
 
 from al_mlp.atomistic_methods import Relaxation
-from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
+from al_mlp.offline_learner.offline_delta_learner import OfflineDeltaLearner
 from al_mlp.utils import calculate_surface_k_points
 from al_mlp.online_learner.online_learner import OnlineLearner
 from al_mlp.online_learner.delta_learner import DeltaLearner
@@ -244,7 +244,7 @@ def active_learning(config):
             mongo_db,
         )
 
-    elif learner_class == "offline":
+    elif learner_class == "offlinedelta":
         # set atomistic method
         config["learner"]["atomistic_method"] = {}
         config["learner"]["atomistic_method"]["initial_traj"] = config["links"]["traj"]
@@ -255,7 +255,7 @@ def active_learning(config):
         ]
 
         # declare learner
-        learner = OfflineActiveLearner(
+        learner = OfflineDeltaLearner(
             learner_params=config["learner"],
             training_data=images,
             ml_potential=ml_potential,

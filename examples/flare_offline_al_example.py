@@ -7,7 +7,7 @@ from al_mlp.atomistic_methods import Relaxation
 from al_mlp.utils import calculate_surface_k_points
 from al_mlp.ml_potentials.flare_pp_calc import FlarePPCalc
 from pymongo import MongoClient
-from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
+from al_mlp.offline_learner.offline_delta_learner import OfflineDeltaLearner
 from al_mlp.base_calcs.ocp_model import OCPModel
 
 # from vasp_interactive.vasp_interactive import VaspInteractive
@@ -119,7 +119,7 @@ oal_relaxation = Relaxation(
 )
 
 # declare offline learner
-learner = OfflineActiveLearner(
+learner = OfflineDeltaLearner(
     all_params["learner"],
     [oal_initial_structure] + images,
     ml_potential,

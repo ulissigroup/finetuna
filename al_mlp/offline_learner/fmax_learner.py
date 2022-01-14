@@ -1,4 +1,4 @@
-from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
+from al_mlp.offline_learner.offline_delta_learner import OfflineDeltaLearner
 from al_mlp.utils import compute_with_calc, write_to_db
 import numpy as np
 import ase
@@ -6,7 +6,7 @@ import random
 from ase.io.trajectory import TrajectoryWriter
 
 
-class FmaxLearner(OfflineActiveLearner):
+class FmaxLearner(OfflineDeltaLearner):
     """
     Replaces termination criteria with a max force in the constructor and the check_terminate method
     """

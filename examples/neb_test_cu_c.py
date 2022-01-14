@@ -11,7 +11,7 @@ import numpy as np
 import copy
 import torch
 
-from al_mlp.offline_active_learner import OfflineActiveLearner
+from al_mlp.offline_learner.offline_delta_learner import OfflineDeltaLearner
 from al_mlp.base_calcs.morse import MultiMorse
 
 from amptorch.trainer import AtomsTrainer
@@ -143,7 +143,7 @@ def construct_geometries(parent_calc, ml2relax):
 
 
 '''
-class NEBLearner(OfflineActiveLearner):
+class NEBLearner(OfflineDeltaLearner):
     def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc):
         super().__init__(learner_params, trainer, training_data, parent_calc, base_calc)
         self.parent_calls = 0
@@ -233,7 +233,7 @@ cutoff = Gs["default"]["cutoff"]
 base_calc = MultiMorse(images, cutoff, combo="mean")
 
 
-# define learner_params OfflineActiveLearner
+# define learner_params OfflineDeltaLearner
 
 learner_params = {
     "atomistic_method": NEBcalc(
@@ -246,5 +246,5 @@ learner_params = {
     "use_dask": False,
 }
 
-learner = OfflineActiveLearner(learner_params, trainer, images, parent_calc, base_calc)
+learner = OfflineDeltaLearner(learner_params, trainer, images, parent_calc, base_calc)
 learner.learn()

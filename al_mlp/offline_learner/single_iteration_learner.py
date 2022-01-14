@@ -1,7 +1,7 @@
-from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
+from al_mlp.offline_learner.offline_delta_learner import OfflineDeltaLearner
 
 
-class SingleIterationLearner(OfflineActiveLearner):
+class SingleIterationLearner(OfflineDeltaLearner):
     """Offline Active Learner for training a single iteration.
     Parameters
     ----------

@@ -13,7 +13,7 @@ import ase
 
 from ase.db import connect
 
-from al_mlp.offline_active_learner import OfflineActiveLearner
+from al_mlp.offline_learner.offline_delta_learner import OfflineDeltaLearner
 from al_mlp.base_calcs.morse import MultiMorse
 from al_mlp.atomistic_methods import Relaxation
 
@@ -175,7 +175,7 @@ learner_params = {
     "seed": 1,
 }
 
-learner = OfflineActiveLearner(learner_params, trainer, images, parent_calc, base_calc)
+learner = OfflineDeltaLearner(learner_params, trainer, images, parent_calc, base_calc)
 learner.learn()
 
 # Calculate true relaxation

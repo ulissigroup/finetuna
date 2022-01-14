@@ -1,9 +1,9 @@
-from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
+from al_mlp.offline_learner.offline_delta_learner import OfflineDeltaLearner
 
 # Specific NEB querying strategy
 
 
-class NEBLearner(OfflineActiveLearner):
+class NEBLearner(OfflineDeltaLearner):
     def __init__(
         self,
         learner_params,

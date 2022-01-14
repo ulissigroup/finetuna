@@ -5,14 +5,14 @@ import random
 
 
 # from al_mlp.utils import write_to_db
-from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
+from al_mlp.offline_learner.offline_delta_learner import OfflineDeltaLearner
 
 # from torch.multiprocessing import Pool
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 
 
-class UncertaintyLearner(OfflineActiveLearner):
+class UncertaintyLearner(OfflineDeltaLearner):
     """Offline Active Learner using an uncertainty enabled ML potential to query
     data with the most uncertainty.
     Parameters
