@@ -46,18 +46,20 @@ class OfflineLearner:
         self.initial_data = training_data
         self.parent_calc = parent_calc
 
+        self.init_logger(mongo_db, optional_config)
+        self.init_learner()
+        self.init_training_data()
+
+    def init_logger(self, mongo_db, optional_config):
         if mongo_db is None:
             mongo_db = {"offline_learner": None}
         self.logger = Logger(
-            learner_params=learner_params,
-            ml_potential=ml_potential,
-            parent_calc=parent_calc,
+            learner_params=self.learner_params,
+            ml_potential=self.ml_potential,
+            parent_calc=self.parent_calc,
             mongo_db_collection=mongo_db["offline_learner"],
             optional_config=optional_config,
         )
-
-        self.init_learner()
-        self.init_training_data()
 
     def init_learner(self):
         """
