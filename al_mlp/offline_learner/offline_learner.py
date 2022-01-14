@@ -4,14 +4,13 @@ from ase.io.trajectory import Trajectory
 from ase.optimize.bfgs import BFGS
 from al_mlp.atomistic_methods import Relaxation
 from al_mlp.base_calcs.dummy import Dummy
-from al_mlp.calcs import DeltaCalc
 from al_mlp.utils import compute_with_calc
 import numpy as np
 from ase.calculators.calculator import Calculator
 from al_mlp.logger import Logger
 
 
-class OfflineActiveLearner:
+class OfflineLearner:
     """Offline Active Learner.
     This class serves as a parent class to inherit more sophisticated
     learners with different query and termination strategies.
@@ -31,9 +30,6 @@ class OfflineActiveLearner:
     parent_calc: ase Calculator object
         Calculator used for querying training data.
 
-    base_calc: ase Calculator object
-        Calculator used to calculate delta data for training.
-
     """
 
     def __init__(
@@ -42,16 +38,13 @@ class OfflineActiveLearner:
         training_data,
         ml_potential,
         parent_calc,
-        base_calc,
         mongo_db=None,
         optional_config=None,
     ):
         self.learner_params = learner_params
         self.ml_potential = ml_potential
-        self.training_data = training_data
+        self.initial_data = training_data
         self.parent_calc = parent_calc
-        self.base_calc = base_calc
-        self.calcs = [parent_calc, base_calc]
 
         if mongo_db is None:
             mongo_db = {"offline_learner": None}
@@ -59,7 +52,6 @@ class OfflineActiveLearner:
             learner_params=learner_params,
             ml_potential=ml_potential,
             parent_calc=parent_calc,
-            base_calc=base_calc,
             mongo_db_collection=mongo_db["offline_learner"],
             optional_config=optional_config,
         )
@@ -109,27 +101,14 @@ class OfflineActiveLearner:
 
     def init_training_data(self):
         """
-        Prepare the training data by attaching delta values for training.
+        Prepare the training data and the model for the training loop.
+        Run an initial relaxation.
         """
-        # setup delta sub calc as defacto parent calc for all queries
-        parent_ref_image = self.atomistic_method.initial_geometry
-        base_ref_image = compute_with_calc([parent_ref_image], self.base_calc)[0]
-        self.refs = [parent_ref_image, base_ref_image]
-        self.delta_sub_calc = DeltaCalc(self.calcs, "sub", self.refs)
-
-        # move training data into raw data for computing with delta calc
-        raw_data = []
-        for image in self.training_data:
-            raw_data.append(image)
-
-        # run a trajectory with no training data: just the base model to sample from
         self.training_data = []
-        self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
-        self.do_after_train()
 
-        # add initial data to training dataset
-        self.add_data(raw_data, None)
-        self.initial_image_energy = self.refs[0].get_potential_energy()
+        self.add_data(self.initial_data, None)
+        self.do_train()
+        self.do_after_train()
 
     def learn(self):
         """
@@ -150,9 +129,16 @@ class OfflineActiveLearner:
     def do_before_train(self):
         """
         Executes before training the ml_potential in every active learning loop.
+
+        Queries data from a list of images,
+        calculates the properties,
+        adds them to the training data,
+        then logs them as parent data.
         """
-        self.query_data()
-        self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
+
+        random.seed(self.query_seeds[self.iterations - 1])
+        queried_images, query_idx = self.query_func()
+        self.add_data(queried_images, query_idx)
 
     def do_train(self):
         """
@@ -164,21 +150,81 @@ class OfflineActiveLearner:
         """
         Executes after training the ml_potential in every active learning loop.
         """
-        ml_potential = self.make_trainer_calc()
-        self.trained_calc = DeltaCalc([ml_potential, self.base_calc], "add", self.refs)
+        trained_calc = self.make_trainer_calc()
 
-        self.atomistic_method.run(calc=self.trained_calc, filename=self.fn_label)
+        self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
+        self.atomistic_method.run(calc=trained_calc, filename=self.fn_label)
         self.sample_candidates = list(
             self.atomistic_method.get_trajectory(filename=self.fn_label)
         )
 
+        self.log_ml_data()
+        self.terminate = self.check_terminate()
+        self.iterations += 1
+
+    def do_after_learn(self):
+        """
+        Executes after active learning loop terminates.
+        """
+        pass
+
+    def add_data(self, queried_images, query_idx):
+        """
+        Attaches calculators to the queried images and runs calculate
+        Adds the training-ready images to the training dataset
+        Returns the  images in a list called new_dataset
+        """
+        new_dataset = compute_with_calc(queried_images, self.make_trainer_calc())
+        self.training_data += new_dataset
+        self.parent_calls += len(new_dataset)
+        self.log_parent_data(new_dataset, query_idx)
+
+        return new_dataset
+
+    def log_parent_data(self, new_dataset, query_idx):
+        """
+        Gets the energy and forces of the new dataset
+        Logs all parameters with logger
+        """
+        for i, image in enumerate(new_dataset):
+            idx = None
+            if query_idx is not None:
+                idx = query_idx[i]
+            energy = image.get_potential_energy(apply_constraint=False)
+            forces = image.get_forces(apply_constraint=False)
+            constrained_forces = image.get_forces()
+            fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
+            self.info = {
+                "check": True,
+                "energy": energy,
+                "forces": forces,
+                "fmax": fmax,
+                "ml_energy": None,
+                "ml_forces": None,
+                "ml_fmax": None,
+                "parent_energy": energy,
+                "parent_forces": forces,
+                "parent_fmax": fmax,
+                "force_uncertainty": image.info.get("max_force_stds", None),
+                "energy_uncertainty": image.info.get("energy_stds", None),
+                "dyn_uncertainty_tol": None,
+                "stat_uncertain_tol": None,
+                "tolerance": None,
+                "parent_calls": self.parent_calls,
+                "trained_on": True,
+                "query_idx": idx,
+                "substep": idx,
+            }
+            self.logger.write(image, self.info)
+
+    def log_ml_data(self):
         substep = 0
         for image in self.sample_candidates:
             energy = image.get_potential_energy(apply_constraint=False)
             forces = image.get_forces(apply_constraint=False)
             constrained_forces = image.get_forces()
             fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
-            info = {
+            self.info = {
                 "check": False,
                 "energy": energy,
                 "forces": forces,
@@ -200,71 +246,7 @@ class OfflineActiveLearner:
                 "substep": substep,
             }
             substep += 1
-            self.logger.write(image, info)
-
-        self.terminate = self.check_terminate()
-        self.iterations += 1
-
-    def do_after_learn(self):
-        """
-        Executes after active learning loop terminates.
-        """
-        pass
-
-    def query_data(self):
-        """
-        Queries data from a list of images. Calculates the properties
-        and adds them to the training data.
-        """
-
-        random.seed(self.query_seeds[self.iterations - 1])
-        queried_images, query_idx = self.query_func()
-        self.add_data(queried_images, query_idx)
-
-    def add_data(self, queried_images, query_idx):
-        self.new_dataset = compute_with_calc(queried_images, self.delta_sub_calc)
-        self.training_data += self.new_dataset
-        self.parent_calls += len(self.new_dataset)
-
-        un_delta_new_dataset = []
-        for image in self.new_dataset:
-            add_delta_calc = DeltaCalc([image.calc, self.base_calc], "add", self.refs)
-            [un_delta_image] = compute_with_calc([image], add_delta_calc)
-            un_delta_new_dataset.append(un_delta_image)
-
-        for i in range(len(un_delta_new_dataset)):
-            image = un_delta_new_dataset[i]
-            idx = None
-            if query_idx is not None:
-                idx = query_idx[i]
-            energy = image.get_potential_energy(apply_constraint=False)
-            forces = image.get_forces(apply_constraint=False)
-            constrained_forces = image.get_forces()
-            fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
-            info = {
-                "check": True,
-                "energy": energy,
-                "forces": forces,
-                "fmax": fmax,
-                "ml_energy": None,
-                "ml_forces": None,
-                "ml_fmax": None,
-                "parent_energy": energy,
-                "parent_forces": forces,
-                "parent_fmax": fmax,
-                "force_uncertainty": image.info.get("max_force_stds", None),
-                "energy_uncertainty": image.info.get("energy_stds", None),
-                "dyn_uncertainty_tol": None,
-                "stat_uncertain_tol": None,
-                "tolerance": None,
-                "parent_calls": self.parent_calls,
-                "trained_on": True,
-                "query_idx": idx,
-                "substep": idx,
-            }
-            self.logger.write(image, info)
-
-        return un_delta_new_dataset
+            self.logger.write(image, self.info)
 
     def check_terminate(self):
         """
