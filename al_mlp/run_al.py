@@ -10,6 +10,7 @@ from vasp_interactive import VaspInteractive
 from ase.db import connect
 
 from al_mlp.atomistic_methods import Relaxation
+from al_mlp.offline_learner.offline_learner import OfflineLearner
 from al_mlp.offline_learner.offline_delta_learner import OfflineDeltaLearner
 from al_mlp.utils import calculate_surface_k_points
 from al_mlp.online_learner.online_learner import OnlineLearner
@@ -243,6 +244,32 @@ def active_learning(config):
             dbname,
             mongo_db,
         )
+
+    elif learner_class == "offline":
+        # set atomistic method
+        config["learner"]["atomistic_method"] = {}
+        config["learner"]["atomistic_method"]["initial_traj"] = config["links"]["traj"]
+        config["learner"]["atomistic_method"]["fmax"] = config["relaxation"]["fmax"]
+        config["learner"]["atomistic_method"]["steps"] = config["relaxation"]["steps"]
+        config["learner"]["atomistic_method"]["maxstep"] = config["relaxation"][
+            "maxstep"
+        ]
+
+        # declare learner
+        learner = OfflineLearner(
+            learner_params=config["learner"],
+            training_data=images,
+            ml_potential=ml_potential,
+            parent_calc=parent_calc,
+            mongo_db=mongo_db,
+            optional_config=config,
+        )
+
+        # do boilerplate stuff
+        do_between_learner_and_run(learner, mongo_db)
+
+        # start run
+        learner.learn()
 
     elif learner_class == "offlinedelta":
         # set atomistic method
