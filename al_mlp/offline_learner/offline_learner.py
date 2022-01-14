@@ -152,10 +152,10 @@ class OfflineLearner:
         """
         Executes after training the ml_potential in every active learning loop.
         """
-        trained_calc = self.make_trainer_calc()
+        self.trained_calc = self.make_trainer_calc()
 
         self.fn_label = f"{self.file_dir}{self.filename}_iter_{self.iterations}"
-        self.atomistic_method.run(calc=trained_calc, filename=self.fn_label)
+        self.atomistic_method.run(calc=self.trained_calc, filename=self.fn_label)
         self.sample_candidates = list(
             self.atomistic_method.get_trajectory(filename=self.fn_label)
         )
