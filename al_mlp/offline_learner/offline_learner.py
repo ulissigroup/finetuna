@@ -176,7 +176,7 @@ class OfflineLearner:
         Adds the training-ready images to the training dataset
         Returns the  images in a list called new_dataset
         """
-        new_dataset = compute_with_calc(queried_images, self.make_trainer_calc())
+        new_dataset = compute_with_calc(queried_images, self.parent_calc)
         self.training_data += new_dataset
         self.parent_calls += len(new_dataset)
         self.log_parent_data(new_dataset, query_idx)
