@@ -38,4 +38,4 @@ jobs:
         cd $CWD
     - name: Run pytest on light test suite unit tests
       run: |
-        pytest al_mlp/tests/suites/light_suite.py
+        pytest al_mlp/tests/suites/light_suite.py -s
