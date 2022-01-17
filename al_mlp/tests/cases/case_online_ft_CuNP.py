@@ -53,8 +53,8 @@ class online_ft_CuNP(BaseOnlineCuNP, unittest.TestCase):
                 "/home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_s2re_bagging_results/gem_homo_run1.pt",
             ],
             "model_path_list": [
-                "/home/jovyan/working/ocp/configs/s2ef/all/gemnet/gemnet-dT.yml",
-                "/home/jovyan/working/ocp/configs/s2ef/all/gemnet/gemnet-dT.yml",
+                "/home/jovyan/shared-scratch/joe/actions_runners_files/configs/gemnet-dT.yml",
+                "/home/jovyan/shared-scratch/joe/actions_runners_files/configs/gemnet-dT.yml",
             ],
             "model_class_list": [
                 "gemnet",
