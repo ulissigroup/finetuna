@@ -243,7 +243,7 @@ class GPMin(Optimizer, GaussianProcess):
         self.train(np.array(self.x_list), np.array(self.y_list))
 
     def relax_model(self, r0):
-        result = minimize(self.acquisition, r0, method='L-BFGS-B', jac = None,  options={'disp': True})
+        result = minimize(self.acquisition, r0, method='L-BFGS-B', jac = True,  options={'disp': True})
         if result.success:
             return result.x
         else:
