@@ -1,7 +1,7 @@
 import unittest
 
 import ase.io
-from al_mlp.tests.setup.online_relaxation_test import run_online_al
+from al_mlp.tests.setup.online_relaxation_setup import run_online_al
 from al_mlp.atomistic_methods import Relaxation
 from al_mlp.calcs import CounterCalc
 from ase.calculators.emt import EMT
