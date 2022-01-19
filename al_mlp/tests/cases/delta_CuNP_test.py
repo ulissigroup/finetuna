@@ -1,6 +1,6 @@
 import unittest
 
-from al_mlp.tests.setup.delta_relaxation_test import run_delta_al
+from al_mlp.tests.setup.delta_relaxation_setup import run_delta_al
 from al_mlp.atomistic_methods import Relaxation
 from al_mlp.calcs import CounterCalc
 from ase.calculators.emt import EMT

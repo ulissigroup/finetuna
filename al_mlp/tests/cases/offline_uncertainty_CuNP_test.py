@@ -1,4 +1,4 @@
-from al_mlp.tests.setup.offline_uncertainty_test import run_offline_al
+from al_mlp.tests.setup.offline_uncertainty_setup import run_offline_al
 from al_mlp.atomistic_methods import Relaxation
 from al_mlp.calcs import CounterCalc
 from ase.calculators.emt import EMT

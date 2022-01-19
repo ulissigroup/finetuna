@@ -1,6 +1,6 @@
 import unittest
 
-from al_mlp.tests.setup.online_flare_relaxation_test import run_online_al
+from al_mlp.tests.setup.online_relaxation_setup import run_online_al
 from al_mlp.atomistic_methods import Relaxation
 from al_mlp.calcs import CounterCalc
 from ase.calculators.emt import EMT
@@ -12,7 +12,7 @@ FORCE_THRESHOLD = 0.05
 ENERGY_THRESHOLD = 0.01
 
 
-class online_flare_CuNP(unittest.TestCase):
+class online_CuNP(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         # Set up parent calculator and image environment
@@ -34,14 +34,14 @@ class online_flare_CuNP(unittest.TestCase):
         OAL_initial_structure = initial_structure.copy()
         OAL_initial_structure.set_calculator(EMT())
         OAL_relaxation = Relaxation(
-            OAL_initial_structure, BFGS, fmax=0.05, steps=60, maxstep=0.04
+            OAL_initial_structure, BFGS, fmax=0.05, steps=100, maxstep=0.04
         )
         cls.OAL_learner, cls.OAL_structure_optim = run_online_al(
             OAL_relaxation,
-            [OAL_initial_structure],
+            [],
             ["Cu"],
             "CuNP_oal",
-            EMT(),
+            CounterCalc(EMT()),
         )
 
         # Retain images of the final structure from both relaxations
@@ -64,6 +64,9 @@ class online_flare_CuNP(unittest.TestCase):
             + str(self.OAL_image.get_potential_energy())
             + "\nwith Energy Threshold: "
             + str(ENERGY_THRESHOLD)
+            + "\nafter "
+            + str(self.OAL_learner.curr_step)
+            + " steps"
         )
 
     def test_oal_CuNP_forces(self):
@@ -75,6 +78,9 @@ class online_flare_CuNP(unittest.TestCase):
             + str(fmax)
             + "\nwith Force Threshold: "
             + str(FORCE_THRESHOLD)
+            + "\nafter "
+            + str(self.OAL_learner.curr_step)
+            + " steps"
         )
 
     def test_oal_CuNP_calls(self):
@@ -87,4 +93,17 @@ class online_flare_CuNP(unittest.TestCase):
             + str(self.OAL_learner.parent_calls)
             + " not less than: "
             + str(0.5 * self.emt_counter.force_calls)
+            + "\nafter "
+            + str(self.OAL_learner.curr_step)
+            + " steps"
+        )
+
+    def test_oal_CuNP_calls_consistent(self):
+        assert (
+            self.OAL_learner.parent_calls == self.OAL_learner.parent_calc.force_calls
+        ), str(
+            "number of parent calls tracked by learner: "
+            + str(self.OAL_learner.parent_calls)
+            + ", is not equal to number of calls tracked by parent call counter: "
+            + str(self.OAL_learner.parent_calc.force_calls)
         )

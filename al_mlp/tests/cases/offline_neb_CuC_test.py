@@ -1,5 +1,4 @@
-from al_mlp.tests.setup.offline_neb_Cu_C_utils import construct_geometries
-from al_mlp.tests.setup.offline_neb_test import offline_neb
+from al_mlp.tests.setup.offline_neb_setup import offline_neb, construct_geometries
 from al_mlp.calcs import CounterCalc
 from ase.io import read
 from al_mlp.atomistic_methods import NEBcalc

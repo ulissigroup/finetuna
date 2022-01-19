@@ -2,13 +2,13 @@
 import unittest
 
 # import test modules
-from al_mlp.tests.cases.case_delta_CuNP import delta_CuNP
-from al_mlp.tests.cases.case_online_CuNP import online_CuNP
-from al_mlp.tests.cases.case_offline_CuNP import offline_CuNP
-from al_mlp.tests.cases.case_offline_uncertainty_test import offline_uncertainty_CuNP
+from al_mlp.tests.cases.delta_CuNP_test import delta_CuNP
+from al_mlp.tests.cases.online_CuNP_test import online_CuNP
+from al_mlp.tests.cases.offline_CuNP_test import offline_CuNP
+from al_mlp.tests.cases.offline_uncertainty_CuNP_test import offline_uncertainty_CuNP
 
-from al_mlp.tests.cases.case_online_flare_CuNP import online_flare_CuNP
-from al_mlp.tests.cases.case_online_ft_CuNP import online_ft_CuNP
+# from al_mlp.tests.cases.online_flare_CuNP_test import online_flare_CuNP
+from al_mlp.tests.cases.online_ft_CuNP_test import online_ft_CuNP
 
 # import and set executor client
 from dask.distributed import Client, LocalCluster
@@ -28,7 +28,7 @@ suite.addTests(loader.loadTestsFromTestCase(offline_CuNP))
 suite.addTests(loader.loadTestsFromModule(offline_uncertainty_CuNP))
 suite.addTests(loader.loadTestsFromModule(delta_CuNP))
 
-suite.addTests(loader.loadTestsFromModule(online_flare_CuNP))
+# suite.addTests(loader.loadTestsFromModule(online_flare_CuNP))
 suite.addTests(loader.loadTestsFromModule(online_ft_CuNP))
 
 # Deprecated below, call using pytest instead
