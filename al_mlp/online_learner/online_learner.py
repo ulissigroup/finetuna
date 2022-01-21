@@ -268,6 +268,25 @@ class OnlineLearner(Calculator):
                     ),
                 ).item()
 
+                # Using retrained ML potential, get new predicted energies and forces
+                retrained_atoms_ML = self.get_ml_prediction(atoms_copy)
+                retrained_energy = retrained_atoms_ML.get_potential_energy(
+                    apply_constraint=self.constraint
+                )
+                retrained_forces = retrained_atoms_ML.get_forces(
+                    apply_constraint=self.constraint
+                )
+                retrained_constrained_forces = retrained_atoms_ML.get_forces()
+                retrained_fmax = np.sqrt(
+                    (retrained_constrained_forces ** 2).sum(axis=1).max()
+                )
+                self.info["retrained_energy"] = retrained_energy
+                self.info["retrained_forces"] = str(retrained_forces)
+                self.info["retrained_fmax"] = retrained_fmax
+                self.info["retrained_force_error"] = np.sum(
+                    np.abs(constrained_forces - retrained_constrained_forces)
+                )
+
             else:
                 # Otherwise use the ML predicted energies and forces
                 if self.store_complete_dataset or len(self.complete_dataset) == 0:
