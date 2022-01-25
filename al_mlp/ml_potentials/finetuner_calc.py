@@ -93,6 +93,7 @@ class FinetunerCalc(MLPCalc):
 
         MLPCalc.__init__(self, mlp_params=config)
 
+        self.train_counter = 0
         self.ml_model = False
         self.max_neighbors = self.mlp_params["tuner"].get("max_neighbors", 50)
         self.cutoff = self.mlp_params["tuner"].get("cutoff", 6)

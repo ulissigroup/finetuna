@@ -67,6 +67,7 @@ class FinetunerEnsembleCalc(FinetunerCalc):
                 )
             )
 
+        self.train_counter = 0
         self.ml_model = False
         if isinstance(mlp_params, list):
             mlp_params_copy = copy.deepcopy(mlp_params[0])
