@@ -169,7 +169,8 @@ class FinetunerCalc(MLPCalc):
         e_mean, f_mean = self.trainer.get_atoms_prediction(atoms)
 
         self.train_counter += 1
-        e_std = f_std = self.train_counter * 0.01
+        e_std = self.train_counter * 0.01
+        f_std = np.zeros_like(f_mean) + (self.train_counter * 0.01)
 
         return e_mean, f_mean, e_std, f_std
 
