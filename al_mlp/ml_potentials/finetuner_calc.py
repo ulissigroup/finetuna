@@ -259,7 +259,9 @@ class FinetunerCalc(MLPCalc):
         """
         Overwritable if doing ensembling of ocp models
         """
-        if self.validation_split is not None:
+        if (self.validation_split is not None) and (
+            len(dataset) > len(self.validation_split)
+        ):
             val_indices = []
             for i in self.validation_split:
                 val_indices.append(i % len(dataset))
