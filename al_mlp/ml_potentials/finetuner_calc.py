@@ -290,7 +290,7 @@ class FinetunerCalc(MLPCalc):
             r_energy=True,
             r_forces=True,
             r_distances=True,
-            r_edges=True,
+            r_edges=False,
         )
 
         graphs_list = [a2g.convert(atoms) for atoms in dataset]
@@ -302,7 +302,9 @@ class FinetunerCalc(MLPCalc):
         graphs_list_dataset = GraphsListDataset(graphs_list)
 
         train_sampler = self.trainer.get_sampler(
-            graphs_list_dataset, len(dataset), shuffle=False
+            graphs_list_dataset,
+            self.mlp_params.get("optim", {}).get("batch_size", 1),
+            shuffle=False,
         )
         self.trainer.train_sampler = train_sampler
 
