@@ -289,8 +289,10 @@ class OnlineLearner(Calculator):
 
             else:
                 # Otherwise use the ML predicted energies and forces
-                if self.store_complete_dataset or len(self.complete_dataset) == 0:
+                if self.store_complete_dataset:
                     self.complete_dataset.append(atoms_ML)
+                else:
+                    self.complete_dataset = [atoms_ML]
 
                 self.info["check"] = False
                 self.set_query_reason("noquery")
@@ -447,8 +449,10 @@ class OnlineLearner(Calculator):
             )
 
         # add to complete dataset (for atomistic methods optimizer replay)
-        if self.store_complete_dataset or len(self.complete_dataset) == 0:
+        if self.store_complete_dataset:
             self.complete_dataset.append(new_data)
+        else:
+            self.complete_dataset = [new_data]
 
         # before adding to parent (training) dataset, convert to top k forces if applicable
         if self.train_on_top_k_forces is not None:
