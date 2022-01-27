@@ -15,6 +15,7 @@ from ocpmodels.common.utils import setup_imports, setup_logging
 from ocpmodels.common import distutils
 import logging
 import numpy as np
+from ocpmodels.modules.scheduler import LRScheduler
 
 
 class FinetunerCalc(MLPCalc):
@@ -148,6 +149,9 @@ class FinetunerCalc(MLPCalc):
             for block_name in self.unfreeze_blocks:
                 if block_name in name:
                     param.requires_grad = True
+
+        self.trainer.load_optimizer()
+        self.trainer.load_extras()
 
         self.ml_model = True
         self.trainer.train_dataset = GenericDB()
@@ -543,7 +547,7 @@ class Trainer(ForcesTrainer):
                             self.run_relaxations()
 
                 if self.scheduler.scheduler_type == "ReduceLROnPlateau":
-                    if self.step % eval_every == 0:
+                    if self.step % eval_every == 0 and self.val_loader is not None:
                         self.scheduler.step(
                             metrics=val_metrics[primary_metric]["metric"],
                         )
