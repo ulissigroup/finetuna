@@ -236,6 +236,7 @@ class FinetunerCalc(MLPCalc):
             new_dataset: list of just the new descriptors to partially fit on
         """
         self.train_counter = 0
+        self.reset()
         if not self.ml_model or not new_dataset:
             self.init_model()
             dataset = parent_dataset
