@@ -1,117 +1,123 @@
 from al_mlp.atomistic_methods import Relaxation
 from al_mlp.online_learner.online_learner import OnlineLearner
-from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
-from amptorch.trainer import AtomsTrainer
-from ase.calculators.emt import EMT
-import numpy as np
-from ase.cluster.icosahedron import Icosahedron
+from ase.calculators.vasp import Vasp
 from ase.optimize import BFGS
-import torch
-import os
-import copy
+from al_mlp.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
+from ase.io import Trajectory
+from al_mlp.utils import calculate_surface_k_points
 
-# Set up ensemble parallelization
 if __name__ == "__main__":
-    # import make_ensemble and dask for setting parallelization
-    from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
-    from dask.distributed import Client, LocalCluster
 
-    cluster = LocalCluster(n_workers=5, processes=True, threads_per_worker=1)
-    client = Client(cluster)
-    AmptorchEnsembleCalc.set_executor(client)
+    traj = Trajectory(
+        "/home/jovyan/working/data/30_randoms_n60/random1447590.traj"
+    )  # change this path to your trajectory file
 
-    # Set up parent calculator and image environment
-    initial_structure = Icosahedron("Cu", 2)
-    initial_structure.rattle(0.1)
-    initial_structure.set_pbc(True)
-    initial_structure.set_cell([20, 20, 20])
-    images = []
-    elements = ["Cu"]
-    parent_calc = EMT()
-
-    # Run relaxation with active learning
-    OAL_initial_structure = initial_structure.copy()
-    OAL_initial_structure.set_calculator(copy.deepcopy(parent_calc))
-    OAL_relaxation = Relaxation(
-        OAL_initial_structure, BFGS, fmax=0.05, steps=60, maxstep=0.04
-    )
-
-    Gs = {
-        "default": {
-            "G2": {
-                "etas": np.logspace(np.log10(0.05), np.log10(5.0), num=4),
-                "rs_s": [0],
+    ml_potential = FinetunerEnsembleCalc(
+        model_classes=[
+            "gemnet",
+            "gemnet",
+        ],
+        model_paths=[
+            "/home/jovyan/working/ocp/configs/s2ef/all/gemnet/gemnet-dT.yml",  # change this path to your gemnet config
+            "/home/jovyan/working/ocp/configs/s2ef/all/gemnet/gemnet-dT.yml",  # change this path to your gemnet config
+        ],
+        checkpoint_paths=[
+            "/home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_s2re_bagging_results/gem_homo_run0.pt",  # change this path to your gemnet checkpoint
+            "/home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_s2re_bagging_results/gem_homo_run1.pt",  # change this path to your other gemnet checkpoint
+        ],
+        mlp_params=[
+            {
+                "tuner": {
+                    "unfreeze_blocks": [
+                        "out_blocks.3.seq_forces",
+                        "out_blocks.3.scale_rbf_F",
+                        "out_blocks.3.dense_rbf_F",
+                        "out_blocks.3.out_forces",
+                    ],
+                    "validation_split": [0],
+                    "num_threads": 8,
+                },
+                "optim": {
+                    "batch_size": 1,
+                    "num_workers": 0,
+                    "max_epochs": 30,
+                    "lr_initial": 0.0003,
+                    "factor": 0.95,
+                    "eval_every": 1,
+                    "patience": 3,
+                },
             },
-            "G4": {"etas": [0.005], "zetas": [1.0, 4.0], "gammas": [1.0, -1.0]},
-            "cutoff": 6,
-        },
-    }
-
-    learner_params = {
-        "max_iterations": 10,
-        "samples_to_retrain": 1,
-        "filename": "relax_example",
-        "file_dir": "./",
-        "stat_uncertain_tol": 0.15,
-        "dyn_uncertain_tol": 1.5,
-        "fmax_verify_threshold": 0.05,  # eV/AA
-        "relative_variance": True,
-        "n_ensembles": 5,
-        "use_dask": True,
-    }
-
-    config = {
-        "model": {"get_forces": True, "num_layers": 3, "num_nodes": 5},
-        "optim": {
-            "device": "cpu",
-            "force_coefficient": 4.0,
-            "lr": 1e-2,
-            "batch_size": 10,
-            "epochs": 100,
-            "optimizer": torch.optim.LBFGS,
-            "optimizer_args": {"optimizer__line_search_fn": "strong_wolfe"},
-        },
-        "dataset": {
-            "raw_data": images,
-            "val_split": 0,
-            "elements": elements,
-            "fp_params": Gs,
-            "save_fps": False,
-            "scaling": {"type": "standardize"},
-        },
-        "cmd": {
-            "debug": False,
-            "run_dir": "./",
-            "seed": 1,
-            "identifier": "test",
-            "verbose": True,
-            # "logger": True,
-            "single-threaded": True,
-        },
-    }
-
-    dbname = "CuNP_oal"
-    trainer = AtomsTrainer(config)
-
-    ml_potential = AmptorchEnsembleCalc(trainer, learner_params["n_ensembles"])
-    onlinecalc = OnlineLearner(
-        learner_params,
-        images,
-        ml_potential,
-        parent_calc,
+            {
+                "tuner": {
+                    "unfreeze_blocks": [
+                        "out_blocks.2.seq_forces",
+                        "out_blocks.2.scale_rbf_F",
+                        "out_blocks.2.dense_rbf_F",
+                        "out_blocks.2.out_forces",
+                    ],
+                    "validation_split": [0],
+                    "num_threads": 8,
+                },
+                "optim": {
+                    "batch_size": 1,
+                    "num_workers": 0,
+                    "max_epochs": 30,
+                    "lr_initial": 0.0003,
+                    "factor": 0.95,
+                    "eval_every": 1,
+                    "patience": 3,
+                },
+            },
+        ],
     )
 
-    if os.path.exists("dft_calls.db"):
-        os.remove("dft_calls.db")
-    OAL_relaxation.run(onlinecalc, filename=dbname)
-
-    # Retain and print image of the final structure from the online relaxation
-    OAL_image = OAL_relaxation.get_trajectory("CuNP_oal")[-1]
-    OAL_image.set_calculator(copy.deepcopy(parent_calc))
-    print(
-        "Final Image Results:"
-        + "\nEnergy:\n"
-        + str(OAL_image.get_potential_energy())
-        + "\nForces:\n"
-        + str(OAL_image.get_forces())
+    parent_calc = Vasp(
+        ibrion=-1,
+        nsw=0,
+        isif=0,
+        isym=0,
+        lreal="Auto",
+        ediffg=-0.03,
+        symprec=1.0e-10,
+        encut=350.0,
+        laechg=False,
+        lcharg=False,
+        lwave=False,
+        ncore=16,
+        gga="RP",
+        pp="PBE",
+        xc="PBE",
+        kpts=calculate_surface_k_points(traj[0]),
     )
+
+    learner = OnlineLearner(
+        learner_params={
+            "stat_uncertain_tol": 1000000,
+            "dyn_uncertain_tol": 1000000,
+            "dyn_avg_steps": 15,
+            "query_every_n_steps": 100,
+            "num_initial_points": 0,
+            "initial_points_to_keep": [],
+            "fmax_verify_threshold": 0.03,
+            "tolerance_selection": "min",
+        },
+        parent_dataset=[],
+        ml_potential=ml_potential,
+        parent_calc=parent_calc,
+        mongo_db=None,
+        optional_config=None,
+    )
+
+    relaxer = Relaxation(
+        initial_geometry=traj[0], optimizer=BFGS, fmax=0.03, steps=None, maxstep=0.2
+    )
+    relaxer.run(
+        calc=learner,
+        filename="online_learner_trajectory",
+        replay_traj="parent_only",
+        max_parent_calls=None,
+        check_final=False,
+        online_ml_fmax=learner.fmax_verify_threshold,
+    )
+
+    print("done!")
