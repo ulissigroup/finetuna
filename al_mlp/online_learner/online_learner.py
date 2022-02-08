@@ -152,6 +152,8 @@ class OnlineLearner(Calculator):
             "current_step": None,
             "steps_since_last_query": None,
             "query": None,
+            "training_time": None,
+            "parent_time": None,
         }
 
     def calculate(self, atoms, properties, system_changes):
@@ -447,6 +449,7 @@ class OnlineLearner(Calculator):
                 + "): "
                 + str(end - start)
             )
+            self.info["parent_time"] = end - start
 
         # add to complete dataset (for atomistic methods optimizer replay)
         if self.store_complete_dataset:
@@ -467,6 +470,7 @@ class OnlineLearner(Calculator):
 
         self.parent_calls += 1
 
+        start = time.time()
         # retrain the ml potential only if there is more than enough data that the ml potential may be used
         if len(self.parent_dataset) > self.num_initial_points:
             # if training only on recent points, and have trained before, then check if dataset has become long enough to train on subset
@@ -500,6 +504,8 @@ class OnlineLearner(Calculator):
 
             self.ml_potential.train(self.parent_dataset)
             self.trained_at_least_once = True
+        end = time.time()
+        self.info["training_time"] = end - start
 
         # set the energy and force results of the parent calculator and return them
         energy_actual = new_data.get_potential_energy(apply_constraint=self.constraint)
