@@ -154,6 +154,7 @@ class OnlineLearner(Calculator):
             "query": None,
             "training_time": None,
             "parent_time": None,
+            "forces_mae": None,
         }
 
     def calculate(self, atoms, properties, system_changes):
@@ -242,6 +243,9 @@ class OnlineLearner(Calculator):
                 self.info["energy_error"] = energy - energy_ML
                 self.info["relative_energy_error"] = (energy - energy_ML) / energy
                 self.info["forces_error"] = np.sum(
+                    np.abs(constrained_forces - constrained_forces_ML)
+                )
+                self.info["forces_mae"] = np.mean(
                     np.abs(constrained_forces - constrained_forces_ML)
                 )
 
