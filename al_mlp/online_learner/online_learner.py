@@ -96,6 +96,9 @@ class OnlineLearner(Calculator):
         self.constraint = self.learner_params.get("train_on_constraint", False)
 
         self.query_every_n_steps = self.learner_params.get("query_every_n_steps", None)
+        self.query_n_fmae_coefficient = self.learner_params.get(
+            "query_n_fmae_coefficient", None
+        )
         self.train_on_top_k_forces = self.learner_params.get(
             "train_on_top_k_forces", None
         )
@@ -391,6 +394,12 @@ class OnlineLearner(Calculator):
                     prediction_unsafe = True
                     self.set_query_reason("position")
             self.positions_queue.put(new_positions)
+
+        if self.query_n_fmae_coefficient is not None:
+            forces_mae = 0.1
+            if hasattr(self, "info") and self.info.get("forces_mae", None) is not None:
+                forces_mae = self.info["forces_mae"]
+            self.query_every_n_steps = self.query_n_fmae_coefficient * forces_mae
 
         if self.query_every_n_steps is not None:
             if self.steps_since_last_query > self.query_every_n_steps:
