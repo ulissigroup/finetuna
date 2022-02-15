@@ -711,7 +711,7 @@ class spinconv(BaseModel):
         num_atoms = len(data.batch)
 
         edge_vec_0 = edge_distance_vec
-        edge_vec_0_distance = torch.sqrt(torch.sum(edge_vec_0 ** 2, dim=1))
+        edge_vec_0_distance = torch.sqrt(torch.sum(edge_vec_0**2, dim=1))
 
         if torch.min(edge_vec_0_distance) < 0.0001:
             print(
@@ -735,7 +735,7 @@ class spinconv(BaseModel):
         )
 
         edge_vec_2 = avg_vector[edge_index[1, :]] + 0.0001
-        edge_vec_2_distance = torch.sqrt(torch.sum(edge_vec_2 ** 2, dim=1))
+        edge_vec_2_distance = torch.sqrt(torch.sum(edge_vec_2**2, dim=1))
 
         if torch.min(edge_vec_2_distance) < 0.000001:
             print(
@@ -746,11 +746,11 @@ class spinconv(BaseModel):
         norm_0_2 = edge_vec_2 / (edge_vec_2_distance.view(-1, 1))
         norm_z = torch.cross(norm_x, norm_0_2, dim=1)
         norm_z = norm_z / (
-            torch.sqrt(torch.sum(norm_z ** 2, dim=1, keepdim=True)) + 0.0000001
+            torch.sqrt(torch.sum(norm_z**2, dim=1, keepdim=True)) + 0.0000001
         )
         norm_y = torch.cross(norm_x, norm_z, dim=1)
         norm_y = norm_y / (
-            torch.sqrt(torch.sum(norm_y ** 2, dim=1, keepdim=True)) + 0.0000001
+            torch.sqrt(torch.sum(norm_y**2, dim=1, keepdim=True)) + 0.0000001
         )
 
         norm_x = norm_x.view(-1, 3, 1)
@@ -835,7 +835,7 @@ class spinconv(BaseModel):
         device = source_edge.device
 
         edge_distance_norm = F.normalize(edge_distance_vec)
-        edge_distance_sqr = torch.sum(edge_distance_vec ** 2, dim=1)
+        edge_distance_sqr = torch.sum(edge_distance_vec**2, dim=1)
 
         source_edge_offset = edge_distance_norm[source_edge]
 
@@ -1671,7 +1671,7 @@ class GaussianSmearingLearnable(torch.nn.Module):
         log_scalar_max = math.log(self.scalar_max)
         standarddev = 2.0 * torch.sigmoid(self.standarddev) - 1.0
         standarddev = self.step * torch.exp(log_scalar_max * standarddev)
-        coeff = -0.5 / (standarddev ** 2)
+        coeff = -0.5 / (standarddev**2)
         return torch.exp(coeff.view(1, -1) * torch.pow(dist, 2))
 
 

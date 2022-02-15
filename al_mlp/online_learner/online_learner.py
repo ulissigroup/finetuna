@@ -196,7 +196,7 @@ class OnlineLearner(Calculator):
             atoms_copy.info["check"] = True
 
             energy, forces, constrained_forces = self.add_data_and_retrain(atoms_copy)
-            fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
+            fmax = np.sqrt((constrained_forces**2).sum(axis=1).max())
 
             self.info["check"] = True
             self.info["parent_energy"] = energy
@@ -211,7 +211,7 @@ class OnlineLearner(Calculator):
             energy = atoms_ML.get_potential_energy(apply_constraint=self.constraint)
             forces = atoms_ML.get_forces(apply_constraint=self.constraint)
             constrained_forces = atoms_ML.get_forces()
-            fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
+            fmax = np.sqrt((constrained_forces**2).sum(axis=1).max())
             self.info["ml_energy"] = energy
             self.info["ml_forces"] = str(forces)
             self.info["ml_fmax"] = fmax
@@ -237,7 +237,7 @@ class OnlineLearner(Calculator):
                 energy, forces, constrained_forces = self.add_data_and_retrain(
                     atoms_copy
                 )
-                fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
+                fmax = np.sqrt((constrained_forces**2).sum(axis=1).max())
 
                 self.info["check"] = True
                 self.info["parent_energy"] = energy
@@ -287,7 +287,7 @@ class OnlineLearner(Calculator):
                 )
                 retrained_constrained_forces = retrained_atoms_ML.get_forces()
                 retrained_fmax = np.sqrt(
-                    (retrained_constrained_forces ** 2).sum(axis=1).max()
+                    (retrained_constrained_forces**2).sum(axis=1).max()
                 )
                 self.info["retrained_energy"] = retrained_energy
                 self.info["retrained_forces"] = str(retrained_forces)
@@ -335,7 +335,7 @@ class OnlineLearner(Calculator):
             if math.isnan(uncertainty):
                 raise ValueError("NaN uncertainty")
             forces = atoms.get_forces()
-            base_tolerance = np.sqrt((forces ** 2).sum(axis=1).max())
+            base_tolerance = np.sqrt((forces**2).sum(axis=1).max())
         elif self.uncertainty_metric == "energy":
             uncertainty = atoms.info["energy_stds"]
             energy = atoms.get_potential_energy()
@@ -416,7 +416,7 @@ class OnlineLearner(Calculator):
 
     def parent_verify(self, atoms):
         forces = atoms.get_forces()
-        fmax = np.sqrt((forces ** 2).sum(axis=1).max())
+        fmax = np.sqrt((forces**2).sum(axis=1).max())
 
         verify = False
         if fmax <= self.fmax_verify_threshold:
