@@ -12,6 +12,16 @@ import queue
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
 
+# def pausable_train(model, parent_calc, *args, **kwargs):
+#     """Use model.train(training_data) if possible. Wrap it with parent_calc.pause clause
+#     """
+#     if hasattr(parent_calc.pause):
+#         with parent_calc.pause():
+#             model.train(*args, **kwargs)
+#     else:
+#         model.train(training_data)
+#     return
+
 
 class OnlineLearner(Calculator):
     implemented_properties = ["energy", "forces"]
@@ -27,6 +37,12 @@ class OnlineLearner(Calculator):
     ):
         Calculator.__init__(self)
         self.parent_calc = parent_calc
+        print("Parent calc is :", self.parent_calc)
+        # parent_calc allow pause?
+        if hasattr(self.parent_calc, "pause"):
+            self.parent_calc_pausable = True
+        else:
+            self.parent_calc_pausable = False
         self.ml_potential = ml_potential
         self.learner_params = learner_params
         self.init_learner_params()
@@ -492,19 +508,33 @@ class OnlineLearner(Calculator):
                 and (self.train_on_recent_points is not None)
                 and (len(self.parent_dataset) > self.train_on_recent_points)
             ):
-                self.ml_potential.train(
-                    self.parent_dataset[-self.train_on_recent_points :]
-                )
+                if self.parent_calc_pausable:
+                    with self.parent_calc.pause():
+                        self.ml_potential.train(
+                            self.parent_dataset[-self.train_on_recent_points :]
+                        )
+                else:
+                    self.ml_potential.train(
+                            self.parent_dataset[-self.train_on_recent_points :]
+                        )
             # otherwise, if partial fitting, partial fit if not training for the first time
             elif (
                 self.trained_at_least_once
                 and (self.train_on_recent_points is None)
                 and (self.partial_fit)
             ):
-                self.ml_potential.train(self.parent_dataset, partial_dataset)
+                if self.parent_calc_pausable:
+                    with self.parent_calc.pause():
+                        self.ml_potential.train(self.parent_dataset, partial_dataset)
+                else:
+                    self.ml_potential.train(self.parent_dataset, partial_dataset)
             # otherwise just train as normal
             else:
-                self.ml_potential.train(self.parent_dataset)
+                if self.parent_calc_pausable:
+                    with self.parent_calc.pause():
+                        self.ml_potential.train(self.parent_dataset)
+                else:
+                    self.ml_potential.train(self.parent_dataset)
                 self.trained_at_least_once = True
 
         # if the data requirement has just been met: train for the first time on only the initial points to keep
@@ -514,8 +544,11 @@ class OnlineLearner(Calculator):
             ]
             self.parent_dataset = new_parent_dataset
             self.num_initial_points = len(self.parent_dataset)
-
-            self.ml_potential.train(self.parent_dataset)
+            if self.parent_calc_pausable:
+                with self.parent_calc.pause():
+                    self.ml_potential.train(self.parent_dataset)
+            else:
+                self.ml_potential.train(self.parent_dataset)
             self.trained_at_least_once = True
         end = time.time()
         self.info["training_time"] = end - start
@@ -538,7 +571,11 @@ class OnlineLearner(Calculator):
         """
         atoms_copy = atoms.copy()
         atoms_copy.set_calculator(self.ml_potential)
-        (atoms_ML,) = convert_to_singlepoint([atoms_copy])
+        if self.parent_calc_pausable:
+            with self.parent_calc.pause():
+                (atoms_ML,) = convert_to_singlepoint([atoms_copy])
+        else:
+            (atoms_ML,) = convert_to_singlepoint([atoms_copy])
         return atoms_ML
 
     def add_to_dataset(self, new_data):

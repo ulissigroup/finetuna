@@ -36,3 +36,13 @@ stored-primes/
 
 # pytest outputs
 .pytest_cache
+sandbox/
+*CAR
+CHG*
+vasprun.xml
+ase-sort.dat
+EIGENVAL
+REPORT
+IBZKPT
+KPOINTS
+PCDAT
