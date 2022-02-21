@@ -560,6 +560,14 @@ class Trainer(ForcesTrainer):
                 else:
                     self.scheduler.step()
 
+                break_below_lr = (
+                    self.config["optim"].get("break_below_lr", None) is not None
+                ) and (self.scheduler.get_lr() < self.config["optim"]["break_below_lr"])
+                if break_below_lr:
+                    break
+            if break_below_lr:
+                break
+
             torch.cuda.empty_cache()
 
             if checkpoint_every == -1:
