@@ -150,14 +150,8 @@ class FinetunerCalc(MLPCalc):
                 if block_name in name:
                     param.requires_grad = True
 
-        self.trainer.load_optimizer()
-        self.trainer.load_extras()
-
         self.ml_model = True
         self.trainer.train_dataset = GenericDB()
-
-        self.trainer.step = 0
-        self.trainer.epoch = 0
 
     def calculate_ml(self, atoms, properties, system_changes) -> tuple:
         """
@@ -264,6 +258,11 @@ class FinetunerCalc(MLPCalc):
         """
         Overwritable if doing ensembling of ocp models
         """
+        self.trainer.step = 0
+        self.trainer.epoch = 0
+        self.trainer.load_optimizer()
+        self.trainer.load_extras()
+
         if (self.validation_split is not None) and (
             len(dataset) > len(self.validation_split)
         ):
