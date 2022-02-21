@@ -545,6 +545,21 @@ class Trainer(ForcesTrainer):
                         else:
                             self.run_relaxations()
 
+                if self.config["optim"].get("print_loss_and_lr", False):
+                    print(
+                        "loss: "
+                        + str(loss.detach().item())
+                        + ", lr: "
+                        + str(self.scheduler.get_lr())
+                        + ", val: "
+                        + str(val_metrics["loss"]["total"])
+                    ) if self.step % eval_every == 0 and self.val_loader is not None else print(
+                        "loss: "
+                        + str(loss.detach().item())
+                        + ",\t lr: "
+                        + str(self.scheduler.get_lr())
+                    )
+
                 if self.scheduler.scheduler_type == "ReduceLROnPlateau":
                     if (
                         self.step % eval_every == 0
