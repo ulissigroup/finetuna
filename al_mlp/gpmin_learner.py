@@ -149,7 +149,7 @@ class GPMinLearner(GPMin):
     def log_wandb(self, e, f):
         info = {
             "parent_energy": e,
-            "parent_fmax": np.sqrt((f ** 2).sum(axis=1).max()),
+            "parent_fmax": np.sqrt((f**2).sum(axis=1).max()),
             "parent_forces": f,
             "parent_calls": self.function_calls,
         }

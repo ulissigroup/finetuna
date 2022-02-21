@@ -81,7 +81,7 @@ class offline_CuNP(unittest.TestCase):
 
     def test_offline_CuNP_forces(self):
         forces = self.offline_final_structure_AL.get_forces()
-        fmax = np.sqrt((forces ** 2).sum(axis=1).max())
+        fmax = np.sqrt((forces**2).sum(axis=1).max())
 
         assert fmax <= FORCE_THRESHOLD, str(
             "Learner forces inconsistent:\n"

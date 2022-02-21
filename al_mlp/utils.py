@@ -129,7 +129,7 @@ def copy_images(images):
 
 
 def get_fmax(forces: np.ndarray):
-    return np.sqrt((forces ** 2).sum(axis=1).max())
+    return np.sqrt((forces**2).sum(axis=1).max())
 
 
 def convert_to_top_k_forces(images, k):

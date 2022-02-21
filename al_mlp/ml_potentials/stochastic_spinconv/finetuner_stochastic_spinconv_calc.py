@@ -1,5 +1,5 @@
 from al_mlp.ml_potentials.finetuner_calc import FinetunerCalc
-from ocpmodels.datasets.trajectory_lmdb import data_list_collater
+from ocpmodels.datasets.lmdb_dataset import data_list_collater
 from .stochastic_spinconv_model import spinconv
 import numpy as np
 

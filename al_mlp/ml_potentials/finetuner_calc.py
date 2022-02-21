@@ -10,7 +10,7 @@ import copy
 import time
 import torch
 from ocpmodels.trainers.forces_trainer import ForcesTrainer
-from ocpmodels.datasets.trajectory_lmdb import data_list_collater
+from ocpmodels.datasets.lmdb_dataset import data_list_collater
 from ocpmodels.common.utils import setup_imports, setup_logging
 from ocpmodels.common import distutils
 import logging
