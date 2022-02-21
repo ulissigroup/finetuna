@@ -547,7 +547,14 @@ class Trainer(ForcesTrainer):
                             self.run_relaxations()
 
                 if self.scheduler.scheduler_type == "ReduceLROnPlateau":
-                    if self.step % eval_every == 0 and self.val_loader is not None:
+                    if (
+                        self.step % eval_every == 0
+                        and self.config["optim"].get("scheduler_loss", None) == "train"
+                    ):
+                        self.scheduler.step(
+                            metrics=loss.detach().item(),
+                        )
+                    elif self.step % eval_every == 0 and self.val_loader is not None:
                         self.scheduler.step(
                             metrics=val_metrics[primary_metric]["metric"],
                         )
