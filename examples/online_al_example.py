@@ -15,15 +15,12 @@ if __name__ == "__main__":
     ml_potential = FinetunerEnsembleCalc(
         model_classes=[
             "gemnet",
-            "gemnet",
         ],
         model_paths=[
-            "/home/jovyan/working/ocp/configs/s2ef/all/gemnet/gemnet-dT.yml",  # change this path to your gemnet config
             "/home/jovyan/working/ocp/configs/s2ef/all/gemnet/gemnet-dT.yml",  # change this path to your gemnet config
         ],
         checkpoint_paths=[
             "/home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_s2re_bagging_results/gem_homo_run0.pt",  # change this path to your gemnet checkpoint
-            "/home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_s2re_bagging_results/gem_homo_run1.pt",  # change this path to your other gemnet checkpoint
         ],
         mlp_params=[
             {
@@ -34,38 +31,25 @@ if __name__ == "__main__":
                         "out_blocks.3.dense_rbf_F",
                         "out_blocks.3.out_forces",
                     ],
-                    "validation_split": [0],
                     "num_threads": 8,
                 },
                 "optim": {
                     "batch_size": 1,
                     "num_workers": 0,
-                    "max_epochs": 30,
+                    "max_epochs": 200,
                     "lr_initial": 0.0003,
-                    "factor": 0.95,
+                    "factor": 0.7,
                     "eval_every": 1,
                     "patience": 3,
+                    "checkpoint_every": 100000,
+                    "scheduler_loss": "train",
+                    "weight_decay": 0,
+                    "optimizer_params": {
+                        "weight_decay": 0,
+                    },
                 },
-            },
-            {
-                "tuner": {
-                    "unfreeze_blocks": [
-                        "out_blocks.2.seq_forces",
-                        "out_blocks.2.scale_rbf_F",
-                        "out_blocks.2.dense_rbf_F",
-                        "out_blocks.2.out_forces",
-                    ],
-                    "validation_split": [0],
-                    "num_threads": 8,
-                },
-                "optim": {
-                    "batch_size": 1,
-                    "num_workers": 0,
-                    "max_epochs": 30,
-                    "lr_initial": 0.0003,
-                    "factor": 0.95,
-                    "eval_every": 1,
-                    "patience": 3,
+                "task": {
+                    "primary_metric": "loss",
                 },
             },
         ],
@@ -100,6 +84,7 @@ if __name__ == "__main__":
             "initial_points_to_keep": [],
             "fmax_verify_threshold": 0.03,
             "tolerance_selection": "min",
+            "partial_fit": True,
         },
         parent_dataset=[],
         ml_potential=ml_potential,
