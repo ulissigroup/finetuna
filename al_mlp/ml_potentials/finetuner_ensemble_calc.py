@@ -3,6 +3,8 @@ from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
 import numpy as np
 import copy
 import time
+import yaml
+import os
 
 
 class FinetunerEnsembleCalc(FinetunerCalc):
@@ -131,3 +133,46 @@ class FinetunerEnsembleCalc(FinetunerCalc):
         f_stds = np.std(forces_list, axis=0)
 
         return e_mean, f_mean, e_std, f_stds
+
+    def save(
+        self,
+        config_file="saved_config.yml",
+        metrics=None,
+        checkpoint_file="checkpoint.pt",
+        training_state=True,
+    ):
+        save_dict = {
+            "model_classes": [],
+            "model_paths": [],
+            "checkpoint_paths": [],
+            "finetuner": [],
+        }
+        checkpoint_name, checkpoint_ext = checkpoint_file.split(".")
+        for i, calc in enumerate(self.finetuner_calcs):
+            checkpoint_dir = calc.trainer.config["cmd"]["checkpoint_dir"]
+            checkpoint_file = checkpoint_name + "_" + str(i) + "." + checkpoint_ext
+            calc.trainer.save(
+                metrics=metrics,
+                checkpoint_file=checkpoint_file,
+                training_state=training_state,
+            )
+            checkpoint_path = os.path.join(checkpoint_dir, checkpoint_file)
+
+            save_dict["model_classes"].append(calc.model_name)
+            save_dict["model_paths"].append(calc.model_path)
+            save_dict["checkpoint_paths"].append(checkpoint_path)
+            save_dict["finetuner"].append(calc.mlp_params)
+        with open(config_file, "w") as file:
+            yaml.dump(save_dict, file)
+
+    @classmethod
+    def load(cls, saved_config_file):
+        with open(saved_config_file, "r") as file:
+            config = yaml.safe_load(file)
+
+        return FinetunerEnsembleCalc(
+            model_classes=config["model_classes"],
+            model_paths=config["model_paths"],
+            checkpoint_paths=config["checkpoint_paths"],
+            mlp_params=config["finetuner"],
+        )
