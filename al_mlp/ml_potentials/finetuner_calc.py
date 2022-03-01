@@ -396,6 +396,7 @@ class Trainer(ForcesTrainer):
             slurm=config.get("slurm", {}),
             local_rank=config.get("local_rank", 0),
             logger=config.get("logger", None),
+            print_every=config.get("print_every", 1),
             is_debug=config.get("is_debug", True),
             cpu=True,
         )
