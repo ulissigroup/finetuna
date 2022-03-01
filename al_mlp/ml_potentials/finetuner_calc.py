@@ -548,16 +548,24 @@ class Trainer(ForcesTrainer):
 
                 if self.config["optim"].get("print_loss_and_lr", False):
                     print(
-                        "loss: "
+                        "epoch: "
+                        + str(self.epoch)
+                        + ", \tstep: "
+                        + str(self.step)
+                        + ", \tloss: "
                         + str(loss.detach().item())
-                        + ", lr: "
+                        + ", \tlr: "
                         + str(self.scheduler.get_lr())
-                        + ", val: "
+                        + ", \tval: "
                         + str(val_metrics["loss"]["total"])
                     ) if self.step % eval_every == 0 and self.val_loader is not None else print(
-                        "loss: "
+                        "epoch: "
+                        + str(self.epoch)
+                        + ", \tstep: "
+                        + str(self.step)
+                        + ", \tloss: "
                         + str(loss.detach().item())
-                        + ",\t lr: "
+                        + ", \tlr: "
                         + str(self.scheduler.get_lr())
                     )
 
