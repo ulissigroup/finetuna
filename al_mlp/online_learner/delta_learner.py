@@ -5,6 +5,9 @@ from al_mlp.logger import Logger
 from al_mlp.utils import compute_with_calc
 from copy import deepcopy
 
+__author__ = "Joseph Musielewicz"
+__email__ = "al.mlp.package@gmail.com"
+
 
 class DeltaLearner(OnlineLearner):
     def __init__(

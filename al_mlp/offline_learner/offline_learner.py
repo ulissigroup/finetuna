@@ -10,6 +10,9 @@ import numpy as np
 from ase.calculators.calculator import Calculator
 from al_mlp.logger import Logger
 
+__author__ = "Joseph Musielewicz"
+__email__ = "al.mlp.package@gmail.com"
+
 
 class OfflineActiveLearner:
     """Offline Active Learner.
@@ -177,7 +180,7 @@ class OfflineActiveLearner:
             energy = image.get_potential_energy(apply_constraint=False)
             forces = image.get_forces(apply_constraint=False)
             constrained_forces = image.get_forces()
-            fmax = np.sqrt((constrained_forces**2).sum(axis=1).max())
+            fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
             info = {
                 "check": False,
                 "energy": energy,
@@ -240,7 +243,7 @@ class OfflineActiveLearner:
             energy = image.get_potential_energy(apply_constraint=False)
             forces = image.get_forces(apply_constraint=False)
             constrained_forces = image.get_forces()
-            fmax = np.sqrt((constrained_forces**2).sum(axis=1).max())
+            fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
             info = {
                 "check": True,
                 "energy": energy,
