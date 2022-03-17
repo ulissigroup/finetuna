@@ -12,16 +12,6 @@ import queue
 __author__ = "Joseph Musielewicz"
 __email__ = "al.mlp.package@gmail.com"
 
-# def pausable_train(model, parent_calc, *args, **kwargs):
-#     """Use model.train(training_data) if possible. Wrap it with parent_calc.pause clause
-#     """
-#     if hasattr(parent_calc.pause):
-#         with parent_calc.pause():
-#             model.train(*args, **kwargs)
-#     else:
-#         model.train(training_data)
-#     return
-
 
 class OnlineLearner(Calculator):
     implemented_properties = ["energy", "forces"]
@@ -37,12 +27,6 @@ class OnlineLearner(Calculator):
     ):
         Calculator.__init__(self)
         self.parent_calc = parent_calc
-        print("Parent calc is :", self.parent_calc)
-        # parent_calc allow pause?
-        if hasattr(self.parent_calc, "pause"):
-            self.parent_calc_pausable = True
-        else:
-            self.parent_calc_pausable = False
         self.ml_potential = ml_potential
         self.learner_params = learner_params
         self.init_learner_params()
@@ -52,6 +36,12 @@ class OnlineLearner(Calculator):
         self.trained_at_least_once = False
         self.check_final_point = False
         self.uncertainty_history = []
+
+        print("Parent calc is :", self.parent_calc)
+        self.parent_calc_pausable = False
+        if hasattr(self.parent_calc, "pause"):
+            self.parent_calc_pausable = True
+            self.parent_calc._pause_calc()
 
         if mongo_db is None:
             mongo_db = {"online_learner": None}
@@ -471,11 +461,16 @@ class OnlineLearner(Calculator):
         # if verifying (or reverifying) do the singlepoints, and record the time parent calls takes
         else:
             print("OnlineLearner: Parent calculation required")
-            start = time.time()
 
+            start = time.time()
+            if self.parent_calc_pausable:
+                self.parent_calc._resume_calc()
             atoms.set_calculator(self.parent_calc)
             (new_data,) = convert_to_singlepoint([atoms])
+            if self.parent_calc_pausable:
+                self.parent_calc._pause_calc()
             end = time.time()
+
             print(
                 "Time to call parent (call #"
                 + str(self.parent_calls)
@@ -512,33 +507,19 @@ class OnlineLearner(Calculator):
                 and (self.train_on_recent_points is not None)
                 and (len(self.parent_dataset) > self.train_on_recent_points)
             ):
-                if self.parent_calc_pausable:
-                    with self.parent_calc.pause():
-                        self.ml_potential.train(
-                            self.parent_dataset[-self.train_on_recent_points :]
-                        )
-                else:
-                    self.ml_potential.train(
-                            self.parent_dataset[-self.train_on_recent_points :]
-                        )
+                self.ml_potential.train(
+                    self.parent_dataset[-self.train_on_recent_points :]
+                )
             # otherwise, if partial fitting, partial fit if not training for the first time
             elif (
                 self.trained_at_least_once
                 and (self.train_on_recent_points is None)
                 and (self.partial_fit)
             ):
-                if self.parent_calc_pausable:
-                    with self.parent_calc.pause():
-                        self.ml_potential.train(self.parent_dataset, partial_dataset)
-                else:
-                    self.ml_potential.train(self.parent_dataset, partial_dataset)
+                self.ml_potential.train(self.parent_dataset, partial_dataset)
             # otherwise just train as normal
             else:
-                if self.parent_calc_pausable:
-                    with self.parent_calc.pause():
-                        self.ml_potential.train(self.parent_dataset)
-                else:
-                    self.ml_potential.train(self.parent_dataset)
+                self.ml_potential.train(self.parent_dataset)
                 self.trained_at_least_once = True
 
         # if the data requirement has just been met: train for the first time on only the initial points to keep
@@ -548,11 +529,8 @@ class OnlineLearner(Calculator):
             ]
             self.parent_dataset = new_parent_dataset
             self.num_initial_points = len(self.parent_dataset)
-            if self.parent_calc_pausable:
-                with self.parent_calc.pause():
-                    self.ml_potential.train(self.parent_dataset)
-            else:
-                self.ml_potential.train(self.parent_dataset)
+
+            self.ml_potential.train(self.parent_dataset)
             self.trained_at_least_once = True
         end = time.time()
         self.info["training_time"] = end - start
@@ -575,11 +553,7 @@ class OnlineLearner(Calculator):
         """
         atoms_copy = atoms.copy()
         atoms_copy.set_calculator(self.ml_potential)
-        if self.parent_calc_pausable:
-            with self.parent_calc.pause():
-                (atoms_ML,) = convert_to_singlepoint([atoms_copy])
-        else:
-            (atoms_ML,) = convert_to_singlepoint([atoms_copy])
+        (atoms_ML,) = convert_to_singlepoint([atoms_copy])
         return atoms_ML
 
     def add_to_dataset(self, new_data):
