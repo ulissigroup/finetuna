@@ -62,8 +62,12 @@ class OnlineLearner(Calculator):
         self.fmax_verify_threshold = self.learner_params.get(
             "fmax_verify_threshold", np.nan
         )
-        self.stat_uncertain_tol = self.learner_params["stat_uncertain_tol"]
-        self.dyn_uncertain_tol = self.learner_params["dyn_uncertain_tol"]
+        self.stat_uncertain_tol = self.learner_params.get(
+            "stat_uncertain_tol", 1000000000
+        )
+        self.dyn_uncertain_tol = self.learner_params.get(
+            "dyn_uncertain_tol", 1000000000
+        )
         self.dyn_avg_steps = self.learner_params.get("dyn_avg_steps", None)
 
         self.suppress_warnings = self.learner_params.get("suppress_warnings", False)
