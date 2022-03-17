@@ -4,6 +4,9 @@ import random
 from al_mlp.utils import write_to_db, compute_with_calc
 import numpy as np
 
+__author__ = "Joseph Musielewicz"
+__email__ = "al.mlp.package@gmail.com"
+
 
 class RestrictedUncertaintyLearner(UncertaintyLearner):
     """

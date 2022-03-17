@@ -6,11 +6,11 @@ setup(
     version="0.1",
     description="Active Learning for Machine Learning Potentials",
     url="https://github.com/ulissigroup/al_mlp",
-    author="Rui Qi Chen, Matt Adams",
-    author_email="ruiqic@andrew.cmu.edu, madams2@andrew.cmu.edu",
+    author="Joseph Musielewicz, Lory Wang",
+    author_email="al.mlp.package@gmail.com",
     packages=find_packages(),
     include_package_data=True,
     install_requires=["ase"],
-    long_description="""Module for performing delta active learning \
+    long_description="""Module for performing active learning \
                           with machine learning potentials.""",
 )

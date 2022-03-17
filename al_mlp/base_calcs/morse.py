@@ -66,9 +66,9 @@ class MultiMorse(Calculator):
                 re = (re_1 + re_n) / 2
             elif self.combo == "yang":
                 D = (2 * D_1 * D_n) / (D_1 + D_n)
-                sig = (sig_1 * sig_n) * (sig_1 + sig_n) / (sig_1 ** 2 + sig_n ** 2)
-                re = (re_1 * re_n) * (re_1 + re_n) / (re_1 ** 2 + re_n ** 2)
-            r = np.sqrt((d ** 2).sum(1))
+                sig = (sig_1 * sig_n) * (sig_1 + sig_n) / (sig_1**2 + sig_n**2)
+                re = (re_1 * re_n) * (re_1 + re_n) / (re_1**2 + re_n**2)
+            r = np.sqrt((d**2).sum(1))
             r_star = r / sig
             re_star = re / sig
             C = np.log(2) / (re_star - 1)

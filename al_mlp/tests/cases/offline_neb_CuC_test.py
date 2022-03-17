@@ -58,7 +58,7 @@ class offline_NEB(unittest.TestCase):
         neb_AL_image = self.neb_AL_image.copy()
         neb_AL_image.set_calculator(EMT())
         forces = neb_AL_image.get_forces()
-        fmax = np.sqrt((forces ** 2).sum(axis=1).max())
+        fmax = np.sqrt((forces**2).sum(axis=1).max())
         print(neb_AL_image.get_forces())
         print(fmax)
         assert fmax <= 0.2

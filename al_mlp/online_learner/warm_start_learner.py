@@ -3,6 +3,9 @@ from al_mlp.utils import convert_to_singlepoint
 import numpy as np
 from al_mlp.logger import Logger
 
+__author__ = "Joseph Musielewicz"
+__email__ = "al.mlp.package@gmail.com"
+
 
 class WarmStartLearner(OnlineLearner):
     def __init__(
@@ -49,7 +52,7 @@ class WarmStartLearner(OnlineLearner):
             energy = atoms_ML.get_potential_energy(apply_constraint=False)
             forces = atoms_ML.get_forces(apply_constraint=False)
             constrained_forces = atoms_ML.get_forces()
-            fmax = np.sqrt((constrained_forces ** 2).sum(axis=1).max())
+            fmax = np.sqrt((constrained_forces**2).sum(axis=1).max())
             self.info["check"] = False
             self.info["ml_energy"] = energy
             self.info["ml_forces"] = str(forces)

@@ -10,7 +10,7 @@ import copy
 import time
 import torch
 from ocpmodels.trainers.forces_trainer import ForcesTrainer
-from ocpmodels.datasets.trajectory_lmdb import data_list_collater
+from ocpmodels.datasets.lmdb_dataset import data_list_collater
 from ocpmodels.common.utils import setup_imports, setup_logging
 from ocpmodels.common import distutils
 import logging
@@ -150,14 +150,8 @@ class FinetunerCalc(MLPCalc):
                 if block_name in name:
                     param.requires_grad = True
 
-        self.trainer.load_optimizer()
-        self.trainer.load_extras()
-
         self.ml_model = True
         self.trainer.train_dataset = GenericDB()
-
-        self.trainer.step = 0
-        self.trainer.epoch = 0
 
     def calculate_ml(self, atoms, properties, system_changes) -> tuple:
         """
@@ -264,6 +258,11 @@ class FinetunerCalc(MLPCalc):
         """
         Overwritable if doing ensembling of ocp models
         """
+        self.trainer.step = 0
+        self.trainer.epoch = 0
+        self.trainer.load_optimizer()
+        self.trainer.load_extras()
+
         if (self.validation_split is not None) and (
             len(dataset) > len(self.validation_split)
         ):
@@ -396,6 +395,8 @@ class Trainer(ForcesTrainer):
             normalizer=config["normalizer"],
             slurm=config.get("slurm", {}),
             local_rank=config.get("local_rank", 0),
+            logger=config.get("logger", None),
+            print_every=config.get("print_every", 1),
             is_debug=config.get("is_debug", True),
             cpu=config.get("cpu", True),
         )
@@ -546,13 +547,51 @@ class Trainer(ForcesTrainer):
                         else:
                             self.run_relaxations()
 
+                if self.config["optim"].get("print_loss_and_lr", False):
+                    print(
+                        "epoch: "
+                        + str(self.epoch)
+                        + ", \tstep: "
+                        + str(self.step)
+                        + ", \tloss: "
+                        + str(loss.detach().item())
+                        + ", \tlr: "
+                        + str(self.scheduler.get_lr())
+                        + ", \tval: "
+                        + str(val_metrics["loss"]["total"])
+                    ) if self.step % eval_every == 0 and self.val_loader is not None else print(
+                        "epoch: "
+                        + str(self.epoch)
+                        + ", \tstep: "
+                        + str(self.step)
+                        + ", \tloss: "
+                        + str(loss.detach().item())
+                        + ", \tlr: "
+                        + str(self.scheduler.get_lr())
+                    )
+
                 if self.scheduler.scheduler_type == "ReduceLROnPlateau":
-                    if self.step % eval_every == 0 and self.val_loader is not None:
+                    if (
+                        self.step % eval_every == 0
+                        and self.config["optim"].get("scheduler_loss", None) == "train"
+                    ):
+                        self.scheduler.step(
+                            metrics=loss.detach().item(),
+                        )
+                    elif self.step % eval_every == 0 and self.val_loader is not None:
                         self.scheduler.step(
                             metrics=val_metrics[primary_metric]["metric"],
                         )
                 else:
                     self.scheduler.step()
+
+                break_below_lr = (
+                    self.config["optim"].get("break_below_lr", None) is not None
+                ) and (self.scheduler.get_lr() < self.config["optim"]["break_below_lr"])
+                if break_below_lr:
+                    break
+            if break_below_lr:
+                break
 
             torch.cuda.empty_cache()
 

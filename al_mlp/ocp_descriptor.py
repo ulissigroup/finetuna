@@ -1,6 +1,6 @@
 from ocpmodels.models.gemnet.utils import inner_product_normalized
 from ocpmodels.common.relaxation.ase_utils import OCPCalculator
-from ocpmodels.datasets.trajectory_lmdb import data_list_collater
+from ocpmodels.datasets.lmdb_dataset import data_list_collater
 
 
 class OCPDescriptor:

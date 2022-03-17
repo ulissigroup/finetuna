@@ -5,6 +5,9 @@ import ase
 import random
 from ase.io.trajectory import TrajectoryWriter
 
+__author__ = "Joseph Musielewicz"
+__email__ = "al.mlp.package@gmail.com"
+
 
 class FmaxLearner(OfflineActiveLearner):
     """

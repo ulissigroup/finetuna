@@ -3,6 +3,9 @@ import torch
 from al_mlp.utils import compute_with_calc
 import random
 
+__author__ = "Joseph Musielewicz"
+__email__ = "al.mlp.package@gmail.com"
+
 
 # from al_mlp.utils import write_to_db
 from al_mlp.offline_learner.offline_learner import OfflineActiveLearner

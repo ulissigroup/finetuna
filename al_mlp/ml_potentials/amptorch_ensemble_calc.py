@@ -73,8 +73,8 @@ class AmptorchEnsembleCalc(MLPCalc):
 
         self.results["energy"] = energy_pred
         self.results["forces"] = force_pred
-        atoms.info["energy_stds"] = energy_var ** 0.2
-        atoms.info["max_force_stds"] = max_forces_var ** 0.5
+        atoms.info["energy_stds"] = energy_var**0.2
+        atoms.info["max_force_stds"] = max_forces_var**0.5
 
         # self.results["max_force_stds"] = np.array(max_forces_var) ** 0.5
         # self.results["energy_stds"] = energy_var ** 0.2

@@ -6,9 +6,6 @@ from al_mlp.utils import compute_with_calc
 from copy import deepcopy
 import numpy as np
 
-__author__ = "Muhammed Shuaibi"
-__email__ = "mshuaibi@andrew.cmu.edu"
-
 
 class InterfaceLearner(OnlineLearner):
     def __init__(
