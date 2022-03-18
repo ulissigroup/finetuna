@@ -8,6 +8,7 @@ import time
 import math
 import ase.db
 import queue
+import os
 
 __author__ = "Joseph Musielewicz"
 __email__ = "al.mlp.package@gmail.com"
@@ -40,6 +41,9 @@ class OnlineLearner(Calculator):
         if mongo_db is None:
             mongo_db = {"online_learner": None}
         self.init_logger(mongo_db, optional_config)
+
+        if self.cwd is not None:
+            os.chdir(self.cwd)
 
         self.parent_calls = 0
         self.curr_step = 0
@@ -110,6 +114,8 @@ class OnlineLearner(Calculator):
         self.store_complete_dataset = self.learner_params.get(
             "store_complete_dataset", False
         )
+
+        self.cwd = self.learner_params.get("cwd", None)
 
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)

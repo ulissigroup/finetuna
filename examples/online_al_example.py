@@ -85,6 +85,7 @@ if __name__ == "__main__":
             "fmax_verify_threshold": 0.03,
             "tolerance_selection": "min",
             "partial_fit": True,
+            "cwd": None,  # change this to a string containing the path to a working directory if needed
         },
         parent_dataset=[],
         ml_potential=ml_potential,
