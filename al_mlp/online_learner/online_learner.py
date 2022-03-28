@@ -33,7 +33,7 @@ class OnlineLearner(Calculator):
         self.init_learner_params()
         self.parent_dataset = []
         self.complete_dataset = []
-        self.queried_db = ase.db.connect("oal_queried_images.db", append=False)
+        self.queried_db = ase.db.connect(self.db_name, append=False)
         self.trained_at_least_once = False
         self.check_final_point = False
         self.uncertainty_history = []
@@ -41,9 +41,6 @@ class OnlineLearner(Calculator):
         if mongo_db is None:
             mongo_db = {"online_learner": None}
         self.init_logger(mongo_db, optional_config)
-
-        if self.cwd is not None:
-            os.chdir(self.cwd)
 
         self.parent_calls = 0
         self.curr_step = 0
@@ -115,7 +112,7 @@ class OnlineLearner(Calculator):
             "store_complete_dataset", False
         )
 
-        self.cwd = self.learner_params.get("cwd", None)
+        self.db_name = self.learner_params.get("asedb_name", "oal_queried_images.db")
 
         self.wandb_init = self.learner_params.get("wandb_init", {})
         self.wandb_log = self.wandb_init.get("wandb_log", False)
