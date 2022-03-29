@@ -1,0 +1,65 @@
+finetuner:
+- optim:
+    batch_size: 10
+    checkpoint_every: 100000
+    eval_every: 1
+    factor: 0.7
+    lr_initial: 0.0003
+    max_epochs: 200
+    num_workers: 0
+    optimizer_params:
+      weight_decay: 0
+    patience: 3
+    scheduler_loss: train
+    weight_decay: 0
+  task:
+    primary_metric: loss
+  tuner:
+    num_threads: 8
+    unfreeze_blocks:
+    - out_blocks.3.seq_forces
+    - out_blocks.3.scale_rbf_F
+    - out_blocks.3.dense_rbf_F
+    - out_blocks.3.out_forces
+learner:
+  dyn_avg_steps: 15
+  dyn_uncertain_tol: 1000000
+  fmax_verify_threshold: 0.03
+  initial_points_to_keep: []
+  logger:
+    pca_quantify: true
+    uncertainty_quantify: false
+  num_initial_points: 0
+  partial_fit: true
+  query_every_n_steps: 100
+  stat_uncertain_tol: 1000000
+  tolerance_selection: min
+  # valset_system_id: '1498818'
+  # wandb_init:
+  #   entity: ulissi-group
+  #   group: group
+  #   name: name
+  #   notes: notes
+  #   project: project
+  #   wandb_log: true
+# optional_config:
+#   links:
+#     # images_path: /home/jovyan/joe-job-vol/6_true_30_randoms/0_ft_unfrz_diff_blks/0_22_1g_partialfit_lr3e4_200ep/online1498818_0_22_1g_partialfit_lr3e4_200ep_0/pretrain_images.db
+#     # learner_class: online
+#     # ml_potential: ft_en
+#     # name: online1498818_0_22_1g_partialfit_lr3e4_200ep
+#     # parent_calc: vaspinteractive
+#     traj: /home/jovyan/shared-scratch/joe/30_randoms/random1498818.traj
+ocp:
+  checkpoint_path_list:
+  - /home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_s2re_bagging_results/gem_homo_run0.pt
+  model_class_list:
+  - gemnet
+  model_path_list:
+  - /home/jovyan/almlp_ocp/gemnet-dT.yml
+relaxation:
+  fmax: 0.03
+  max_parent_calls: null
+  maxstep: 0.2
+  replay_method: parent_only
+  steps: null
