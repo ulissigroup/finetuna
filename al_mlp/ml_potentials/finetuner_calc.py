@@ -58,7 +58,7 @@ class FinetunerCalc(MLPCalc):
         mlp_params: dict = {},
     ):
 
-        if model_name not in ["gemnet", "spinconv", "dimenetpp"]:
+        if model_name not in ["gemnet", "spinconv", "dimenetpp", "adapter_gemnet_t"]:
             raise ValueError("Invalid model name provided")
 
         if "optimizer" in mlp_params.get("optim", {}):
@@ -112,6 +112,14 @@ class FinetunerCalc(MLPCalc):
             self.unfreeze_blocks = ["force_output_block"]
         elif self.model_name == "dimenetpp":
             self.unfreeze_blocks = ["output_blocks.3"]
+        elif self.model_name == "adapter_gemnet_t":
+            self.unfreeze_blocks = [
+                "out_blocks.3.seq_forces",
+                "out_blocks.3.scale_rbf_F",
+                "out_blocks.3.dense_rbf_F",
+                "out_blocks.3.out_forces",
+                "project_f",
+            ]
         if "unfreeze_blocks" in self.mlp_params["tuner"]:
             if isinstance(self.mlp_params["tuner"]["unfreeze_blocks"], list):
                 self.unfreeze_blocks = self.mlp_params["tuner"]["unfreeze_blocks"]
@@ -120,9 +128,15 @@ class FinetunerCalc(MLPCalc):
             else:
                 raise ValueError("invalid unfreeze_blocks parameter given")
 
-        # init trainer
+        # make a copy of the config dict so we don't edit the original
         config_dict = copy.deepcopy(self.mlp_params)
 
+        # change the path to scale file to start at a folder called "configs"
+        config_dict["model"]["scale_file"] = os.path.join(
+            self.model_path.split("configs")[0], config_dict["model"]["scale_file"]
+        )
+
+        # init trainer
         sys.stdout = open(os.devnull, "w")
         self.trainer = Trainer(
             config_yml=config_dict,
@@ -401,6 +415,11 @@ class Trainer(ForcesTrainer):
             cpu=True,
         )
 
+        # if loading a model with added blocks for training from the checkpoint, set strict loading to False
+        if self.config["model"] in ["adapter_gemnet_t"]:
+            self.model.load_state_dict.__func__.__defaults__ = (False,)
+
+        # load checkpoint
         if checkpoint is not None:
             try:
                 self.load_checkpoint(checkpoint)
