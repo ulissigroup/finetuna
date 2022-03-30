@@ -18,7 +18,6 @@ al_mlp.egg-info
 *.out
 *.pickle
 *.png
-*.json
 *.h5
 *.dirlock
 *.lock
