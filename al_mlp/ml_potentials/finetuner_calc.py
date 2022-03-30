@@ -15,7 +15,7 @@ from ocpmodels.common.utils import setup_imports, setup_logging
 from ocpmodels.common import distutils
 import logging
 import numpy as np
-from ocpmodels.modules.scheduler import LRScheduler
+from al_mlp.ml_potentials.ocp_models.adapter_gemnet_t import adapter_gemnet_t
 
 
 class FinetunerCalc(MLPCalc):
@@ -115,9 +115,9 @@ class FinetunerCalc(MLPCalc):
         elif self.model_name == "adapter_gemnet_t":
             self.unfreeze_blocks = [
                 "out_blocks.3.seq_forces",
-                "out_blocks.3.scale_rbf_F",
+                # "out_blocks.3.scale_rbf_F",
                 "out_blocks.3.dense_rbf_F",
-                "out_blocks.3.out_forces",
+                # "out_blocks.3.out_forces",
                 "project_f",
             ]
         if "unfreeze_blocks" in self.mlp_params["tuner"]:
