@@ -30,6 +30,7 @@ model:
   output_init: HeOrthogonal
   activation: silu
   scale_file: configs/gemnet-dT.json
+  adapter_dim: 32
 
   regress_forces: True
   direct_forces: True
