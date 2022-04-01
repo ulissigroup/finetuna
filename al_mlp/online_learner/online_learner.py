@@ -426,7 +426,10 @@ class OnlineLearner(Calculator):
         fmax = np.sqrt((forces**2).sum(axis=1).max())
 
         verify = False
-        if fmax <= self.fmax_verify_threshold:
+        if (
+            fmax <= self.fmax_verify_threshold
+            or atoms.info["parent_calculation_required"]
+        ):
             verify = True
             print("Force below threshold: check with parent")
             self.set_query_reason("threshold")
