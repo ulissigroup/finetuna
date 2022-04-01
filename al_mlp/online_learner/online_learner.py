@@ -428,7 +428,7 @@ class OnlineLearner(Calculator):
         verify = False
         if (
             fmax <= self.fmax_verify_threshold
-            or atoms.info["parent_calculation_required"]
+            or atoms.info.get("parent_calculation_required", False)
         ):
             verify = True
             print("Force below threshold: check with parent")
