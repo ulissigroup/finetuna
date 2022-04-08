@@ -3,12 +3,12 @@ from ase.optimize.bfgs import BFGS
 import numpy as np
 import os
 from ase.calculators.vasp import Vasp
-from al_mlp.atomistic_methods import Relaxation
-from al_mlp.utils import calculate_surface_k_points
-from al_mlp.ml_potentials.flare_pp_calc import FlarePPCalc
+from finetuna.atomistic_methods import Relaxation
+from finetuna.utils import calculate_surface_k_points
+from finetuna.ml_potentials.flare_pp_calc import FlarePPCalc
 from pymongo import MongoClient
-from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
-from al_mlp.base_calcs.ocp_model import OCPModel
+from finetuna.offline_learner.offline_learner import OfflineActiveLearner
+from finetuna.base_calcs.ocp_model import OCPModel
 
 # from vasp_interactive.vasp_interactive import VaspInteractive
 

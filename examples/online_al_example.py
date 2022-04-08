@@ -1,10 +1,10 @@
-from al_mlp.atomistic_methods import Relaxation
-from al_mlp.online_learner.online_learner import OnlineLearner
+from finetuna.atomistic_methods import Relaxation
+from finetuna.online_learner.online_learner import OnlineLearner
 from vasp_interactive import VaspInteractive
 from ase.optimize import BFGS
-from al_mlp.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
+from finetuna.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
 from ase.io import Trajectory
-from al_mlp.utils import calculate_surface_k_points
+from finetuna.utils import calculate_surface_k_points
 
 if __name__ == "__main__":
 

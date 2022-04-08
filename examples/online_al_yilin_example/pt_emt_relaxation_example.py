@@ -1,5 +1,5 @@
 import ase
-from al_mlp.atomistic_methods import Relaxation
+from finetuna.atomistic_methods import Relaxation
 from ase.optimize import BFGS
 from ase.calculators.emt import EMT
 

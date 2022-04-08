@@ -12,12 +12,12 @@ import torch
 import ase
 
 from ase.db import connect
-from al_mlp.offline_learner.ensemble_learner import EnsembleLearner
-from al_mlp.base_calcs.morse import MultiMorse
-from al_mlp.atomistic_methods import Relaxation
+from finetuna.offline_learner.ensemble_learner import EnsembleLearner
+from finetuna.base_calcs.morse import MultiMorse
+from finetuna.atomistic_methods import Relaxation
 
 from amptorch.trainer import AtomsTrainer
-from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
+from finetuna.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
 
 
 parent_calc = EMT()

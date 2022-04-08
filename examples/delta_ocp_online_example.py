@@ -1,10 +1,10 @@
 from ocpmodels.models import dimenet_plus_plus
-from al_mlp.utils import compute_with_calc
-from al_mlp.calcs import DeltaCalc
-from al_mlp.base_calcs.ocp_model import OCPModel
-from al_mlp.atomistic_methods import Relaxation
-from al_mlp.online_learner.online_learner import OnlineLearner
-from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
+from finetuna.utils import compute_with_calc
+from finetuna.calcs import DeltaCalc
+from finetuna.base_calcs.ocp_model import OCPModel
+from finetuna.atomistic_methods import Relaxation
+from finetuna.online_learner.online_learner import OnlineLearner
+from finetuna.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
 from amptorch.trainer import AtomsTrainer
 from ase.calculators.emt import EMT
 import numpy as np
@@ -17,7 +17,7 @@ import copy
 # Set up ensemble parallelization
 if __name__ == "__main__":
     # import make_ensemble and dask for setting parallelization
-    from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
+    from finetuna.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
     from dask.distributed import Client, LocalCluster
 
     cluster = LocalCluster(processes=True, threads_per_worker=1)

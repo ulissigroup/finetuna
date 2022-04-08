@@ -3,13 +3,13 @@ from ase.optimize.bfgs import BFGS
 import numpy as np
 import os
 from ase.calculators.vasp import Vasp
-from al_mlp.atomistic_methods import Relaxation
-from al_mlp.utils import calculate_surface_k_points
-from al_mlp.ml_potentials.flare_pp_calc import FlarePPCalc
+from finetuna.atomistic_methods import Relaxation
+from finetuna.utils import calculate_surface_k_points
+from finetuna.ml_potentials.flare_pp_calc import FlarePPCalc
 from pymongo import MongoClient
-from al_mlp.online_learner.online_learner import OnlineLearner
+from finetuna.online_learner.online_learner import OnlineLearner
 
-# from al_mlp.base_calcs.ocp_model import OCPModel
+# from finetuna.base_calcs.ocp_model import OCPModel
 # from vasp_interactive.vasp_interactive import VaspInteractive
 
 filename = "/home/jovyan/shared-scratch/joe/metal_with_c2_val/C2H1O2/random1608175.traj"

@@ -1,4 +1,4 @@
-from al_mlp.offline_learner.fmax_learner import FmaxLearner
+from finetuna.offline_learner.fmax_learner import FmaxLearner
 from ase.eos import EquationOfState
 from ase.build import bulk
 from ase.build import fcc100, add_adsorbate, molecule
@@ -13,8 +13,8 @@ import torch
 import ase
 
 from ase.db import connect
-from al_mlp.base_calcs.morse import MultiMorse
-from al_mlp.atomistic_methods import Relaxation
+from finetuna.base_calcs.morse import MultiMorse
+from finetuna.atomistic_methods import Relaxation
 
 from amptorch.trainer import AtomsTrainer
 

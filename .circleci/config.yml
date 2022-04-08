@@ -28,7 +28,7 @@ jobs:
       - run:
           name: Create environment
           command: |
-            if [ ! -d "/home/circleci/miniconda/envs/al_mlp" ]; then
+            if [ ! -d "/home/circleci/miniconda/envs/finetuna" ]; then
               source /home/circleci/miniconda/etc/profile.d/conda.sh
               conda activate base
               conda install -c conda-forge conda-merge
@@ -45,6 +45,6 @@ jobs:
           name: Run black
           command: |
             source /home/circleci/miniconda/etc/profile.d/conda.sh
-            conda activate al_mlp
+            conda activate finetuna
             pip install black
             black . --check
