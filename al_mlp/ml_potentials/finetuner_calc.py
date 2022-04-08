@@ -400,6 +400,12 @@ class Trainer(ForcesTrainer):
             del config["dataset"]["src"]
             config["normalizer"] = config["dataset"]
 
+        gpu_env = os.environ.get("AL_MLP_GPU", "False")
+        if gpu_env == "True":
+            cpu_boolean = False
+        else:
+            cpu_boolean = True
+
         super().__init__(
             task=config["task"],
             model=config["model"],
@@ -412,7 +418,7 @@ class Trainer(ForcesTrainer):
             logger=config.get("logger", None),
             print_every=config.get("print_every", 1),
             is_debug=config.get("is_debug", True),
-            cpu=True,
+            cpu=cpu_boolean,
         )
 
         # if loading a model with added blocks for training from the checkpoint, set strict loading to False
