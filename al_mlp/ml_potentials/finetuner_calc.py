@@ -1,11 +1,11 @@
 from ase.calculators.calculator import all_changes
 from ase.atoms import Atoms
-from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
+from finetuna.ml_potentials.ml_potential_calc import MLPCalc
 from torch.utils.data import Dataset
 from ocpmodels.preprocessing import AtomsToGraphs
 import sys, os
 import yaml
-from al_mlp.job_creator import merge_dict
+from finetuna.job_creator import merge_dict
 import copy
 import time
 import torch
@@ -15,7 +15,7 @@ from ocpmodels.common.utils import setup_imports, setup_logging
 from ocpmodels.common import distutils
 import logging
 import numpy as np
-from al_mlp.ml_potentials.ocp_models.adapter_gemnet_t import adapter_gemnet_t
+from finetuna.ml_potentials.ocp_models.adapter_gemnet_t import adapter_gemnet_t
 
 
 class FinetunerCalc(MLPCalc):

@@ -1,5 +1,5 @@
-from al_mlp.ml_potentials.flare_calc import FlareCalc
-from al_mlp.ocp_descriptor import OCPDescriptor
+from finetuna.ml_potentials.flare_calc import FlareCalc
+from finetuna.ocp_descriptor import OCPDescriptor
 
 
 class FlareOCPDescriptorCalc(FlareCalc):

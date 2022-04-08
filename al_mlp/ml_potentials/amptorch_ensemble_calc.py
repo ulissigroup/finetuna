@@ -1,9 +1,9 @@
 import numpy as np
 import random
 import copy
-from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
+from finetuna.ml_potentials.ml_potential_calc import MLPCalc
 from amptorch.trainer import AtomsTrainer
-from al_mlp.ml_potentials.bootstrap import non_bootstrap_ensemble
+from finetuna.ml_potentials.bootstrap import non_bootstrap_ensemble
 import torch
 import uuid
 

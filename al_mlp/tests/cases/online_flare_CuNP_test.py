@@ -1,8 +1,8 @@
 import unittest
 
-from al_mlp.tests.setup.online_flare_relaxation_setup import run_online_al
-from al_mlp.atomistic_methods import Relaxation
-from al_mlp.calcs import CounterCalc
+from finetuna.tests.setup.online_flare_relaxation_setup import run_online_al
+from finetuna.atomistic_methods import Relaxation
+from finetuna.calcs import CounterCalc
 from ase.calculators.emt import EMT
 import numpy as np
 from ase.cluster.icosahedron import Icosahedron

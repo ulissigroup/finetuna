@@ -1,8 +1,8 @@
 import torch
-from al_mlp.offline_learner.neb_learner import NEBLearner
+from finetuna.offline_learner.neb_learner import NEBLearner
 import numpy as np
-from al_mlp.atomistic_methods import NEBcalc
-from al_mlp.base_calcs.morse import MultiMorse
+from finetuna.atomistic_methods import NEBcalc
+from finetuna.base_calcs.morse import MultiMorse
 from amptorch.trainer import AtomsTrainer
 from torch.nn import Tanh
 

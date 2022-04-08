@@ -2,10 +2,10 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="al_mlp",
+    name="finetuna",
     version="0.1",
     description="Active Learning for Machine Learning Potentials",
-    url="https://github.com/ulissigroup/al_mlp",
+    url="https://github.com/ulissigroup/finetuna",
     author="Joseph Musielewicz, Lory Wang",
     author_email="al.mlp.package@gmail.com",
     packages=find_packages(),

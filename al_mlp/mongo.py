@@ -24,7 +24,7 @@ from ase.constraints import dict2constraint
 import subprocess
 from uuid import UUID, uuid4
 
-from al_mlp.atomistic_methods import Relaxation
+from finetuna.atomistic_methods import Relaxation
 
 
 def make_doc_from_atoms(atoms, **kwargs):
@@ -272,7 +272,7 @@ class MongoWrapper:
             try:
                 self.commit_id = (
                     subprocess.check_output(
-                        ["git", "describe", "--always"], cwd="/home/al_mlp"
+                        ["git", "describe", "--always"], cwd="/home/finetuna"
                     )
                     .strip()
                     .decode()

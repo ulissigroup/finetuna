@@ -9,9 +9,9 @@ from ase.calculators.vasp.vasp import Vasp
 from ase.io.trajectory import Trajectory
 from ase.optimize import BFGS
 from vasp_interactive import VaspInteractive
-from al_mlp.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
-from al_mlp.online_learner.online_learner import OnlineLearner
-from al_mlp.atomistic_methods import parent_only_replay
+from finetuna.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
+from finetuna.online_learner.online_learner import OnlineLearner
+from finetuna.atomistic_methods import parent_only_replay
 import argparse
 
 

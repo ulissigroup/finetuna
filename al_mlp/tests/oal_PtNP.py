@@ -1,6 +1,6 @@
 import ase.io
-from al_mlp.tests.test_setup.online_relaxation_test import run_oal
-from al_mlp.atomistic_methods import Relaxation
+from finetuna.tests.test_setup.online_relaxation_test import run_oal
+from finetuna.atomistic_methods import Relaxation
 from ase.calculators.emt import EMT
 from ase.optimize import BFGS
 import numpy as np

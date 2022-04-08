@@ -1,4 +1,4 @@
-from al_mlp.ml_potentials.ocpd_calc import OCPDCalc
+from finetuna.ml_potentials.ocpd_calc import OCPDCalc
 import torch
 from torch import nn
 import torch.nn.functional as F

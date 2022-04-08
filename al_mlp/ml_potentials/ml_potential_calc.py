@@ -5,7 +5,7 @@ from ase.atoms import Atoms
 class MLPCalc(Calculator):
     """
     Machine Learning Potential Calculator.
-    This class serves as a parent class for calculators in al_mlp
+    This class serves as a parent class for calculators in finetuna
     Guarantees all calculators will implement train()
     Provides calculate method with boilerplate lines to be called by children calculate methods
     Also guarantees certain universal values will be created during initialization (self.mlp_params)

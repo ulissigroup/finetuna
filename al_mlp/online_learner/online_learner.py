@@ -2,8 +2,8 @@ from logging import warn
 import numpy as np
 from ase.calculators.calculator import Calculator
 from ase.calculators.singlepoint import SinglePointCalculator
-from al_mlp.logger import Logger
-from al_mlp.utils import convert_to_singlepoint, convert_to_top_k_forces
+from finetuna.logger import Logger
+from finetuna.utils import convert_to_singlepoint, convert_to_top_k_forces
 import time
 import math
 import ase.db

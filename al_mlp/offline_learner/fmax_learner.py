@@ -1,5 +1,5 @@
-from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
-from al_mlp.utils import compute_with_calc, write_to_db
+from finetuna.offline_learner.offline_learner import OfflineActiveLearner
+from finetuna.utils import compute_with_calc, write_to_db
 import numpy as np
 import ase
 import random

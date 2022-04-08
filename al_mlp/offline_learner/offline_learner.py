@@ -2,13 +2,13 @@ import random
 from ase.io.trajectory import Trajectory
 
 from ase.optimize.bfgs import BFGS
-from al_mlp.atomistic_methods import Relaxation
-from al_mlp.base_calcs.dummy import Dummy
-from al_mlp.calcs import DeltaCalc
-from al_mlp.utils import compute_with_calc
+from finetuna.atomistic_methods import Relaxation
+from finetuna.base_calcs.dummy import Dummy
+from finetuna.calcs import DeltaCalc
+from finetuna.utils import compute_with_calc
 import numpy as np
 from ase.calculators.calculator import Calculator
-from al_mlp.logger import Logger
+from finetuna.logger import Logger
 
 __author__ = "Joseph Musielewicz"
 __email__ = "al.mlp.package@gmail.com"

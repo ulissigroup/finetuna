@@ -1,4 +1,4 @@
-from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
+from finetuna.offline_learner.offline_learner import OfflineActiveLearner
 
 
 class SingleIterationLearner(OfflineActiveLearner):
@@ -46,9 +46,9 @@ class SingleIterationLearner(OfflineActiveLearner):
         """
         global compute_with_calc
         if self.learner_params["use_dask"]:
-            from al_mlp.utils_dask import compute_with_calc
+            from finetuna.utils_dask import compute_with_calc
         else:
-            from al_mlp.utils import compute_with_calc
+            from finetuna.utils import compute_with_calc
 
         self.terminate = False
         self.iterations = 0

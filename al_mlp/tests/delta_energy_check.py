@@ -1,5 +1,5 @@
 # Tests if delta calculator is working properly with simple assertion function
-from al_mlp.calcs import DeltaCalc
+from finetuna.calcs import DeltaCalc
 from ase.calculators.emt import EMT
 import numpy as np
 import copy
@@ -7,7 +7,7 @@ from ase.build import fcc100, add_adsorbate, molecule
 from ase.constraints import FixAtoms
 from ase.build import bulk
 from ase.utils.eos import EquationOfState
-from al_mlp.base_calcs.morse import MultiMorse
+from finetuna.base_calcs.morse import MultiMorse
 
 parent_calculator = EMT()
 energies = []

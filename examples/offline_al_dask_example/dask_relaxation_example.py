@@ -13,9 +13,9 @@ import ase
 
 from ase.db import connect
 
-from al_mlp.offline_active_learner import OfflineActiveLearner
-from al_mlp.base_calcs.morse import MultiMorse
-from al_mlp.atomistic_methods import Relaxation
+from finetuna.offline_active_learner import OfflineActiveLearner
+from finetuna.base_calcs.morse import MultiMorse
+from finetuna.atomistic_methods import Relaxation
 
 from amptorch.trainer import AtomsTrainer
 
@@ -23,15 +23,15 @@ from dask_kubernetes import KubeCluster
 from dask.distributed import Client
 
 cluster = KubeCluster.from_yaml(
-    "/home/jovyan/al_mlp/examples/offline_al_dask_example/dask-worker-cpu-spec.yml"
+    "/home/jovyan/finetuna/examples/offline_al_dask_example/dask-worker-cpu-spec.yml"
 )
 client = Client(cluster)
 cluster.adapt(minimum=0, maximum=4)
 
 # only necessary to upload egg file to
-# workers if al_mlp is not in the environment but
+# workers if finetuna is not in the environment but
 
-files_list = ["al_mlp-0.1-py3.6.egg"]
+files_list = ["finetuna-0.1-py3.6.egg"]
 
 # for i in range(len(files_list)):
 #     fname = files_list[i]

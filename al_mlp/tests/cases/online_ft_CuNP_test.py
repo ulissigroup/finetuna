@@ -1,5 +1,5 @@
 import unittest
-from al_mlp.tests.cases.base_case_online_CuNP import BaseOnlineCuNP
+from finetuna.tests.cases.base_case_online_CuNP import BaseOnlineCuNP
 
 
 class online_ft_CuNP(BaseOnlineCuNP, unittest.TestCase):

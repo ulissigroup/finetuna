@@ -2,17 +2,17 @@
 from ase.atoms import Atoms
 from ase.io import Trajectory
 from numpy import ndarray
-from al_mlp.mongo import MongoWrapper
+from finetuna.mongo import MongoWrapper
 import ase.db
 from ase.calculators.calculator import Calculator
 import random
 import wandb
-from al_mlp.utils import compute_with_calc, copy_images
+from finetuna.utils import compute_with_calc, copy_images
 import math
 import numpy as np
 from uncertainty_toolbox.metrics import get_all_metrics
 
-from al_mlp.pca import TrajPCA
+from finetuna.pca import TrajPCA
 
 
 class Logger:

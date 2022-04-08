@@ -1,8 +1,8 @@
 from ase.optimize.gpmin.gpmin import GPMin
 import numpy as np
 from ase.optimize.gpmin.prior import CalculatorPrior
-from al_mlp.ml_potentials.finetuner_calc import FinetunerCalc
-from al_mlp.utils import convert_to_singlepoint
+from finetuna.ml_potentials.finetuner_calc import FinetunerCalc
+from finetuna.utils import convert_to_singlepoint
 from scipy.optimize import minimize
 import wandb
 

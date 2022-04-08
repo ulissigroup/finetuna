@@ -1,12 +1,12 @@
-from al_mlp.tests.setup.offline_relaxation_setup import run_offline_al
-from al_mlp.atomistic_methods import Relaxation
-from al_mlp.calcs import CounterCalc
+from finetuna.tests.setup.offline_relaxation_setup import run_offline_al
+from finetuna.atomistic_methods import Relaxation
+from finetuna.calcs import CounterCalc
 from ase.calculators.emt import EMT
 import numpy as np
 from ase.cluster.icosahedron import Icosahedron
 from ase.optimize import BFGS
 import unittest
-from al_mlp.utils import compute_with_calc
+from finetuna.utils import compute_with_calc
 
 FORCE_THRESHOLD = 0.05
 ENERGY_THRESHOLD = 0.03

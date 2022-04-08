@@ -1,7 +1,7 @@
-from al_mlp.online_learner.online_learner import OnlineLearner
-from al_mlp.utils import convert_to_singlepoint
+from finetuna.online_learner.online_learner import OnlineLearner
+from finetuna.utils import convert_to_singlepoint
 import numpy as np
-from al_mlp.logger import Logger
+from finetuna.logger import Logger
 
 __author__ = "Joseph Musielewicz"
 __email__ = "al.mlp.package@gmail.com"

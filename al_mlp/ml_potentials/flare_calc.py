@@ -3,7 +3,7 @@ from flare.gp import GaussianProcess
 from flare.struc import Structure
 import numpy as np
 
-from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
+from finetuna.ml_potentials.ml_potential_calc import MLPCalc
 
 
 class FlareCalc(FLARE_Calculator, MLPCalc):

@@ -9,20 +9,20 @@ from ase.calculators.emt import EMT
 from vasp_interactive import VaspInteractive
 from ase.db import connect
 
-from al_mlp.atomistic_methods import Relaxation
-from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
-from al_mlp.utils import calculate_surface_k_points
-from al_mlp.online_learner.online_learner import OnlineLearner
-from al_mlp.online_learner.delta_learner import DeltaLearner
-from al_mlp.online_learner.warm_start_learner import WarmStartLearner
+from finetuna.atomistic_methods import Relaxation
+from finetuna.offline_learner.offline_learner import OfflineActiveLearner
+from finetuna.utils import calculate_surface_k_points
+from finetuna.online_learner.online_learner import OnlineLearner
+from finetuna.online_learner.delta_learner import DeltaLearner
+from finetuna.online_learner.warm_start_learner import WarmStartLearner
 
-from al_mlp.ml_potentials.flare_pp_calc import FlarePPCalc
-from al_mlp.ml_potentials.flare_calc import FlareCalc
-from al_mlp.ml_potentials.flare_ocp_descriptor_calc import FlareOCPDescriptorCalc
-from al_mlp.ml_potentials.ocpd_gp_calc import OCPDGPCalc
-from al_mlp.ml_potentials.ocpd_nn_calc import OCPDNNCalc
-from al_mlp.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
-from al_mlp.ml_potentials.stochastic_spinconv.finetuner_stochastic_spinconv_calc import (
+from finetuna.ml_potentials.flare_pp_calc import FlarePPCalc
+from finetuna.ml_potentials.flare_calc import FlareCalc
+from finetuna.ml_potentials.flare_ocp_descriptor_calc import FlareOCPDescriptorCalc
+from finetuna.ml_potentials.ocpd_gp_calc import OCPDGPCalc
+from finetuna.ml_potentials.ocpd_nn_calc import OCPDNNCalc
+from finetuna.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
+from finetuna.ml_potentials.stochastic_spinconv.finetuner_stochastic_spinconv_calc import (
     FinetunerStochasticSpinconvCalc,
 )
 

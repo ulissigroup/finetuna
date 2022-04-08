@@ -1,13 +1,13 @@
 import unittest
 
-from al_mlp.tests.setup.delta_relaxation_setup import run_delta_al
-from al_mlp.atomistic_methods import Relaxation
-from al_mlp.calcs import CounterCalc
+from finetuna.tests.setup.delta_relaxation_setup import run_delta_al
+from finetuna.atomistic_methods import Relaxation
+from finetuna.calcs import CounterCalc
 from ase.calculators.emt import EMT
 import numpy as np
 from ase.cluster.icosahedron import Icosahedron
 from ase.optimize import BFGS
-from al_mlp.utils import convert_to_singlepoint
+from finetuna.utils import convert_to_singlepoint
 
 FORCE_THRESHOLD = 0.05
 ENERGY_THRESHOLD = 0.01

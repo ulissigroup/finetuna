@@ -1,5 +1,5 @@
 from sklearn.gaussian_process._gpr import GaussianProcessRegressor
-from al_mlp.ml_potentials.ocpd_calc import OCPDCalc
+from finetuna.ml_potentials.ocpd_calc import OCPDCalc
 from sklearn.gaussian_process.kernels import (
     ConstantKernel,
     WhiteKernel,

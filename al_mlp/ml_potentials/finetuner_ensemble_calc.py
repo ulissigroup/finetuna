@@ -1,5 +1,5 @@
-from al_mlp.ml_potentials.finetuner_calc import FinetunerCalc
-from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
+from finetuna.ml_potentials.finetuner_calc import FinetunerCalc
+from finetuna.ml_potentials.ml_potential_calc import MLPCalc
 import numpy as np
 import copy
 import time

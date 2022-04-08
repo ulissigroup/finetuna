@@ -1,6 +1,6 @@
 import numpy as np
-from al_mlp.online_learner.online_learner import OnlineLearner
-from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
+from finetuna.online_learner.online_learner import OnlineLearner
+from finetuna.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
 
 from amptorch.trainer import AtomsTrainer
 import os

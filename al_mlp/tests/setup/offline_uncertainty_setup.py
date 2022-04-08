@@ -1,26 +1,26 @@
 import numpy as np
-from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
+from finetuna.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
 
-# from al_mlp.ensemble_calc import EnsembleCalc
+# from finetuna.ensemble_calc import EnsembleCalc
 
-from al_mlp.offline_learner.restricted_uncertainty_learner import (
+from finetuna.offline_learner.restricted_uncertainty_learner import (
     RestrictedUncertaintyLearner,
 )
 
 from amptorch.trainer import AtomsTrainer
 import os
 
-# from al_mlp.base_calcs.dummy import Dummy
+# from finetuna.base_calcs.dummy import Dummy
 import torch
 
 # from dask.distributed import Client, LocalCluster
 
-# from al_mlp.atomistic_methods import Relaxation
+# from finetuna.atomistic_methods import Relaxation
 # from ase.optimize import BFGS
 import ase.io
-from al_mlp.base_calcs.morse import MultiMorse
+from finetuna.base_calcs.morse import MultiMorse
 
-# from al_mlp.preset_learners.ensemble_learner import EnsembleLearner
+# from finetuna.preset_learners.ensemble_learner import EnsembleLearner
 
 
 def run_offline_al(atomistic_method, images, dbname, parent_calc):

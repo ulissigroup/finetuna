@@ -1,7 +1,7 @@
 from ase.calculators.calculator import all_changes
 from ase.atoms import Atoms
-from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
-from al_mlp.ocp_descriptor import OCPDescriptor
+from finetuna.ml_potentials.ml_potential_calc import MLPCalc
+from finetuna.ocp_descriptor import OCPDescriptor
 
 
 class OCPDCalc(MLPCalc):

@@ -1,8 +1,8 @@
-from al_mlp.online_learner.online_learner import OnlineLearner
-from al_mlp.calcs import DeltaCalc
-from al_mlp.utils import convert_to_singlepoint, subtract_deltas
-from al_mlp.logger import Logger
-from al_mlp.utils import compute_with_calc
+from finetuna.online_learner.online_learner import OnlineLearner
+from finetuna.calcs import DeltaCalc
+from finetuna.utils import convert_to_singlepoint, subtract_deltas
+from finetuna.logger import Logger
+from finetuna.utils import compute_with_calc
 from copy import deepcopy
 import numpy as np
 

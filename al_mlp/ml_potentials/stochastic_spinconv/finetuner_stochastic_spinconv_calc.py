@@ -1,4 +1,4 @@
-from al_mlp.ml_potentials.finetuner_calc import FinetunerCalc
+from finetuna.ml_potentials.finetuner_calc import FinetunerCalc
 from ocpmodels.datasets.lmdb_dataset import data_list_collater
 from .stochastic_spinconv_model import spinconv
 import numpy as np
@@ -14,7 +14,7 @@ class FinetunerStochasticSpinconvCalc(FinetunerCalc):
     Parameters
     ----------
     model_path: str
-        path to Spinconv model config, e.g. '/home/jovyan/working/al_mlp/al_mlp/ml_potentials/stochastic_spinconv/stochastic_spinconv.yml'
+        path to Spinconv model config, e.g. '/home/jovyan/working/finetuna/finetuna/ml_potentials/stochastic_spinconv/stochastic_spinconv.yml'
 
     checkpoint_path: str
         path to Spinconv model checkpoint, e.g. '/home/jovyan/shared-scratch/adeesh/uncertainty/spcv-2M-uncertainty-cp.pt'

@@ -2,17 +2,17 @@
 import unittest
 
 # import test modules
-from al_mlp.tests.cases.delta_CuNP_test import delta_CuNP
-from al_mlp.tests.cases.online_CuNP_test import online_CuNP
-from al_mlp.tests.cases.offline_CuNP_test import offline_CuNP
-from al_mlp.tests.cases.offline_uncertainty_CuNP_test import offline_uncertainty_CuNP
+from finetuna.tests.cases.delta_CuNP_test import delta_CuNP
+from finetuna.tests.cases.online_CuNP_test import online_CuNP
+from finetuna.tests.cases.offline_CuNP_test import offline_CuNP
+from finetuna.tests.cases.offline_uncertainty_CuNP_test import offline_uncertainty_CuNP
 
-# from al_mlp.tests.cases.online_flare_CuNP_test import online_flare_CuNP
-from al_mlp.tests.cases.online_ft_CuNP_test import online_ft_CuNP
+# from finetuna.tests.cases.online_flare_CuNP_test import online_flare_CuNP
+from finetuna.tests.cases.online_ft_CuNP_test import online_ft_CuNP
 
 # import and set executor client
 from dask.distributed import Client, LocalCluster
-from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
+from finetuna.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
 
 cluster = LocalCluster(n_workers=4, processes=True, threads_per_worker=1)
 client = Client(cluster)

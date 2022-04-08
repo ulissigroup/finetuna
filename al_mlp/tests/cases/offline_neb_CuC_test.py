@@ -1,7 +1,7 @@
-from al_mlp.tests.setup.offline_neb_setup import offline_neb, construct_geometries
-from al_mlp.calcs import CounterCalc
+from finetuna.tests.setup.offline_neb_setup import offline_neb, construct_geometries
+from finetuna.calcs import CounterCalc
 from ase.io import read
-from al_mlp.atomistic_methods import NEBcalc
+from finetuna.atomistic_methods import NEBcalc
 import ase
 from ase.calculators.emt import EMT
 import numpy as np

@@ -1,4 +1,4 @@
-from al_mlp.offline_learner.offline_learner import OfflineActiveLearner
+from finetuna.offline_learner.offline_learner import OfflineActiveLearner
 
 # Specific NEB querying strategy
 

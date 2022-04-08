@@ -1,7 +1,7 @@
 import numpy as np
-from al_mlp.online_learner.delta_learner import DeltaLearner
-from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
-from al_mlp.base_calcs.morse import MultiMorse
+from finetuna.online_learner.delta_learner import DeltaLearner
+from finetuna.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
+from finetuna.base_calcs.morse import MultiMorse
 
 from amptorch.trainer import AtomsTrainer
 import os

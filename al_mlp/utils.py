@@ -1,5 +1,5 @@
 from ase.calculators.singlepoint import SinglePointCalculator as sp
-from al_mlp.calcs import DeltaCalc
+from finetuna.calcs import DeltaCalc
 from ase.io import write
 import numpy as np
 import subprocess

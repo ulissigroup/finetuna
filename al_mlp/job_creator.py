@@ -8,7 +8,7 @@ from ase.calculators.vasp.create_input import GenerateVaspInput
 
 def create_job(
     given_params,
-    main_path="/home/al_mlp/examples/main/al_main.py",
+    main_path="/home/finetuna/examples/main/al_main.py",
     sample_job_spec_path="sample_job_spec.yml",
     sample_config_path=None,
     images=None,

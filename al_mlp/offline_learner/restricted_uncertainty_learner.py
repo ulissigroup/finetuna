@@ -1,7 +1,7 @@
-from al_mlp.offline_learner.uncertainty_learner import UncertaintyLearner
+from finetuna.offline_learner.uncertainty_learner import UncertaintyLearner
 import ase
 import random
-from al_mlp.utils import write_to_db, compute_with_calc
+from finetuna.utils import write_to_db, compute_with_calc
 import numpy as np
 
 __author__ = "Joseph Musielewicz"

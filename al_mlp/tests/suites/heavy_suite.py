@@ -2,17 +2,17 @@
 import unittest
 
 # import test modules
-# from al_mlp.tests.cases.online_PtNP_test import online_PtNP
-from al_mlp.tests.cases.offline_neb_CuC_test import offline_NEB
-from al_mlp.tests.cases.online_CuNP_test import online_CuNP
-from al_mlp.tests.cases.offline_CuNP_test import offline_CuNP
-from al_mlp.tests.cases.online_flare_CuNP_test import online_flare_CuNP
-from al_mlp.tests.cases.delta_CuNP_test import delta_CuNP
-from al_mlp.tests.cases.offline_uncertainty_CuNP_test import offline_uncertainty_CuNP
-from al_mlp.tests.cases.online_ft_CuNP_test import online_ft_CuNP
+# from finetuna.tests.cases.online_PtNP_test import online_PtNP
+from finetuna.tests.cases.offline_neb_CuC_test import offline_NEB
+from finetuna.tests.cases.online_CuNP_test import online_CuNP
+from finetuna.tests.cases.offline_CuNP_test import offline_CuNP
+from finetuna.tests.cases.online_flare_CuNP_test import online_flare_CuNP
+from finetuna.tests.cases.delta_CuNP_test import delta_CuNP
+from finetuna.tests.cases.offline_uncertainty_CuNP_test import offline_uncertainty_CuNP
+from finetuna.tests.cases.online_ft_CuNP_test import online_ft_CuNP
 
 # import make_ensemble and dask for setting parallelization
-from al_mlp.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
+from finetuna.ml_potentials.amptorch_ensemble_calc import AmptorchEnsembleCalc
 from dask.distributed import Client, LocalCluster
 
 # Set dask client in ensemble calc

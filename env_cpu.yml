@@ -1,4 +1,4 @@
-name: al_mlp
+name: finetuna
 channels:
  - conda-forge
  - defaults

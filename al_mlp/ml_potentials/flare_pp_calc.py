@@ -15,7 +15,7 @@ from ase.calculators.calculator import all_changes
 from flare import struc
 import numpy as np
 
-from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
+from finetuna.ml_potentials.ml_potential_calc import MLPCalc
 
 
 class FlarePPCalc(MLPCalc):

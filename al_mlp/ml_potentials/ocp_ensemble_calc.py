@@ -1,9 +1,9 @@
 import numpy as np
 import random
-from al_mlp.ml_potentials.bootstrap import non_bootstrap_ensemble
+from finetuna.ml_potentials.bootstrap import non_bootstrap_ensemble
 import torch
 import uuid
-from al_mlp.ml_potentials.ml_potential_calc import MLPCalc
+from finetuna.ml_potentials.ml_potential_calc import MLPCalc
 
 from ocpmodels.trainers.amp_xfer_trainer import OCPXTrainer
 
