@@ -124,7 +124,7 @@ class GPMinLearner(GPMin):
         print("Relaxing after function call " + str(self.function_calls))
         self.gtol = 0
         options = {
-            "disp": True,
+            # "disp": True,
             "gtol": 1e-03,
             # "maxls": 20,
         }
@@ -135,6 +135,7 @@ class GPMinLearner(GPMin):
             print(
                 "minimization attempt number " + str(i) + ", for gtol=" + str(self.gtol)
             )
+            # /opt/conda/lib/python3.8/site-packages/scipy/optimize/optimize.py line 1256 to print BFGS
             result = minimize(
                 self.acquisition, r0, method="BFGS", jac=True, options=options
             )
