@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 setup(
     name="finetuna",
     version="0.1",
-    description="Active Learning for Machine Learning Potentials",
+    description="Fine-Tuning Accelerated Molecular Simulations",
     url="https://github.com/ulissigroup/finetuna",
     author="Joseph Musielewicz, Lory Wang",
     author_email="al.mlp.package@gmail.com",
