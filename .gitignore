@@ -24,16 +24,6 @@ finetuna.egg-info
 *.swp
 *.lmdb
 *.lmdb-lock
-sandbox/
-*CAR
-CHG*
-vasprun.xml
-ase-sort.dat
-EIGENVAL
-REPORT
-IBZKPT
-KPOINTS
-PCDAT
 
 */test_figs/*
 */dask-worker-space/*
