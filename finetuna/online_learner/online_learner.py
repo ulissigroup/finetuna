@@ -38,6 +38,12 @@ class OnlineLearner(Calculator):
         self.check_final_point = False
         self.uncertainty_history = []
 
+        print("Parent calc is :", self.parent_calc)
+        self.parent_calc_pausable = False
+        if hasattr(self.parent_calc, "pause"):
+            self.parent_calc_pausable = True
+            self.parent_calc._pause_calc()
+
         if mongo_db is None:
             mongo_db = {"online_learner": None}
         self.init_logger(mongo_db, optional_config)
@@ -460,11 +466,16 @@ class OnlineLearner(Calculator):
         # if verifying (or reverifying) do the singlepoints, and record the time parent calls takes
         else:
             print("OnlineLearner: Parent calculation required")
-            start = time.time()
 
+            start = time.time()
+            if self.parent_calc_pausable:
+                self.parent_calc._resume_calc()
             atoms.set_calculator(self.parent_calc)
             (new_data,) = convert_to_singlepoint([atoms])
+            if self.parent_calc_pausable:
+                self.parent_calc._pause_calc()
             end = time.time()
+
             print(
                 "Time to call parent (call #"
                 + str(self.parent_calls)
