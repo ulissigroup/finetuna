@@ -11,6 +11,5 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=["ase"],
-    long_description="""Module for performing active learning \
-                          with machine learning potentials.""",
+    long_description="""Module for performing active learning by fine-tuning pre-trained machine learning potentials to accelerate molecular simulations.""",
 )
