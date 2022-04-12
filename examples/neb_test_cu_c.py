@@ -11,8 +11,8 @@ import numpy as np
 import copy
 import torch
 
-from al_mlp.offline_active_learner import OfflineActiveLearner
-from al_mlp.base_calcs.morse import MultiMorse
+from finetuna.offline_active_learner import OfflineActiveLearner
+from finetuna.base_calcs.morse import MultiMorse
 
 from amptorch.trainer import AtomsTrainer
 

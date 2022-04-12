@@ -40,13 +40,13 @@ spec:
         args:
         - echo "hello world!" &&
           sudo rsync -av --progress /home/jovyan/working/ocp-modeling-dev /home &&
-          sudo rsync -av --progress /home/jovyan/working/al_mlp /home &&
+          sudo rsync -av --progress /home/jovyan/working/finetuna /home &&
           sudo rsync -av --progress /home/jovyan/working/amptorch /home &&
           sudo rsync -av --progress /home/jovyan/working/launch /home &&
           cd /home/ocp-modeling-dev &&
           pip install -e . &&
           pre-commit install &&
-          cd /home/al_mlp &&
+          cd /home/finetuna &&
           python setup.py install &&
           cd /home/amptorch &&
           python setup.py install &&
@@ -55,7 +55,7 @@ spec:
           pip install rmsd &&
           wandb login &&
           cd /home/jovyan/working/debug &&
-          python al_mlp/examples/al_main.py --config-yml al_mlp/examples/sample_config.yml 2>&1 | tee run_logs.txt
+          python finetuna/examples/al_main.py --config-yml finetuna/examples/sample_config.yml 2>&1 | tee run_logs.txt
         workingDir: /home/jovyan/.kube
       restartPolicy: Never
       volumes:

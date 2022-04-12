@@ -1,7 +1,7 @@
 [![ulissigroup](https://circleci.com/gh/ulissigroup/al_mlp.svg?style=svg)](https://app.circleci.com/pipelines/github/ulissigroup/al_mlp)
-## *al_mlp*: Active Learning for Machine Learning Potentials
+## *FINETUNA*: Fine-Tuning Accelerated Molecular Simulations
 
-Implements active learning with delta machine learning to accelerate atomistic simulations.
+Implements active learning with pre-trained graph model fine-tuning to accelerate atomistic simulations.
 
 ### Installation
 
@@ -16,7 +16,7 @@ conda-merge env_amptorch_cpu.yml env_cpu.yml > env.yml
 conda env create -f env.yml
 ```
 
-3. Activate the conda environment `conda activate al_mlp` and install the package with `pip install -e .`
+3. Activate the conda environment `conda activate finetuna` and install the package with `pip install -e .`
 
 ### Usage
 #### Configs [wip]
