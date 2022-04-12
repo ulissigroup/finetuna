@@ -101,8 +101,8 @@ class FinetunerCalc(MLPCalc):
         self.energy_training = self.mlp_params["tuner"].get("energy_training", False)
         if not self.energy_training:
             self.mlp_params["optim"]["energy_coefficient"] = 0
-        # if "num_threads" in self.mlp_params["tuner"]:
-            # torch.set_num_threads(self.mlp_params["tuner"]["num_threads"])
+        if "num_threads" in self.mlp_params["tuner"]:
+            torch.set_num_threads(self.mlp_params["tuner"]["num_threads"])
         self.validation_split = self.mlp_params["tuner"].get("validation_split", None)
 
         # init block/weight freezing

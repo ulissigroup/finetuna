@@ -88,7 +88,6 @@ class FinetunerEnsembleCalc(FinetunerCalc):
             finetuner.init_model()
 
     def train_ocp(self, dataset):
-        times = []
         for finetuner in self.finetuner_calcs:
             start = time.time()
             finetuner.train_ocp(dataset)
@@ -102,8 +101,6 @@ class FinetunerEnsembleCalc(FinetunerCalc):
                 + str(end - start)
                 + " seconds"
             )
-            times.append(end - start)
-        return times
 
     def calculate_ml(self, atoms, properties, system_changes) -> tuple:
         """
