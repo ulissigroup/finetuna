@@ -412,7 +412,7 @@ class Trainer(ForcesTrainer):
             logger=config.get("logger", None),
             print_every=config.get("print_every", 1),
             is_debug=config.get("is_debug", True),
-            cpu=True,
+            cpu=config.get("cpu", True),
         )
 
         # if loading a model with added blocks for training from the checkpoint, set strict loading to False
