@@ -1,27 +1,27 @@
-from al_mlp.atomistic_methods import Relaxation
-from al_mlp.online_learner.online_learner import OnlineLearner
+from finetuna.atomistic_methods import Relaxation
+from finetuna.online_learner.online_learner import OnlineLearner
 from ase.calculators.vasp import Vasp
 from vasp_interactive import VaspInteractive
 from ase.optimize import BFGS
-from al_mlp.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
+from finetuna.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
 from ase.io import Trajectory
-from al_mlp.utils import calculate_surface_k_points
+from finetuna.utils import calculate_surface_k_points
+
 
 def main():
     """Compare the efficiency of OAL + ASE-Vasp or VaspInteractive (w/ or w/o pause)
-    usage: 
+    usage:
     python oal_finetune_vasp_inter.py <ase or vasp-interactive> <pause? 1/0>
     """
     import sys
+
     calc_type = sys.argv[1].lower()
     if len(sys.argv) > 2:
         pause = int(sys.argv[2])
     else:
         pause = 1
-        
+
     print(f"{calc_type} {pause}")
-    
-    
 
     traj = Trajectory(
         "/home/jovyan/shared-scratch/joe/30_randoms/random1447590.traj"
@@ -86,35 +86,28 @@ def main():
         ],
     )
     common_params = dict(
-            isif=0,
-            isym=0,
-            lreal="Auto",
-            ediffg=-0.03,
-            symprec=1.0e-10,
-            encut=350.0,
-            laechg=False,
-            lcharg=False,
-            lwave=False,
-            ncore=16,
-            gga="RP",
-            pp="PBE",
-            xc="PBE",
-            kpts=calculate_surface_k_points(traj[0]),
+        isif=0,
+        isym=0,
+        lreal="Auto",
+        ediffg=-0.03,
+        symprec=1.0e-10,
+        encut=350.0,
+        laechg=False,
+        lcharg=False,
+        lwave=False,
+        ncore=16,
+        gga="RP",
+        pp="PBE",
+        xc="PBE",
+        kpts=calculate_surface_k_points(traj[0]),
     )
 
     if calc_type == "ase":
-        parent_calc = Vasp(
-            ibrion=-1,
-            nsw=0,
-            **common_params
-        )
+        parent_calc = Vasp(ibrion=-1, nsw=0, **common_params)
     else:
-        allow_pause = (pause == 1)
-        parent_calc = VaspInteractive(
-            allow_mpi_pause=allow_pause,
-            **common_params
-        )
-    
+        allow_pause = pause == 1
+        parent_calc = VaspInteractive(allow_mpi_pause=allow_pause, **common_params)
+
     learner = OnlineLearner(
         learner_params={
             "stat_uncertain_tol": 1000000,
@@ -146,6 +139,7 @@ def main():
     )
 
     print("done!")
+
 
 if __name__ == "__main__":
     main()
