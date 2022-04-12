@@ -1,7 +1,7 @@
 import os
 import yaml
 import argparse
-from al_mlp.run_al import active_learning
+from finetuna.run_al import active_learning
 
 
 def get_parser():

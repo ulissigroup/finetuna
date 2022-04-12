@@ -1,10 +1,10 @@
-from al_mlp.atomistic_methods import Relaxation
-from al_mlp.online_learner.online_learner import OnlineLearner
-from ase.calculators.vasp import Vasp
+from finetuna.atomistic_methods import Relaxation
+from finetuna.online_learner.online_learner import OnlineLearner
+from vasp_interactive import VaspInteractive
 from ase.optimize import BFGS
-from al_mlp.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
+from finetuna.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
 from ase.io import Trajectory
-from al_mlp.utils import calculate_surface_k_points
+from finetuna.utils import calculate_surface_k_points
 
 if __name__ == "__main__":
 
@@ -30,22 +30,32 @@ if __name__ == "__main__":
                         "out_blocks.3.scale_rbf_F",
                         "out_blocks.3.dense_rbf_F",
                         "out_blocks.3.out_forces",
+                        "out_blocks.2.seq_forces",
+                        "out_blocks.2.scale_rbf_F",
+                        "out_blocks.2.dense_rbf_F",
+                        "out_blocks.2.out_forces",
+                        "out_blocks.1.seq_forces",
+                        "out_blocks.1.scale_rbf_F",
+                        "out_blocks.1.dense_rbf_F",
+                        "out_blocks.1.out_forces",
                     ],
                     "num_threads": 8,
                 },
                 "optim": {
                     "batch_size": 1,
                     "num_workers": 0,
-                    "max_epochs": 200,
+                    "max_epochs": 400,
                     "lr_initial": 0.0003,
-                    "factor": 0.7,
+                    "factor": 0.9,
                     "eval_every": 1,
                     "patience": 3,
                     "checkpoint_every": 100000,
                     "scheduler_loss": "train",
                     "weight_decay": 0,
+                    "eps": 1e-8,
                     "optimizer_params": {
                         "weight_decay": 0,
+                        "eps": 1e-8,
                     },
                 },
                 "task": {
@@ -55,7 +65,7 @@ if __name__ == "__main__":
         ],
     )
 
-    parent_calc = Vasp(
+    parent_calc = VaspInteractive(
         ibrion=-1,
         nsw=0,
         isif=0,

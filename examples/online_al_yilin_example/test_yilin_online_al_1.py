@@ -1,16 +1,16 @@
 import numpy as np
 import ase
-from al_mlp.online_learner import OnlineActiveLearner
+from finetuna.online_learner import OnlineActiveLearner
 from ase.calculators.emt import EMT
 from ase.optimize import BFGS
 from ase.calculators.calculator import Calculator, all_changes
 
-# from al_mlp.base_calcs.morse import MultiMorse
+# from finetuna.base_calcs.morse import MultiMorse
 from amptorch.ase_utils import AMPtorch
 from amptorch.trainer import AtomsTrainer
-from al_mlp.atomistic_methods import Relaxation
+from finetuna.atomistic_methods import Relaxation
 import os
-from al_mlp.ensemble_calc import EnsembleCalc
+from finetuna.ensemble_calc import EnsembleCalc
 from dask_kubernetes import KubeCluster
 from dask.distributed import Client
 
@@ -42,7 +42,7 @@ class Dummy(Calculator):
 
 num_workers = 10
 cluster = KubeCluster.from_yaml(
-    "/home/jovyan/al_mlp/examples/online_al_yilin_example/dask-worker-cpu-spec.yml"
+    "/home/jovyan/finetuna/examples/online_al_yilin_example/dask-worker-cpu-spec.yml"
 )
 client = Client(cluster)
 cluster.adapt(minimum=num_workers, maximum=num_workers)
