@@ -16,11 +16,8 @@ import argparse
 
 
 def main(args):
-    # cwd = os.getcwd()
-
     vasp_interactive = VaspInteractive()
     vasp_interactive.read_incar(filename=args.path + "INCAR")
-    print(args.path + "INCAR")
     vasp_interactive.read_kpoints(filename=args.path + "KPOINTS")
     vasp_interactive.read_potcar(filename=args.path + "POTCAR")
 
