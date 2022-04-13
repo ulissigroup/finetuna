@@ -16,13 +16,15 @@ import argparse
 
 
 def main(args):
-    cwd = os.getcwd()
-    vasp_interactive = VaspInteractive()
-    vasp_interactive.read_incar(filename=cwd + "/INCAR")
-    vasp_interactive.read_kpoints(filename=cwd + "/KPOINTS")
-    vasp_interactive.read_potcar(filename=cwd + "/POTCAR")
+    # cwd = os.getcwd()
 
-    initial_structure = ase.io.read(cwd + "/POSCAR")
+    vasp_interactive = VaspInteractive()
+    vasp_interactive.read_incar(filename=args.path + "INCAR")
+    print(args.path + "INCAR")
+    vasp_interactive.read_kpoints(filename=args.path + "KPOINTS")
+    vasp_interactive.read_potcar(filename=args.path + "POTCAR")
+
+    initial_structure = ase.io.read(args.path + "POSCAR")
 
     yaml_file = open(args.config)
     parsed_yaml_file = yaml.load(yaml_file, Loader=yaml.FullLoader)
@@ -53,7 +55,6 @@ def main(args):
             maxstep=parsed_yaml_file["relaxation"].get("maxstep", None),
         )
         dyn.attach(parent_only_replay, 1, initial_structure.calc, dyn)
-
         dyn.run(
             fmax=parsed_yaml_file["relaxation"].get("fmax", 0.03),
             steps=parsed_yaml_file["relaxation"].get("steps", None),
@@ -61,7 +62,12 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Count words")
-    parser.add_argument("config", type=str, default="-", help="Path to config file")
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument(
+        "-config", type=str, required=True, help="Path to the config file"
+    )
+    parser.add_argument(
+        "-path", type=str, default="", help="Path to the VASP input directory"
+    )
     args = parser.parse_args()
     main(args)
