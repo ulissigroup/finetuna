@@ -328,3 +328,19 @@ class TrajPCA:
         x = pc_xy[0][0]
         y = pc_xy[0][1]
         return x, y
+
+    def analyze_traj(self, traj):
+        """
+        Arguments
+        ----------
+        traj: Trajectory
+            the specific ase Trajectory object to compare to the 
+            reference trajectory.
+        """
+        traj_pca_x = np.zeros(len(traj))
+        traj_pca_y = np.zeros(len(traj))
+        for idx, image in enumerate(traj):
+            x, y = self.analyze_image(image)
+            traj_pca_x[idx] = x
+            traj_pca_y[idx] = y
+        return [traj_pca_x, traj_pca_y]
