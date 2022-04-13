@@ -334,7 +334,7 @@ class TrajPCA:
         Arguments
         ----------
         traj: Trajectory
-            the specific ase Trajectory object to compare to the 
+            the specific ase Trajectory object to compare to the
             reference trajectory.
         """
         traj_pca_x = np.zeros(len(traj))
