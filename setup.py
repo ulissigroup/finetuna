@@ -11,7 +11,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=["ase"],
-    scripts=["examples/vasp_wrapper/finetuna_vasp.py"],
+    scripts=["examples/vasp_wrapper/finetuna_wrap.py"],
     long_description="""Module for performing active learning by fine-tuning pre-trained machine learning
      potentials to accelerate molecular simulations.""",
 )
