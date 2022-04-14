@@ -1,4 +1,5 @@
-#
+"""Logging active learning results to wandb, mongodb, and ase db."""
+
 from ase.atoms import Atoms
 from ase.io import Trajectory
 from numpy import ndarray
@@ -17,7 +18,8 @@ from finetuna.pca import TrajPCA
 
 class Logger:
     """
-    Used by online and offline learners to log their results to wandb, mongodb, and asedb consistently
+    Used by online and offline learners to log their results to
+    wandb, mongodb, and asedb consistently.
     """
 
     def __init__(
@@ -36,10 +38,12 @@ class Logger:
             Dictionary of learner parameters and settings.
 
         optional_configs: dict
-            Optional dictionary of all other configs and settings associated with a run.
+            Optional dictionary of all other configs and settings
+            associated with a run.
 
         mongo_db: MongoClient
-            Optional MongoClient from the pymongo package associated with the desired mongo_db.
+            Optional MongoClient from the pymongo package associated
+            with the desired mongo_db.
         """
         # save input arguments
         self.learner_params = learner_params
@@ -90,11 +94,13 @@ class Logger:
         self.init_extra_info()
 
     def init_extra_info(self):
-        # initialize booleans for extra calculations
+        """initialize booleans for extra calculations,
+        e.g.: PCA, uncertainty quantification."""
         self.pca_quantify = False
         self.uncertainty_quantify = False
         self.parent_traj = None
-        # if a trajectory is supplied in the optional config, store that for PCA, uncertainty metrics, etc.
+        # if a trajectory is supplied in the optional config,
+        # store that for PCA, uncertainty metrics, etc.
         if (
             self.optional_config is not None
             and "links" in self.optional_config

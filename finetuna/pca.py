@@ -1,3 +1,5 @@
+"""Principal component analysis module."""
+
 from ase.atoms import Atoms
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -10,6 +12,109 @@ from ase.constraints import constrained_indices
 from flare_pp._C_flare import Structure, B2
 
 
+class TrajPCA:
+    """
+    Perform PCA on a given trajectory object. Then save that analysis
+    for use on later atoms objects parameters.
+    """
+
+    def __init__(self, traj):
+        """
+        Arguments
+        ----------
+        traj: Trajectory
+            the parent Trajectory for this system to be compared to
+        """
+        self.species_map = init_species_map(traj[0])
+        self.b2calc = B2(
+            "chebyshev",
+            "quadratic",
+            [0, 5],
+            [],
+            [len(self.species_map), 12, 3],
+        )
+
+        energies = []
+        des_list = []
+        energies.append([j.get_potential_energy() for j in traj])
+        for j in range(len(traj)):
+            atoms = traj[j]
+            structure_descriptor = Structure(
+                atoms.get_cell(),
+                [self.species_map[x] for x in atoms.get_atomic_numbers()],
+                atoms.get_positions(),
+                5,
+                [self.b2calc],
+            )
+            des = structure_descriptor.descriptors[0].descriptors
+            des_reshape = []
+            for a in des:
+                for b in a:
+                    des_reshape.extend(np.ravel(np.array(b)))
+            des_list.append(des_reshape)
+
+        columns = []
+        for i in range(np.shape(des_list[0])[-1]):
+            columns.append(i)
+
+        df = pd.DataFrame(des_list)
+        self.keep_columns = ~df.eq(0).all()
+
+        df = df.loc[:, self.keep_columns]
+        columns = list(df.columns)
+        sub_array = df.loc[:, columns].values
+        self.standard_scaler = StandardScaler()
+        transformed = self.standard_scaler.fit_transform(sub_array)
+
+        self.pca = PCA(n_components=2)
+        principal_components = self.pca.fit_transform(transformed)
+
+    def analyze_image(self, image):
+        """
+        Arguments
+        ----------
+        image: Atoms
+            the specific ase Atoms object to compare to the traj
+        """
+        image_structure_descriptor = Structure(
+            image.get_cell(),
+            [self.species_map[x] for x in image.get_atomic_numbers()],
+            image.get_positions(),
+            5,
+            [self.b2calc],
+        )
+        des = image_structure_descriptor.descriptors[0].descriptors
+        des_reshape = []
+        for a in des:
+            for b in a:
+                des_reshape.extend(np.ravel(np.array(b)))
+        df = pd.DataFrame([des_reshape]).loc[:, self.keep_columns]
+        sub_array = df.values
+        transformed_image = self.standard_scaler.transform(sub_array)
+
+        pc_xy = self.pca.transform(transformed_image)
+
+        x = pc_xy[0][0]
+        y = pc_xy[0][1]
+        return x, y
+
+    def analyze_traj(self, traj):
+        """
+        Arguments
+        ----------
+        traj: Trajectory
+            the specific ase Trajectory object to compare to the
+            reference trajectory.
+        """
+        traj_pca_x = np.zeros(len(traj))
+        traj_pca_y = np.zeros(len(traj))
+        for idx, image in enumerate(traj):
+            x, y = self.analyze_image(image)
+            traj_pca_x[idx] = x
+            traj_pca_y[idx] = y
+        return [traj_pca_x, traj_pca_y]
+
+
 def pca_xyz(traj_dict, fig_title=None):
     """Perform a PCA analysis for the trajectories.
     Parameters
@@ -19,8 +124,10 @@ def pca_xyz(traj_dict, fig_title=None):
         e.g.: {'oal': oal_traj}, where oal_traj is an ASE Trajectory
         object or the path to the trajectory.
         or {'oal': [path_to_oal_traj, path_to_oal_db]}, where path_to_oal_traj
-        is the path to the trajectory and path_to_oal_db is the path to the ase Database.
-        or {'oal': [list_of_atoms]}, where the list of atoms serves as a trajectory to be read
+        is the path to the trajectory and path_to_oal_db is the path to the
+        ase Database.
+        or {'oal': [list_of_atoms]}, where the list of atoms serves as a
+        trajectory to be read
 
     fig_title: str
         Title of the PCA plot.
@@ -48,7 +155,7 @@ def pca_xyz(traj_dict, fig_title=None):
     constrained_id = constrained_indices(trajs[0][0])
     for i in trajs:
         all_pos = [j.get_positions() for j in i]
-        free_atom_pos = [np.delete(i, constrained_id, 0) for i in all_pos]
+        # free_atom_pos = [np.delete(i, constrained_id, 0) for i in all_pos]
         pos.append([j.get_positions() for j in i])
         energy.append([j.get_potential_energy() for j in i])
     label = []
@@ -241,106 +348,3 @@ def des_pca(traj_dict, fig_title=None):
     colorbar = fig.colorbar(sm)
     colorbar.set_label("-log(abs(energy))")
     plt.savefig("pca.png")
-
-
-class TrajPCA:
-    """
-    Perform PCA on a given trajectory object. Then save that analysis for use on later atoms objects
-    Parameters
-    """
-
-    def __init__(self, traj):
-        """
-        Arguments
-        ----------
-        traj: Trajectory
-            the parent Trajectory for this system to be compared to
-        """
-        self.species_map = init_species_map(traj[0])
-        self.b2calc = B2(
-            "chebyshev",
-            "quadratic",
-            [0, 5],
-            [],
-            [len(self.species_map), 12, 3],
-        )
-
-        energies = []
-        des_list = []
-        energies.append([j.get_potential_energy() for j in traj])
-        for j in range(len(traj)):
-            atoms = traj[j]
-            structure_descriptor = Structure(
-                atoms.get_cell(),
-                [self.species_map[x] for x in atoms.get_atomic_numbers()],
-                atoms.get_positions(),
-                5,
-                [self.b2calc],
-            )
-            des = structure_descriptor.descriptors[0].descriptors
-            des_reshape = []
-            for a in des:
-                for b in a:
-                    des_reshape.extend(np.ravel(np.array(b)))
-            des_list.append(des_reshape)
-
-        columns = []
-        for i in range(np.shape(des_list[0])[-1]):
-            columns.append(i)
-
-        df = pd.DataFrame(des_list)
-        self.keep_columns = ~df.eq(0).all()
-
-        df = df.loc[:, self.keep_columns]
-        columns = list(df.columns)
-        sub_array = df.loc[:, columns].values
-        self.standard_scaler = StandardScaler()
-        transformed = self.standard_scaler.fit_transform(sub_array)
-
-        self.pca = PCA(n_components=2)
-        principal_components = self.pca.fit_transform(transformed)
-
-    def analyze_image(self, image):
-        """
-        Arguments
-        ----------
-        image: Atoms
-            the specific ase Atoms object to compare to the traj
-        """
-        image_structure_descriptor = Structure(
-            image.get_cell(),
-            [self.species_map[x] for x in image.get_atomic_numbers()],
-            image.get_positions(),
-            5,
-            [self.b2calc],
-        )
-        des = image_structure_descriptor.descriptors[0].descriptors
-        des_reshape = []
-        for a in des:
-            for b in a:
-                des_reshape.extend(np.ravel(np.array(b)))
-        df = pd.DataFrame([des_reshape]).loc[:, self.keep_columns]
-        sub_array = df.values
-        transformed_image = self.standard_scaler.transform(sub_array)
-
-        pc_xy = self.pca.transform(transformed_image)
-
-        x = pc_xy[0][0]
-        y = pc_xy[0][1]
-        return x, y
-
-    def analyze_traj(self, traj):
-        """
-        Arguments
-        ----------
-        traj: Trajectory
-            the specific ase Trajectory object to compare to the
-            reference trajectory.
-        """
-        traj_pca_x = np.zeros(len(traj))
-        traj_pca_y = np.zeros(len(traj))
-        for idx, image in enumerate(traj):
-            x, y = self.analyze_image(image)
-            traj_pca_x[idx] = x
-            traj_pca_y[idx] = y
-        return [traj_pca_x, traj_pca_y]
