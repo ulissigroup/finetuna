@@ -18,9 +18,9 @@ import argparse
 def main(args):
     # Initialize VASP interactive calculator with VASP input from the path provided
     vasp_interactive = VaspInteractive()
-    vasp_interactive.read_incar(filename = os.path.join(args.path, "INCAR"))
-    vasp_interactive.read_kpoints(filename = os.path.join(args.path, "KPOINTS"))
-    vasp_interactive.read_potcar(filename = os.path.join(args.path, "POTCAR"))
+    vasp_interactive.read_incar(filename=os.path.join(args.path, "INCAR"))
+    vasp_interactive.read_kpoints(filename=os.path.join(args.path, "KPOINTS"))
+    vasp_interactive.read_potcar(filename=os.path.join(args.path, "POTCAR"))
     # Read the initial structure
     initial_structure = ase.io.read(os.path.join(args.path, "POSCAR"))
     # Parse the config file
@@ -58,11 +58,15 @@ def main(args):
             steps=parsed_yaml_file["relaxation"].get("steps", None),
         )
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument(
-        "-c", "--config", type=str, default = "finetuna/vasp_wrapper/sample_config.yml",
-        help="Path to the config file"
+        "-c",
+        "--config",
+        type=str,
+        default="finetuna/vasp_wrapper/sample_config.yml",
+        help="Path to the config file",
     )
     parser.add_argument(
         "-p", "--path", type=str, default="", help="Path to the VASP input directory"
