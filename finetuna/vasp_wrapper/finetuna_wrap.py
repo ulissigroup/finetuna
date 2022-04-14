@@ -16,20 +16,21 @@ import argparse
 
 
 def main(args):
+    # Initialize VASP interactive calculator with VASP input from the path provided
     vasp_interactive = VaspInteractive()
-    vasp_interactive.read_incar(filename=args.path + "INCAR")
-    vasp_interactive.read_kpoints(filename=args.path + "KPOINTS")
-    vasp_interactive.read_potcar(filename=args.path + "POTCAR")
-
-    initial_structure = ase.io.read(args.path + "POSCAR")
-
+    vasp_interactive.read_incar(filename = os.path.join(args.path, "INCAR"))
+    vasp_interactive.read_kpoints(filename = os.path.join(args.path, "KPOINTS"))
+    vasp_interactive.read_potcar(filename = os.path.join(args.path, "POTCAR"))
+    # Read the initial structure
+    initial_structure = ase.io.read(os.path.join(args.path, "POSCAR"))
+    # Parse the config file
     yaml_file = open(args.config)
     parsed_yaml_file = yaml.load(yaml_file, Loader=yaml.FullLoader)
     learner_params = parsed_yaml_file["learner"]
     finetuner = parsed_yaml_file["finetuner"]
     optional_config = parsed_yaml_file.get("optional_config", None)
-
     pretrain_dataset = []
+    # Set up Finetuner calculator
     ml_potential = FinetunerEnsembleCalc(
         model_classes=parsed_yaml_file["ocp"]["model_class_list"],
         model_paths=parsed_yaml_file["ocp"]["model_path_list"],
@@ -48,7 +49,7 @@ def main(args):
         initial_structure.calc = onlinecalc
         dyn = BFGS(
             initial_structure,
-            trajectory="online_al.traj",
+            trajectory=parsed_yaml_file["relaxation"].get("trajname", "online_al.traj"),
             maxstep=parsed_yaml_file["relaxation"].get("maxstep", None),
         )
         dyn.attach(parent_only_replay, 1, initial_structure.calc, dyn)
@@ -57,14 +58,14 @@ def main(args):
             steps=parsed_yaml_file["relaxation"].get("steps", None),
         )
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument(
-        "-config", type=str, required=True, help="Path to the config file"
+        "-c", "--config", type=str, default = "finetuna/vasp_wrapper/sample_config.yml",
+        help="Path to the config file"
     )
     parser.add_argument(
-        "-path", type=str, default="", help="Path to the VASP input directory"
+        "-p", "--path", type=str, default="", help="Path to the VASP input directory"
     )
     args = parser.parse_args()
     main(args)

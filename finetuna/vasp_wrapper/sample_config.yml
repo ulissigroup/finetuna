@@ -27,7 +27,7 @@ learner:
   fmax_verify_threshold: 0.03
   initial_points_to_keep: []
   logger:
-    pca_quantify: true
+    pca_quantify: false
     uncertainty_quantify: false
   num_initial_points: 0
   partial_fit: true
@@ -44,11 +44,6 @@ learner:
   #   wandb_log: true
 # optional_config:
 #   links:
-#     # images_path: /home/jovyan/joe-job-vol/6_true_30_randoms/0_ft_unfrz_diff_blks/0_22_1g_partialfit_lr3e4_200ep/online1498818_0_22_1g_partialfit_lr3e4_200ep_0/pretrain_images.db
-#     # learner_class: online
-#     # ml_potential: ft_en
-#     # name: online1498818_0_22_1g_partialfit_lr3e4_200ep
-#     # parent_calc: vaspinteractive
 #     traj: /home/jovyan/shared-scratch/joe/30_randoms/random1498818.traj
 ocp:
   checkpoint_path_list:
@@ -56,10 +51,11 @@ ocp:
   model_class_list:
   - gemnet
   model_path_list:
-  - /home/jovyan/almlp_ocp/gemnet-dT.yml
+  - finetuna/ml_potentials/ocp_models/gemnet_t/configs/gemnet-dT.yml
 relaxation:
   fmax: 0.03
   max_parent_calls: null
   maxstep: 0.2
   replay_method: parent_only
   steps: null
+  trajname: oal_relaxation.traj
