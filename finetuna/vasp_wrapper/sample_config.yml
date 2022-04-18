@@ -46,12 +46,12 @@ learner:
 #   links:
 #     traj: /home/jovyan/shared-scratch/joe/30_randoms/random1498818.traj
 ocp:
-  checkpoint_path_list:
-  - /home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_s2re_bagging_results/gem_homo_run0.pt
   model_class_list:
   - gemnet
-  model_path_list:
-  - finetuna/ml_potentials/ocp_models/gemnet_t/configs/gemnet-dT.yml
+  # model_path_list:
+  # - /home/jovyan/finetuna/finetuna/ml_potentials/ocp_models/gemnet_t/configs/gemnet-dT.yml
+  checkpoint_path_list:
+  - /home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_s2re_bagging_results/gem_homo_run0.pt
 relaxation:
   fmax: 0.03
   max_parent_calls: null

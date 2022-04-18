@@ -13,6 +13,7 @@ from finetuna.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
 from finetuna.online_learner.online_learner import OnlineLearner
 from finetuna.atomistic_methods import parent_only_replay
 import argparse
+from importlib_resources import files
 
 
 def main(args):
@@ -33,11 +34,16 @@ def main(args):
     # Set up Finetuner calculator
     ml_potential = FinetunerEnsembleCalc(
         model_classes=parsed_yaml_file["ocp"]["model_class_list"],
-        model_paths=parsed_yaml_file["ocp"]["model_path_list"],
+        model_paths=[
+            str(
+                files("finetuna.ml_potentials.ocp_models.gemnet_t.configs").joinpath(
+                    "gemnet-dT.yml"
+                )
+            )
+        ],
         checkpoint_paths=parsed_yaml_file["ocp"]["checkpoint_path_list"],
         mlp_params=finetuner,
     )
-
     with vasp_interactive as parent_calc:
         onlinecalc = OnlineLearner(
             learner_params,
@@ -65,7 +71,7 @@ if __name__ == "__main__":
         "-c",
         "--config",
         type=str,
-        default="finetuna/vasp_wrapper/sample_config.yml",
+        default=files("finetuna.vasp_wrapper").joinpath("sample_config.yml"),
         help="Path to the config file",
     )
     parser.add_argument(
