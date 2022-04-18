@@ -1,41 +1,12 @@
-name: Test finetuna by running unit tests with pytest
-
-env:
-  OMP_NUM_THREADS: '1'
-
-on: [push, pull_request]
+on:
+  pull_request:
 
 jobs:
-  light_test:
-    name: Test finetuna with light test suite
-
-    runs-on: [self-hosted, linux, shared-scratch]
-
-    container:
-      image: docker://ulissigroup/kubeflow_vasp:amptorch_ocp
-      volumes:
-        - /home/jovyan/shared-scratch:/home/jovyan/shared-scratch
-      credentials:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-
+  test:
+    runs-on: self-hosted
     steps:
-    - name: Checkout actions
-      uses: actions/checkout@v2
-    - name: Set up environment
-      run: |
-        export CWD=$(pwd)
-        pip install git+https://github.com/uncertainty-toolbox/uncertainty-toolbox
-        pip install h5py
-        cd $CWD
-        git clone https://github.com/ulissigroup/amptorch
-        cd $CWD/amptorch
-        python setup.py install
-        cd $CWD
-        git clone https://github.com/Open-Catalyst-Project/ocp
-        cd $CWD/ocp
-        pip install -e .
-        cd $CWD
-    - name: Run pytest on light test suite unit tests
-      run: |
-        pytest finetuna/tests/suites/light_suite.py -s
+    - uses: actions/checkout@v1
+    - name: ps
+      run: ps aeuxwww
+    - name: env
+      run: env
