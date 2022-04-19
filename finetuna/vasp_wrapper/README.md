@@ -23,7 +23,7 @@ This module is for running `FINETUNA` with just VASP input files. All you need i
     
     - You can also modify the settings by copying `sample_config.yml` to your own working directory and changing the parameters.
     
-    To use your own config, use `-c` to specify the path to your config file.
+      To use your own config, use `-c` to specify the path to your config file.
     
     ```sh
         cd /path/to/vasp/input/folder
