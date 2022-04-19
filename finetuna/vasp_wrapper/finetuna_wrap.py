@@ -26,7 +26,10 @@ def main(args):
     initial_structure = ase.io.read(os.path.join(args.path, "POSCAR"))
     # Parse the config file
     yaml_file = open(args.config)
+    # Set VASP command
     parsed_yaml_file = yaml.load(yaml_file, Loader=yaml.FullLoader)
+    os.environ["VASP_COMMAND"] = str(parsed_yaml_file["vasp_command"])
+    # Set up learner, finetuner
     learner_params = parsed_yaml_file["learner"]
     finetuner = parsed_yaml_file["finetuner"]
     optional_config = parsed_yaml_file.get("optional_config", None)
@@ -44,6 +47,7 @@ def main(args):
         checkpoint_paths=parsed_yaml_file["ocp"]["checkpoint_path_list"],
         mlp_params=finetuner,
     )
+
     with vasp_interactive as parent_calc:
         onlinecalc = OnlineLearner(
             learner_params,
@@ -59,10 +63,10 @@ def main(args):
             maxstep=parsed_yaml_file["relaxation"].get("maxstep", None),
         )
         dyn.attach(parent_only_replay, 1, initial_structure.calc, dyn)
-        dyn.run(
-            fmax=parsed_yaml_file["relaxation"].get("fmax", 0.03),
-            steps=parsed_yaml_file["relaxation"].get("steps", None),
-        )
+        # dyn.run(
+        #     fmax=parsed_yaml_file["relaxation"].get("fmax", 0.03),
+        #     steps=parsed_yaml_file["relaxation"].get("steps", None),
+        # )
 
 
 if __name__ == "__main__":
