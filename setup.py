@@ -6,10 +6,12 @@ setup(
     version="0.1",
     description="Fine-Tuning Accelerated Molecular Simulations",
     url="https://github.com/ulissigroup/finetuna",
-    author="Joseph Musielewicz, Lory Wang",
+    author="Joseph Musielewicz, Xiaoxiao Wang",
     author_email="al.mlp.package@gmail.com",
     packages=find_packages(),
     include_package_data=True,
-    install_requires=["ase"],
-    long_description="""Module for performing active learning by fine-tuning pre-trained machine learning potentials to accelerate molecular simulations.""",
+    install_requires=["ase", "importlib_resources"],
+    scripts=["finetuna/vasp_wrapper/finetuna_wrap.py"],
+    long_description="""Module for performing active learning by fine-tuning pre-trained machine learning
+     potentials to accelerate molecular simulations.""",
 )

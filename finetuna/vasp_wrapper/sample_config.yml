@@ -1,15 +1,22 @@
+vasp_command: mpirun -q -np 8 /opt/vasp.6.1.2_pgi_mkl/bin/vasp_std --map-by hwthread
+
 finetuner:
 - optim:
     batch_size: 10
+    break_below_lr: 1.0e-07
     checkpoint_every: 100000
+    eps: 1.0e-08
     eval_every: 1
-    factor: 0.7
+    factor: 0.9
+    force_coefficient: 100
     lr_initial: 0.0003
-    max_epochs: 200
+    max_epochs: 400
     num_workers: 0
     optimizer_params:
+      eps: 1.0e-08
       weight_decay: 0
     patience: 3
+    print_loss_and_lr: true
     scheduler_loss: train
     weight_decay: 0
   task:
@@ -21,6 +28,14 @@ finetuner:
     - out_blocks.3.scale_rbf_F
     - out_blocks.3.dense_rbf_F
     - out_blocks.3.out_forces
+    - out_blocks.2.seq_forces
+    - out_blocks.2.scale_rbf_F
+    - out_blocks.2.dense_rbf_F
+    - out_blocks.2.out_forces
+    - out_blocks.1.seq_forces
+    - out_blocks.1.scale_rbf_F
+    - out_blocks.1.dense_rbf_F
+    - out_blocks.1.out_forces
 learner:
   dyn_avg_steps: 15
   dyn_uncertain_tol: 1000000
@@ -35,31 +50,27 @@ learner:
   stat_uncertain_tol: 1000000
   tolerance_selection: min
   # valset_system_id: '1498818'
-  # wandb_init:
-  #   entity: ulissi-group
-  #   group: group
-  #   name: name
-  #   notes: notes
-  #   project: project
-  #   wandb_log: true
+  wandb_init:
+    entity: ulissi-group
+    project: almlp
+    group: ipa
+    name: rpbe
+    notes: notes
+    wandb_log: true
 # optional_config:
 #   links:
-#     # images_path: /home/jovyan/joe-job-vol/6_true_30_randoms/0_ft_unfrz_diff_blks/0_22_1g_partialfit_lr3e4_200ep/online1498818_0_22_1g_partialfit_lr3e4_200ep_0/pretrain_images.db
-#     # learner_class: online
-#     # ml_potential: ft_en
-#     # name: online1498818_0_22_1g_partialfit_lr3e4_200ep
-#     # parent_calc: vaspinteractive
 #     traj: /home/jovyan/shared-scratch/joe/30_randoms/random1498818.traj
 ocp:
-  checkpoint_path_list:
-  - /home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_s2re_bagging_results/gem_homo_run0.pt
   model_class_list:
   - gemnet
-  model_path_list:
-  - /home/jovyan/almlp_ocp/gemnet-dT.yml
+  # model_path_list:
+  # - /home/jovyan/finetuna/finetuna/ml_potentials/ocp_models/gemnet_t/configs/gemnet-dT.yml
+  checkpoint_path_list:
+  - /home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_s2re_bagging_results/gem_homo_run0.pt
 relaxation:
   fmax: 0.03
   max_parent_calls: null
   maxstep: 0.2
   replay_method: parent_only
   steps: null
+  trajname: oal_relaxation.traj

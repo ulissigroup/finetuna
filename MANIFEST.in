@@ -1,1 +1,3 @@
-include finetuna/base_calcs/morse_params/*.csv
+includes finetuna/base_calcs/morse_params/*.csv
+includes finetuna/vasp_wrapper/*
+includes finetuna/ml_potentials/ocp_models/gemnet_t/configs/*
