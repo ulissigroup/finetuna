@@ -56,7 +56,7 @@ learner:
     group: group
     name: name
     notes: notes
-    wandb_log: true
+    wandb_log: false # Wandb disabled
 # optional_config:
 #   links:
 #     traj: /path/to/vasp/reference/traj
