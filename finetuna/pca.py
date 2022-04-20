@@ -10,6 +10,9 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from ase.constraints import constrained_indices
 from flare_pp._C_flare import Structure, B2
+from finetuna.ml_potentials.ocp_models.gemnet_t.descriptor_gemnet_t import (
+    DescriptorGemNetT,
+)
 
 
 class TrajPCA:
@@ -18,13 +21,22 @@ class TrajPCA:
     for use on later atoms objects parameters.
     """
 
-    def __init__(self, traj):
+    def __init__(
+        self,
+        traj,
+        gemnet_descriptor_model_checkpoint_path=None,
+    ):
         """
         Arguments
         ----------
         traj: Trajectory
             the parent Trajectory for this system to be compared to
         """
+        if gemnet_descriptor_model_checkpoint_path is not None:
+            self.descriptor_model = DescriptorGemNetT(
+                gemnet_descriptor_model_checkpoint_path
+            )
+
         self.species_map = init_species_map(traj[0])
         self.b2calc = B2(
             "chebyshev",
