@@ -63,10 +63,10 @@ def main(args):
             maxstep=parsed_yaml_file["relaxation"].get("maxstep", None),
         )
         dyn.attach(parent_only_replay, 1, initial_structure.calc, dyn)
-        # dyn.run(
-        #     fmax=parsed_yaml_file["relaxation"].get("fmax", 0.03),
-        #     steps=parsed_yaml_file["relaxation"].get("steps", None),
-        # )
+        dyn.run(
+            fmax=parsed_yaml_file["relaxation"].get("fmax", 0.03),
+            steps=parsed_yaml_file["relaxation"].get("steps", None),
+        )
 
 
 if __name__ == "__main__":
