@@ -13,8 +13,6 @@ import math
 import numpy as np
 from uncertainty_toolbox.metrics import get_all_metrics
 
-from finetuna.pca import TrajPCA
-
 
 class Logger:
     """
@@ -116,6 +114,8 @@ class Logger:
             )
 
             if self.pca_quantify:
+                from finetuna.pca import TrajPCA
+
                 self.pca_analyzer = TrajPCA(self.parent_traj)
 
     def write(self, atoms: Atoms, info: dict, extra_info: dict = {}):
