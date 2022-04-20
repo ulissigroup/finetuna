@@ -58,7 +58,13 @@ class FinetunerCalc(MLPCalc):
         mlp_params: dict = {},
     ):
 
-        if model_name not in ["gemnet", "spinconv", "dimenetpp", "adapter_gemnet_t"]:
+        if model_name not in [
+            "gemnet",
+            "spinconv",
+            "dimenetpp",
+            "adapter_gemnet_t",
+            "gemnet_oc",
+        ]:
             raise ValueError("Invalid model name provided")
 
         if "optimizer" in mlp_params.get("optim", {}):
@@ -119,6 +125,21 @@ class FinetunerCalc(MLPCalc):
                 "out_blocks.3.dense_rbf_F",
                 # "out_blocks.3.out_forces",
                 "project_f",
+            ]
+        elif self.model_name == "gemnet_oc":
+            self.unfreeze_blocks = [
+                "out_blocks.6.seq_forces",
+                "out_blocks.6.dense_rbf_F",
+                "out_blocks.5.seq_forces",
+                "out_blocks.5.dense_rbf_F",
+                "out_blocks.4.seq_forces",
+                "out_blocks.4.dense_rbf_F",
+                "out_blocks.3.seq_forces",
+                "out_blocks.3.dense_rbf_F",
+                "out_blocks.2.seq_forces",
+                "out_blocks.2.dense_rbf_F",
+                "out_blocks.1.seq_forces",
+                "out_blocks.1.dense_rbf_F",
             ]
         if "unfreeze_blocks" in self.mlp_params["tuner"]:
             if isinstance(self.mlp_params["tuner"]["unfreeze_blocks"], list):
