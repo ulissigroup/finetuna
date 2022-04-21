@@ -19,5 +19,5 @@ This module is for running `FINETUNA` with just VASP input files. All you need i
     ```
         or
     ```sh
-        finetuna.py -c /path/to/config/file -p /path/to/vasp/input/folder
+        finetuna_wrap.py -c /path/to/config/file -p /path/to/vasp/input/folder
     ```
