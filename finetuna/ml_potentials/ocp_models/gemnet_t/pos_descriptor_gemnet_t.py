@@ -210,5 +210,60 @@ if __name__ == "__main__":
     traj = Trajectory(
         "/home/jovyan/joe-job-vol/6_true_30_randoms/0_ft_unfrz_diff_blks/0_50_copy49_2g_dynunc25_kstep1000/online440438_0_50_copy49_2g_dynunc25_kstep1000_0/ft_en_C2H8In32N2Zr16_oal.traj"
     )
+    traj = [
+        image
+        for i, image in enumerate(traj)
+        if i
+        in [
+            0,
+            1,
+            2,
+            3,
+            4,
+            10,
+            20,
+            30,
+            40,
+            50,
+            60,
+            70,
+            80,
+            90,
+            100,
+            110,
+            120,
+            128,
+            129,
+            130,
+        ]
+    ]
     pdesc = dgem.get_positional_descriptor(traj[0])
-    print(pdesc)
+
+    from finetuna.pca import TrajPCA
+
+    tp = TrajPCA(
+        traj,
+        gemnet_descriptor_model_checkpoint_path="/home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_t_direct_h512_all.pt",
+    )
+
+    import matplotlib.pyplot as plt
+
+    plt.figure()
+    xl = []
+    yl = []
+    for image in traj:
+        x, y = tp.analyze_image(image)
+        xl.append(x)
+        yl.append(y)
+    plt.plot(xl, yl)
+
+    tp = TrajPCA(traj)
+    xl = []
+    yl = []
+    for image in traj:
+        x, y = tp.analyze_image(image)
+        xl.append(x)
+        yl.append(y)
+    plt.plot(xl, yl)
+
+    plt.savefig("pca_plot.png")
