@@ -67,7 +67,7 @@ class TrajPCA:
         transformed = self.standard_scaler.fit_transform(sub_array)
 
         self.pca = PCA(n_components=2)
-        principal_components = self.pca.fit_transform(transformed)
+        self.principal_components = self.pca.fit_transform(transformed).T
 
     def analyze_image(self, image):
         """
