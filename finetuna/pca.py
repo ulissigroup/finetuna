@@ -9,7 +9,6 @@ from ase.db import connect
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from ase.constraints import constrained_indices
-from flare_pp._C_flare import Structure, B2
 from finetuna.ml_potentials.ocp_models.gemnet_t.pos_descriptor_gemnet_t import (
     PosDescriptorGemNetT,
 )
@@ -33,32 +32,30 @@ class TrajPCA:
             the parent Trajectory for this system to be compared to
         """
         if gemnet_descriptor_model_checkpoint_path is not None:
+            self.des_type = "ocp"
             self.descriptor_model = PosDescriptorGemNetT(
                 gemnet_descriptor_model_checkpoint_path
             )
+        else:
+            from flare_pp._C_flare import Structure, B2
 
-        self.species_map = init_species_map(traj[0])
-        self.b2calc = B2(
-            "chebyshev",
-            "quadratic",
-            [0, 5],
-            [],
-            [len(self.species_map), 12, 3],
-        )
+            self.flare_structure_class = Structure
+            self.des_type = "flare"
+            self.species_map = init_species_map(traj[0])
+            self.b2calc = B2(
+                "chebyshev",
+                "quadratic",
+                [0, 5],
+                [],
+                [len(self.species_map), 12, 3],
+            )
 
         energies = []
         des_list = []
         energies.append([j.get_potential_energy() for j in traj])
         for j in range(len(traj)):
             atoms = traj[j]
-            structure_descriptor = Structure(
-                atoms.get_cell(),
-                [self.species_map[x] for x in atoms.get_atomic_numbers()],
-                atoms.get_positions(),
-                5,
-                [self.b2calc],
-            )
-            des = structure_descriptor.descriptors[0].descriptors
+            des = self.get_des(atoms)
             des_reshape = []
             for a in des:
                 for b in a:
@@ -81,6 +78,21 @@ class TrajPCA:
         self.pca = PCA(n_components=2)
         principal_components = self.pca.fit_transform(transformed)
 
+    def get_des(self, atoms):
+        if self.des_type == "flare":
+            structure_descriptor = self.flare_structure_class(
+                atoms.get_cell(),
+                [self.species_map[x] for x in atoms.get_atomic_numbers()],
+                atoms.get_positions(),
+                5,
+                [self.b2calc],
+            )
+            des = structure_descriptor.descriptors[0].descriptors
+            return des
+        elif self.des_type == "ocp":
+            des = self.descriptor_model.get_positional_descriptor(atoms)
+            return des[0]
+
     def analyze_image(self, image):
         """
         Arguments
@@ -88,14 +100,7 @@ class TrajPCA:
         image: Atoms
             the specific ase Atoms object to compare to the traj
         """
-        image_structure_descriptor = Structure(
-            image.get_cell(),
-            [self.species_map[x] for x in image.get_atomic_numbers()],
-            image.get_positions(),
-            5,
-            [self.b2calc],
-        )
-        des = image_structure_descriptor.descriptors[0].descriptors
+        des = self.get_des(image)
         des_reshape = []
         for a in des:
             for b in a:
@@ -253,6 +258,8 @@ def des_pca(traj_dict, fig_title=None):
     fig_title: str
         Title of the PCA plot.
     """
+    from flare_pp._C_flare import Structure, B2
+
     types = []
     trajs = []
     energy = []
