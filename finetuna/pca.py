@@ -10,8 +10,8 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from ase.constraints import constrained_indices
 from flare_pp._C_flare import Structure, B2
-from finetuna.ml_potentials.ocp_models.gemnet_t.descriptor_gemnet_t import (
-    DescriptorGemNetT,
+from finetuna.ml_potentials.ocp_models.gemnet_t.pos_descriptor_gemnet_t import (
+    PosDescriptorGemNetT,
 )
 
 
@@ -33,7 +33,7 @@ class TrajPCA:
             the parent Trajectory for this system to be compared to
         """
         if gemnet_descriptor_model_checkpoint_path is not None:
-            self.descriptor_model = DescriptorGemNetT(
+            self.descriptor_model = PosDescriptorGemNetT(
                 gemnet_descriptor_model_checkpoint_path
             )
 
