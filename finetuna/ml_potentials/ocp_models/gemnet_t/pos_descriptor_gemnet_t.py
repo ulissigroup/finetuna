@@ -82,7 +82,7 @@ class PosDescriptorGemNetT(GemNetT):
             total=len(data_loader),
             position=rank,
             desc="device {}".format(rank),
-            disable=False,
+            disable=True,
         ):
             for batch in batch_list:
                 out = self.forward(batch)

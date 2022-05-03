@@ -12,6 +12,7 @@ from ase.constraints import constrained_indices
 from finetuna.ml_potentials.ocp_models.gemnet_t.pos_descriptor_gemnet_t import (
     PosDescriptorGemNetT,
 )
+from tqdm import tqdm
 
 
 class TrajPCA:
@@ -53,8 +54,13 @@ class TrajPCA:
         energies = []
         des_list = []
         energies.append([j.get_potential_energy() for j in traj])
-        for j in range(len(traj)):
-            atoms = traj[j]
+        for j, atoms in tqdm(
+            enumerate(traj),
+            total=len(traj),
+            position=1,
+            desc="init PCA",
+            disable=False,
+        ):
             des = self.get_des(atoms)
             des_reshape = []
             for a in des:
@@ -76,7 +82,7 @@ class TrajPCA:
         transformed = self.standard_scaler.fit_transform(sub_array)
 
         self.pca = PCA(n_components=2)
-        principal_components = self.pca.fit_transform(transformed)
+        self.principal_components = self.pca.fit_transform(transformed).T
 
     def get_des(self, atoms):
         if self.des_type == "flare":
