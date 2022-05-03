@@ -28,7 +28,7 @@ def main(args):
     # Read the initial structure
     initial_structure = ase.io.read(os.path.join(args.path, "POSCAR"))
     # Parse the config file
-    yaml_file = open(files("finetuna.vasp_wrapper").joinpath("sample_config.yml"))
+    yaml_file = open(args.config)
     # Set VASP command
     parsed_yaml_file = yaml.load(yaml_file, Loader=yaml.FullLoader)
     # Set up learner, finetuner
