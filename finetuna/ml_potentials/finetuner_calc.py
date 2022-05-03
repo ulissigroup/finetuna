@@ -188,6 +188,9 @@ class FinetunerCalc(MLPCalc):
         self.ml_model = True
         self.trainer.train_dataset = GenericDB()
 
+        self.trainer.step = 0
+        self.trainer.epoch = 0
+
     def calculate_ml(self, atoms, properties, system_changes) -> tuple:
         """
         Give ml model the ocp_descriptor to calculate properties : energy, forces, uncertainties.
@@ -293,8 +296,9 @@ class FinetunerCalc(MLPCalc):
         """
         Overwritable if doing ensembling of ocp models
         """
-        self.trainer.step = 0
-        self.trainer.epoch = 0
+        self.trainer.config["optim"]["max_epochs"] = int(
+            self.trainer.epoch + self.mlp_params["optim"]["max_epochs"]
+        )
         self.trainer.load_optimizer()
         self.trainer.load_extras()
 
@@ -561,6 +565,11 @@ class Trainer(ForcesTrainer):
 
                 # Evaluate on val set every `eval_every` iterations.
                 if self.step % eval_every == 0:
+                    if self.test_loader is not None:
+                        test_metrics = self.validate(
+                            split="test",
+                            disable_tqdm=disable_eval_tqdm,
+                        )
                     if self.val_loader is not None:
                         val_metrics = self.validate(
                             split="val",
@@ -598,7 +607,7 @@ class Trainer(ForcesTrainer):
                         + ", \tlr: "
                         + str(self.scheduler.get_lr())
                         + ", \tval: "
-                        + str(val_metrics["loss"]["total"])
+                        + str(val_metrics["loss"]["metric"])
                     ) if self.step % eval_every == 0 and self.val_loader is not None else print(
                         "epoch: "
                         + str(self.epoch)
