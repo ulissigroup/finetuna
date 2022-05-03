@@ -1,5 +1,3 @@
-vasp_command: mpirun -q -np 8 /opt/vasp.6.1.2_pgi_mkl/bin/vasp_std --map-by hwthread
-
 finetuner:
 - optim:
     batch_size: 10
@@ -16,7 +14,7 @@ finetuner:
       eps: 1.0e-08
       weight_decay: 0
     patience: 3
-    print_loss_and_lr: true
+    # print_loss_and_lr: true
     scheduler_loss: train
     weight_decay: 0
   task:
@@ -66,7 +64,7 @@ ocp:
   checkpoint_path_list:
   - /home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_s2re_bagging_results/gem_homo_run0.pt
 relaxation:
-  fmax: 0.03
+  # fmax: 0.03
   max_parent_calls: null
   maxstep: 0.2
   replay_method: parent_only
