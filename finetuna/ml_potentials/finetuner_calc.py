@@ -16,6 +16,8 @@ from ocpmodels.common import distutils
 import logging
 import numpy as np
 from finetuna.ml_potentials.ocp_models.adapter_gemnet_t import adapter_gemnet_t
+import torch.nn as nn
+from ocpmodels.modules.loss import DDPLoss, L2MAELoss
 
 
 class FinetunerCalc(MLPCalc):
@@ -652,3 +654,38 @@ class Trainer(ForcesTrainer):
             self.val_dataset.close_db()
         if "test_dataset" in self.config:
             self.test_dataset.close_db()
+
+    def load_loss(self):
+        self.loss_fn = {}
+        self.loss_fn["energy"] = self.config["optim"].get("loss_energy", "mae")
+        self.loss_fn["force"] = self.config["optim"].get("loss_force", "mae")
+        for loss, loss_name in self.loss_fn.items():
+            if loss_name in ["l1", "mae"]:
+                self.loss_fn[loss] = nn.L1Loss()
+            elif loss_name == "mse":
+                self.loss_fn[loss] = nn.MSELoss()
+            elif loss_name == "l2mae":
+                self.loss_fn[loss] = L2MAELoss()
+            elif loss_name == "rell2mae":
+                self.loss_fn[loss] = RelativeL2MAELoss()
+            else:
+                raise NotImplementedError(f"Unknown loss function name: {loss_name}")
+            if distutils.initialized():
+                self.loss_fn[loss] = DDPLoss(self.loss_fn[loss])
+
+
+class RelativeL2MAELoss(nn.Module):
+    def __init__(self, reduction="mean"):
+        super().__init__()
+        self.reduction = reduction
+        assert reduction in ["mean", "sum"]
+
+    def forward(self, input: torch.Tensor, target: torch.Tensor):
+        diff = input - target
+        relative = (target**2).sum(axis=1).sqrt()
+        relative_diff = (diff.T / relative).T
+        dists = torch.norm(relative_diff, p=2, dim=-1)
+        if self.reduction == "mean":
+            return torch.mean(dists)
+        elif self.reduction == "sum":
+            return torch.sum(dists)
