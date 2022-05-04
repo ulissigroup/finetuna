@@ -9,8 +9,8 @@ from ase.db import connect
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from ase.constraints import constrained_indices
-from finetuna.ml_potentials.ocp_models.gemnet_t.pos_descriptor_gemnet_t import (
-    PosDescriptorGemNetT,
+from finetuna.ml_potentials.ocp_models.gemnet_t.int_descriptor_gemnet_t import (
+    IntDescriptorGemNetT,
 )
 from tqdm import tqdm
 
@@ -34,7 +34,7 @@ class TrajPCA:
         """
         if gemnet_descriptor_model_checkpoint_path is not None:
             self.des_type = "ocp"
-            self.descriptor_model = PosDescriptorGemNetT(
+            self.descriptor_model = IntDescriptorGemNetT(
                 gemnet_descriptor_model_checkpoint_path
             )
         else:
@@ -96,7 +96,7 @@ class TrajPCA:
             des = structure_descriptor.descriptors[0].descriptors
             return des
         elif self.des_type == "ocp":
-            des = self.descriptor_model.get_positional_descriptor(atoms)
+            des = self.descriptor_model.get_int_block_descriptor(atoms)
             return des[0]
 
     def analyze_image(self, image):

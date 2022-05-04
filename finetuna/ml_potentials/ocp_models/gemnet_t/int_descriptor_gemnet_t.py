@@ -14,8 +14,8 @@ import inspect
 from ocpmodels.preprocessing import AtomsToGraphs
 
 
-@registry.register_model("pos_descriptor_gemnet_t")
-class PosDescriptorGemNetT(GemNetT):
+@registry.register_model("int_descriptor_gemnet_t")
+class IntDescriptorGemNetT(GemNetT):
     def __init__(
         self,
         checkpoint_path,
@@ -60,7 +60,7 @@ class PosDescriptorGemNetT(GemNetT):
         else:
             self.load_state_dict(checkpoint["state_dict"])
 
-    def get_positional_descriptor(self, atoms):
+    def get_int_block_descriptor(self, atoms):
         data_object = self.a2g.convert(atoms)
         data_loader = data_list_collater([data_object])
 
