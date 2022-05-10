@@ -7,6 +7,7 @@ from sklearn.gaussian_process.kernels import (
     Matern,
     RationalQuadratic,
 )
+import gpytorch
 
 
 class OCPDGPCalc(OCPDCalc):
@@ -14,7 +15,6 @@ class OCPDGPCalc(OCPDCalc):
 
     def __init__(
         self,
-        model_path: str,
         checkpoint_path: str,
         gp_params: dict = {},
     ):
@@ -46,7 +46,7 @@ class OCPDGPCalc(OCPDCalc):
                     else:
                         raise ValueError("no/invalid kernel operation given")
 
-        super().__init__(model_path, checkpoint_path, mlp_params=gp_params)
+        super().__init__(checkpoint_path, mlp_params=gp_params)
 
     def init_model(self):
         self.ml_model = True
@@ -72,3 +72,15 @@ class OCPDGPCalc(OCPDCalc):
         self, new_energies, new_forces, new_e_descriptors, new_f_descriptors
     ):
         raise NotImplementedError
+
+
+class ExactGPModel(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y, likelihood):
+        super(ExactGPModel, self).__init__(train_x, train_y, likelihood)
+        self.mean_module = gpytorch.means.ConstantMean()
+        self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel())
+
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
