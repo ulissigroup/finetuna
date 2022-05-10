@@ -88,9 +88,9 @@ class IntDescriptorGemNetT(GemNetT):
                 out = self.forward(batch)
                 descriptor.append(out)
 
-        out_h = descriptor[0][0].detach().numpy()
-        out_m = descriptor[0][1].detach().numpy()
-        return out_h, out_m
+        h_atom_embeddings = descriptor[0][0]
+        m_edge_embeddings = descriptor[0][1]
+        return h_atom_embeddings, m_edge_embeddings
 
     @conditional_grad(torch.enable_grad())
     def forward(self, data):

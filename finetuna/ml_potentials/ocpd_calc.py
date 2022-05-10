@@ -2,6 +2,9 @@ from ase.calculators.calculator import all_changes
 from ase.atoms import Atoms
 from finetuna.ml_potentials.ml_potential_calc import MLPCalc
 from finetuna.ocp_descriptor import OCPDescriptor
+from finetuna.ml_potentials.ocp_models.gemnet_t.int_descriptor_gemnet_t import (
+    IntDescriptorGemNetT,
+)
 
 
 class OCPDCalc(MLPCalc):
@@ -26,15 +29,14 @@ class OCPDCalc(MLPCalc):
 
     def __init__(
         self,
-        model_path: str,
         checkpoint_path: str,
         mlp_params: dict = {},
     ):
         MLPCalc.__init__(self, mlp_params=mlp_params)
 
-        self.ocp_describer = OCPDescriptor(
-            model_path=model_path,
+        self.ocp_describer = IntDescriptorGemNetT(
             checkpoint_path=checkpoint_path,
+            cpu=mlp_params.get("cpu", True),
         )
 
         self.init_model()
@@ -121,6 +123,7 @@ class OCPDCalc(MLPCalc):
 
             new_dataset: list of just the new descriptors to partially fit on
         """
+        self.reset()
         if not self.ml_model or not new_dataset:
             self.init_model()
             self.fit(*self.get_data_from_atoms(parent_dataset))
@@ -144,7 +147,5 @@ class OCPDCalc(MLPCalc):
         """ "
         Overwritable method for getting the ocp descriptor from atoms objects
         """
-        ocp_descriptor = self.ocp_describer.gemnet_forward(atoms)
-        e_desc = ocp_descriptor[0].detach().numpy().flatten()
-        f_desc = ocp_descriptor[1].detach().numpy().flatten()
-        return e_desc, f_desc
+        atom_emb, edge_emb = self.ocp_describer.get_int_block_descriptor(atoms)
+        return atom_emb.flatten(), edge_emb.flatten()
