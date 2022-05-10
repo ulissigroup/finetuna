@@ -360,6 +360,18 @@ class FinetunerCalc(MLPCalc):
 
         return data_loader
 
+    def set_lr(self, lr):
+        self.trainer.config["optim"]["lr_initial"] = lr
+
+    def set_max_epochs(self, max_epochs):
+        self.mlp_params["optim"]["max_epochs"] = max_epochs
+
+    def set_validation(self, val_set: "list[Atoms]"):
+        self.trainer.val_loader = self.get_data_from_atoms(val_set)
+
+    def set_test(self, test_set: "list[Atoms]"):
+        self.trainer.test_loader = self.get_data_from_atoms(test_set)
+
 
 class GraphsListDataset(Dataset):
     def __init__(self, graphs_list):

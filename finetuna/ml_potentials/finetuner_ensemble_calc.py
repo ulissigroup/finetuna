@@ -1,5 +1,6 @@
 from finetuna.ml_potentials.finetuner_calc import FinetunerCalc
 from finetuna.ml_potentials.ml_potential_calc import MLPCalc
+from ase.atoms import Atoms
 import numpy as np
 import copy
 import time
@@ -164,6 +165,22 @@ class FinetunerEnsembleCalc(FinetunerCalc):
             save_dict["finetuner"].append(calc.mlp_params)
         with open(config_file, "w") as file:
             yaml.dump(save_dict, file)
+
+    def set_lr(self, lr):
+        for finetuner in self.finetuner_calcs:
+            finetuner.set_lr(lr)
+
+    def set_max_epochs(self, max_epochs):
+        for finetuner in self.finetuner_calcs:
+            finetuner.set_max_epochs(max_epochs)
+
+    def set_validation(self, val_set: "list[Atoms]"):
+        for finetuner in self.finetuner_calcs:
+            finetuner.set_validation(val_set)
+
+    def set_test(self, test_set: "list[Atoms]"):
+        for finetuner in self.finetuner_calcs:
+            finetuner.set_test(test_set)
 
     @classmethod
     def load(cls, saved_config_file):
