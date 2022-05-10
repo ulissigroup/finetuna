@@ -427,12 +427,16 @@ class Trainer(ForcesTrainer):
             del config["dataset"]["src"]
             config["normalizer"] = config["dataset"]
 
+        identifier = ""
+        if hasattr(config.get("logger", {}), "get"):
+            identifier = config.get("logger", {}).get("identifier", "")
+
         super().__init__(
             task=config["task"],
             model=config["model"],
             dataset=None,
             optimizer=config["optim"],
-            identifier="",
+            identifier=identifier,
             normalizer=config["normalizer"],
             slurm=config.get("slurm", {}),
             local_rank=config.get("local_rank", 0),
