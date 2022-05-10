@@ -1,5 +1,3 @@
-vasp_command: mpirun -q -np 8 /opt/vasp.6.1.2_pgi_mkl/bin/vasp_std --map-by hwthread
-
 finetuner:
 - optim:
     batch_size: 10
@@ -16,7 +14,7 @@ finetuner:
       eps: 1.0e-08
       weight_decay: 0
     patience: 3
-    print_loss_and_lr: true
+    # print_loss_and_lr: true
     scheduler_loss: train
     weight_decay: 0
   task:
@@ -38,37 +36,35 @@ finetuner:
     - out_blocks.1.out_forces
 learner:
   dyn_avg_steps: 15
-  dyn_uncertain_tol: 1000000
-  fmax_verify_threshold: 0.03
+  dyn_uncertain_tol: 1000000 # Dynamic uncertainty tolerance
+  fmax_verify_threshold: 0.03 # Fmax threshold for calling VASP single point calculation
   initial_points_to_keep: []
   logger:
-    pca_quantify: true
+    pca_quantify: true # Log PCA on wandb
     uncertainty_quantify: false
-  num_initial_points: 0
+  num_initial_points: 0  # Number of VASP calls at the beginning of the relaxation
   partial_fit: true
-  query_every_n_steps: 100
-  stat_uncertain_tol: 1000000
+  query_every_n_steps: 100 # K-steps querying strategy: query every 100 steps
+  stat_uncertain_tol: 1000000 # Static uncertainty tolerance
   tolerance_selection: min
   # valset_system_id: '1498818'
   wandb_init:
     entity: ulissi-group
-    project: almlp
-    group: ipa
-    name: rpbe
+    project: project
+    group: group
+    name: name
     notes: notes
-    wandb_log: true
+    wandb_log: false # Wandb disabled
 # optional_config:
 #   links:
-#     traj: /home/jovyan/shared-scratch/joe/30_randoms/random1498818.traj
+#     traj: /path/to/vasp/reference/traj
 ocp:
   model_class_list:
   - gemnet
-  # model_path_list:
-  # - /home/jovyan/finetuna/finetuna/ml_potentials/ocp_models/gemnet_t/configs/gemnet-dT.yml
   checkpoint_path_list:
   - /home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_s2re_bagging_results/gem_homo_run0.pt
 relaxation:
-  fmax: 0.03
+  # fmax: 0.03
   max_parent_calls: null
   maxstep: 0.2
   replay_method: parent_only

@@ -18,23 +18,25 @@ from importlib_resources import files
 
 def main(args):
     # Initialize VASP interactive calculator with VASP input from the path provided
-    vasp_interactive = VaspInteractive()
+    os.chdir(args.path)
+    print("------Initializing VASP Interactive Calculator------")
+    vasp_interactive = VaspInteractive(directory=args.path)
     vasp_interactive.read_incar(filename=os.path.join(args.path, "INCAR"))
     vasp_interactive.read_kpoints(filename=os.path.join(args.path, "KPOINTS"))
     vasp_interactive.read_potcar(filename=os.path.join(args.path, "POTCAR"))
+
     # Read the initial structure
     initial_structure = ase.io.read(os.path.join(args.path, "POSCAR"))
     # Parse the config file
     yaml_file = open(args.config)
     # Set VASP command
     parsed_yaml_file = yaml.load(yaml_file, Loader=yaml.FullLoader)
-    os.environ["VASP_COMMAND"] = str(parsed_yaml_file["vasp_command"])
     # Set up learner, finetuner
     learner_params = parsed_yaml_file["learner"]
     finetuner = parsed_yaml_file["finetuner"]
     optional_config = parsed_yaml_file.get("optional_config", None)
-    pretrain_dataset = []
     # Set up Finetuner calculator
+    print("------Setting up Finetuner Calculator------")
     ml_potential = FinetunerEnsembleCalc(
         model_classes=parsed_yaml_file["ocp"]["model_class_list"],
         model_paths=[
@@ -44,10 +46,9 @@ def main(args):
                 )
             )
         ],
-        checkpoint_paths=parsed_yaml_file["ocp"]["checkpoint_path_list"],
+        checkpoint_paths=[args.checkpoint],
         mlp_params=finetuner,
     )
-
     with vasp_interactive as parent_calc:
         onlinecalc = OnlineLearner(
             learner_params,
@@ -63,23 +64,45 @@ def main(args):
             maxstep=parsed_yaml_file["relaxation"].get("maxstep", None),
         )
         dyn.attach(parent_only_replay, 1, initial_structure.calc, dyn)
-        # dyn.run(
-        #     fmax=parsed_yaml_file["relaxation"].get("fmax", 0.03),
-        #     steps=parsed_yaml_file["relaxation"].get("steps", None),
-        # )
+        # Set convergence criteria as EDIFFG in VASP flag, default to 0.03 eV/A
+        if -vasp_interactive.exp_params.get("ediffg") == 0:
+            relax_fmax = 0.03
+        else:
+            relax_fmax = -vasp_interactive.exp_params.get("ediffg")
+        print(
+            f"------Starting Relaxation. Terminate when Fmax <{relax_fmax} eV/A------"
+        )
+        dyn.run(
+            fmax=relax_fmax,
+        )
+        print("------Relaxation Ends------")
+        print(
+            f"------{onlinecalc.parent_calls} VASP Single Point Calculations Required------"
+        )
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="")
+    parser = argparse.ArgumentParser(description="VASP Input Wrapper for Finetuna")
     parser.add_argument(
         "-c",
+        "--checkpoint",
+        type=str,
+        required=True,
+        help="Path to the checkpoint",
+    )
+    parser.add_argument(
+        "-p",
+        "--path",
+        type=str,
+        default=os.path.abspath(""),
+        help="Path to the VASP input directory",
+    )
+    parser.add_argument(
+        "-con",
         "--config",
         type=str,
         default=files("finetuna.vasp_wrapper").joinpath("sample_config.yml"),
-        help="Path to the config file",
-    )
-    parser.add_argument(
-        "-p", "--path", type=str, default="", help="Path to the VASP input directory"
+        help="Path to the config",
     )
     args = parser.parse_args()
     main(args)

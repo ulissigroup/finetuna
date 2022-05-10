@@ -89,6 +89,11 @@ class OnlineLearner(Calculator):
         self.initial_points_to_keep = self.learner_params.get(
             "initial_points_to_keep", [i for i in range(self.num_initial_points)]
         )
+        if len(self.initial_points_to_keep) == 0 and self.num_initial_points > 0:
+            raise ValueError(
+                f"{self.num_initial_points} Initial DFT points will be calculated but not used for training.\
+                Please change initial_points_to_keep in learner parameters."
+            )
         self.uncertainty_metric = self.learner_params.get(
             "uncertainty_metric", "forces"
         )
@@ -466,7 +471,7 @@ class OnlineLearner(Calculator):
         # if verifying (or reverifying) do the singlepoints, and record the time parent calls takes
         else:
             print("OnlineLearner: Parent calculation required")
-
+            self.parent_calls += 1
             start = time.time()
             if self.parent_calc_pausable:
                 self.parent_calc._resume_calc()
@@ -500,8 +505,6 @@ class OnlineLearner(Calculator):
 
         # add to parent dataset (for training) and return partial dataset (for partial fit)
         partial_dataset = self.add_to_dataset(training_data)
-
-        self.parent_calls += 1
 
         start = time.time()
         # retrain the ml potential only if there is more than enough data that the ml potential may be used

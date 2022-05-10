@@ -16,16 +16,6 @@ from finetuna.online_learner.online_learner import OnlineLearner
 from finetuna.online_learner.delta_learner import DeltaLearner
 from finetuna.online_learner.warm_start_learner import WarmStartLearner
 
-from finetuna.ml_potentials.flare_pp_calc import FlarePPCalc
-from finetuna.ml_potentials.flare_calc import FlareCalc
-from finetuna.ml_potentials.flare_ocp_descriptor_calc import FlareOCPDescriptorCalc
-from finetuna.ml_potentials.ocpd_gp_calc import OCPDGPCalc
-from finetuna.ml_potentials.ocpd_nn_calc import OCPDNNCalc
-from finetuna.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
-from finetuna.ml_potentials.stochastic_spinconv.finetuner_stochastic_spinconv_calc import (
-    FinetunerStochasticSpinconvCalc,
-)
-
 from ocpmodels.common.relaxation.ase_utils import OCPCalculator
 
 
@@ -144,12 +134,20 @@ def active_learning(config):
     potential_class = config["links"].get("ml_potential", "flare")
     if potential_class == "flare":
         # declare ml calc
+        from finetuna.ml_potentials.flare_pp_calc import FlarePPCalc
+
         ml_potential = FlarePPCalc(config["flare"], [initial_structure] + images)
     elif potential_class == "pyflare":
+        from finetuna.ml_potentials.flare_calc import FlareCalc
+
         ml_potential = FlareCalc(
             config.get("pyflare", {}), [initial_structure] + images
         )
     elif potential_class == "flare_ocp_descriptor":
+        from finetuna.ml_potentials.flare_ocp_descriptor_calc import (
+            FlareOCPDescriptorCalc,
+        )
+
         ml_potential = FlareOCPDescriptorCalc(
             model_path=config["ocp"]["model_path"],
             checkpoint_path=config["ocp"]["checkpoint_path"],
@@ -157,12 +155,16 @@ def active_learning(config):
             initial_images=[initial_structure] + images,
         )
     elif potential_class == "ocpd_gp":
+        from finetuna.ml_potentials.ocpd_gp_calc import OCPDGPCalc
+
         ml_potential = OCPDGPCalc(
             model_path=config["ocp"]["model_path"],
             checkpoint_path=config["ocp"]["checkpoint_path"],
             gp_params=config.get("gp", {}),
         )
     elif potential_class == "ocpd_nn":
+        from finetuna.ml_potentials.ocpd_nn_calc import OCPDNNCalc
+
         ml_potential = OCPDNNCalc(
             initial_structure,
             model_path=config["ocp"]["model_path"],
@@ -170,6 +172,8 @@ def active_learning(config):
             nn_params=config.get("nn", {}),
         )
     elif potential_class == "ft_en":
+        from finetuna.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
+
         ml_potential = FinetunerEnsembleCalc(
             model_classes=config["ocp"]["model_class_list"],
             model_paths=config["ocp"]["model_path_list"],
@@ -177,6 +181,10 @@ def active_learning(config):
             mlp_params=config.get("finetuner", {}),
         )
     elif potential_class == "ft_ss":
+        from finetuna.ml_potentials.stochastic_spinconv.finetuner_stochastic_spinconv_calc import (
+            FinetunerStochasticSpinconvCalc,
+        )
+
         ml_potential = FinetunerStochasticSpinconvCalc(
             model_path=config["ocp"]["model_path"],
             checkpoint_path=config["ocp"]["checkpoint_path"],
