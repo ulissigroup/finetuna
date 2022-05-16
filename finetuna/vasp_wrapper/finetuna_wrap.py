@@ -18,9 +18,10 @@ from importlib_resources import files
 
 def main(args):
     # Initialize VASP interactive calculator with VASP input from the path provided
-    os.chdir(args.path)
+    os.mkdir(args.path + "/finetuna_relaxation")
+    os.chdir(args.path + "/finetuna_relaxation")
     print("------Initializing VASP Interactive Calculator------")
-    vasp_interactive = VaspInteractive(directory=args.path)
+    vasp_interactive = VaspInteractive()
     vasp_interactive.read_incar(filename=os.path.join(args.path, "INCAR"))
     vasp_interactive.read_kpoints(filename=os.path.join(args.path, "KPOINTS"))
     vasp_interactive.read_potcar(filename=os.path.join(args.path, "POTCAR"))
