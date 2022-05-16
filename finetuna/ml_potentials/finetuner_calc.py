@@ -113,6 +113,10 @@ class FinetunerCalc(MLPCalc):
             torch.set_num_threads(self.mlp_params["tuner"]["num_threads"])
         self.validation_split = self.mlp_params["tuner"].get("validation_split", None)
 
+        self.ref_atoms = None
+        self.ref_energy_parent = None
+        self.ref_energy_ml = None
+
         # init block/weight freezing
         if self.model_name == "gemnet":
             self.unfreeze_blocks = ["out_blocks.3"]
@@ -227,6 +231,9 @@ class FinetunerCalc(MLPCalc):
             atoms, properties, system_changes
         )
 
+        if self.ref_energy_parent is not None:
+            energy += self.ref_energy_parent - self.ref_energy_ml
+
         self.results["energy"] = energy
         self.results["forces"] = forces
         self.results["stds"] = [energy_uncertainty, force_uncertainties]
@@ -293,6 +300,9 @@ class FinetunerCalc(MLPCalc):
             + str(end - start)
             + " seconds"
         )
+
+        if self.ref_energy_parent is not None:
+            self.ref_energy_ml, f = self.trainer.get_atoms_prediction(self.ref_atoms)
 
     def train_ocp(self, dataset):
         """
@@ -371,6 +381,16 @@ class FinetunerCalc(MLPCalc):
 
     def set_test(self, test_set: "list[Atoms]"):
         self.trainer.test_loader = self.get_data_from_atoms(test_set)
+
+    def set_reference_atoms(self, atoms):
+        """
+        Helper and external function for setting a parent reference energy to correct the ML predicted energy.
+        Takes an atoms object with parent singlepoint calculator attached.
+        Sets the atoms object as the reference atoms object, and the parent energy as the correspond parent reference energy.
+        """
+        self.ref_atoms = atoms
+        self.ref_energy_parent = self.ref_atoms.get_potential_energy()
+        self.ref_energy_ml, f = self.trainer.get_atoms_prediction(self.ref_atoms)
 
 
 class GraphsListDataset(Dataset):
