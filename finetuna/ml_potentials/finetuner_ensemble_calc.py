@@ -79,6 +79,12 @@ class FinetunerEnsembleCalc(FinetunerCalc):
         if "tuner" not in mlp_params_copy:
             mlp_params_copy["tuner"] = {}
         self.ensemble_method = mlp_params_copy["tuner"].get("ensemble_method", "mean")
+        super().__init__(
+            model_name=model_classes[0],
+            model_path=model_paths[0],
+            checkpoint_path=checkpoint_paths[0],
+            mlp_params=mlp_params_copy,
+        )
         MLPCalc.__init__(self, mlp_params=mlp_params_copy)
 
     def init_model(self):
