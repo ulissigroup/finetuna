@@ -11,7 +11,6 @@ import wandb
 from finetuna.utils import compute_with_calc, copy_images
 import math
 import numpy as np
-from uncertainty_toolbox.metrics import get_all_metrics
 
 
 class Logger:
@@ -180,6 +179,8 @@ class Logger:
 
 
 def quantify_uncertainty(traj, model_calc):
+    from uncertainty_toolbox.metrics import get_all_metrics
+
     parent_images = copy_images(traj)
     model_images = compute_with_calc(traj, model_calc)
 
