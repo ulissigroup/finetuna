@@ -417,7 +417,8 @@ class Trainer(ForcesTrainer):
             config["model"] = config["model_attributes"]
 
         # Calculate the edge indices on the fly
-        config["model"]["otf_graph"] = True
+        self.otf_graph = True
+        config["model"]["otf_graph"] = self.otf_graph
 
         # Save config so obj can be transported over network (pkl)
         self.config = copy.deepcopy(config)
@@ -464,7 +465,7 @@ class Trainer(ForcesTrainer):
 
     def get_atoms_prediction(self, atoms):
         data_object = self.a2g.convert(atoms)
-        batch = data_list_collater([data_object])
+        batch = data_list_collater([data_object], self.otf_graph)
         predictions = self.predict(
             data_loader=batch, per_image=False, results_file=None, disable_tqdm=True
         )
