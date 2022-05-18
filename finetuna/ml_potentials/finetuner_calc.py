@@ -459,6 +459,7 @@ class Trainer(ForcesTrainer):
             r_energy=False,
             r_forces=False,
             r_distances=False,
+            r_edges=False,
         )
 
     def get_atoms_prediction(self, atoms):
