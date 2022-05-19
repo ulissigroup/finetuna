@@ -15,8 +15,12 @@ wget https://raw.githubusercontent.com/ulissigroup/amptorch/master/env_cpu.yml -
 conda-merge env_amptorch_cpu.yml env_cpu.yml > env.yml
 conda env create -f env.yml
 ```
-
 3. Activate the conda environment `conda activate finetuna` and install the package with `pip install -e .`
+
+4. Install VASP Interactive:
+```
+pip install git+https://github.com/ulissigroup/vasp-interactive.git
+```
 
 ### Usage
 #### Configs [wip]
