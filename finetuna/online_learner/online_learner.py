@@ -539,8 +539,6 @@ class OnlineLearner(Calculator):
             self.ml_potential.train(self.parent_dataset)
             self.trained_at_least_once = True
         end = time.time()
-        if self.parent_calc_pausable:
-            self.parent_calc._resume_calc()
         self.info["training_time"] = end - start
 
         # set the energy and force results of the parent calculator and return them
