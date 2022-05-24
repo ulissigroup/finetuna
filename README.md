@@ -7,15 +7,25 @@ Implements active learning with pre-trained graph model fine-tuning to accelerat
 
 Install dependencies:
 
-1. Ensure conda is up-to-date: ```conda update conda```
+1. Ensure conda is up-to-date: 
+```
+conda update conda
+```
 
 2. Merge the amptorch conda environment with this one and create it:
 ```
 conda env create -f env.cpu.yml.yml
 ```
-3. Activate the conda environment `conda activate finetuna` and install the package with `pip install -e .`
+3. Activate the conda environment
+```
+conda activate finetuna
+```
+4. Install the package:
+```
+pip install -e .
+```
 
-4. Install VASP Interactive:
+5. Install VASP Interactive:
 ```
 pip install git+https://github.com/ulissigroup/vasp-interactive.git
 ```
