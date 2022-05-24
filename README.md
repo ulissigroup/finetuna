@@ -11,9 +11,7 @@ Install dependencies:
 
 2. Merge the amptorch conda environment with this one and create it:
 ```
-wget https://raw.githubusercontent.com/ulissigroup/amptorch/master/env_cpu.yml -O env_amptorch_cpu.yml
-conda-merge env_amptorch_cpu.yml env_cpu.yml > env.yml
-conda env create -f env.yml
+conda env create -f env.cpu.yml.yml
 ```
 3. Activate the conda environment `conda activate finetuna` and install the package with `pip install -e .`
 
