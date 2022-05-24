@@ -14,7 +14,7 @@ conda update conda
 
 2. Merge the amptorch conda environment with this one and create it:
 ```
-conda env create -f env.cpu.yml.yml
+conda env create -f env.cpu.yml
 ```
 3. Activate the conda environment
 ```
