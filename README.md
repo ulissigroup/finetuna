@@ -1,4 +1,4 @@
-[![ulissigroup](https://circleci.com/gh/ulissigroup/finetuna.svg?style=svg)](https://app.circleci.com/pipelines/github/ulissigroup/finetuna)
+<!-- [![ulissigroup](https://circleci.com/gh/ulissigroup/finetuna.svg?style=svg)](https://app.circleci.com/pipelines/github/ulissigroup/finetuna) -->
 ## *FINETUNA*: Fine-Tuning Accelerated Molecular Simulations
 
 Implements active learning with pre-trained graph model fine-tuning to accelerate atomistic simulations.
