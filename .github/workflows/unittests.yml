@@ -1,4 +1,4 @@
-name: Test finetuna by running unit tests with pytest
+name: Test
 
 env:
   OMP_NUM_THREADS: '1'
