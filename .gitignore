@@ -3,6 +3,8 @@ __pycache__/
 *.pyc
 myvenv/
 finetuna.egg-info
+build/
+dist/
 
 #output files
 *.ampdb
