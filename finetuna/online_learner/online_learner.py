@@ -123,6 +123,8 @@ class OnlineLearner(Calculator):
             "store_complete_dataset", False
         )
 
+        self.ml_energy_only = self.learner_params.get("ml_energy_only", False)
+
         self.db_name = self.learner_params.get("asedb_name", "oal_queried_images.db")
 
         self.wandb_init = self.learner_params.get("wandb_init", {})
@@ -325,6 +327,9 @@ class OnlineLearner(Calculator):
                 self.set_query_reason("noquery")
 
                 atoms_copy.info["check"] = False
+
+        if self.ml_energy_only:
+            energy = self.info["ml_energy"]
 
         # Record number of parent calls after this calculation
         self.info["parent_calls"] = self.parent_calls
