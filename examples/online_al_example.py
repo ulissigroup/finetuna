@@ -24,6 +24,8 @@ if __name__ == "__main__":
         ],
         mlp_params=[
             {
+                # Change "cpu": False if you want to use GPU training (if available)
+                "cpu": True,
                 "tuner": {
                     "unfreeze_blocks": [
                         "out_blocks.3.seq_forces",
@@ -66,8 +68,6 @@ if __name__ == "__main__":
     )
 
     parent_calc = VaspInteractive(
-        ibrion=-1,
-        nsw=0,
         isif=0,
         isym=0,
         lreal="Auto",
@@ -82,6 +82,8 @@ if __name__ == "__main__":
         pp="PBE",
         xc="PBE",
         kpts=calculate_surface_k_points(traj[0]),
+        # Uncomment the kpts=(1,1,1) for a very fast test (but not accurate)!
+        # kpts=(1,1,1),
     )
 
     learner = OnlineLearner(
