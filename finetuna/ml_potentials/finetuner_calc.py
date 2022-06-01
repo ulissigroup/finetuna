@@ -308,9 +308,11 @@ class FinetunerCalc(MLPCalc):
         """
         Overwritable if doing ensembling of ocp models
         """
-        self.trainer.config["optim"]["max_epochs"] = int(
-            self.trainer.epoch + self.mlp_params["optim"]["max_epochs"]
-        )
+        # set the new max epoch to whatever the starting epoch will be + the current max epoch size
+        start_epoch = self.trainer.step // len(dataset)
+        max_epochs = start_epoch + self.mlp_params["optim"]["max_epochs"]
+        self.trainer.config["optim"]["max_epochs"] = int(max_epochs)
+
         self.trainer.load_optimizer()
         self.trainer.load_extras()
 
