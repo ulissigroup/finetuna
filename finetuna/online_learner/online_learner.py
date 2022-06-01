@@ -329,7 +329,10 @@ class OnlineLearner(Calculator):
                 atoms_copy.info["check"] = False
 
         if self.ml_energy_only:
-            energy = self.info["ml_energy"]
+            if self.info.get("retrained_energy", None) is not None:
+                energy = self.info["retrained_energy"]
+            else:
+                energy = self.info["ml_energy"]
 
         # Record number of parent calls after this calculation
         self.info["parent_calls"] = self.parent_calls
