@@ -51,6 +51,9 @@ class Logger:
 
         self.step = 0
 
+        # check logger_id for logging separate trajectories for NEBs
+        self.logger_id = self.learner_params.get("logger_id", None)
+
         # initialize local ASE db file
         self.asedb_name = learner_params.get("asedb_name", "oal_queried_images.db")
         if self.asedb_name is not None:
@@ -118,6 +121,13 @@ class Logger:
                 self.pca_analyzer = TrajPCA(self.parent_traj)
 
     def write(self, atoms: Atoms, info: dict, extra_info: dict = {}):
+        if self.logger_id is not None:
+            info_id = {}
+            for key, value in info.items():
+                info_id[key] = value
+                info_id[key + "_" + str(self.logger_id)] = value
+            info = info_id
+
         # write to ASE db
         if self.asedb_name is not None:
             random.seed(self.step)
