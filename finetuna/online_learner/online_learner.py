@@ -78,6 +78,7 @@ class OnlineLearner(Calculator):
         self.dyn_avg_steps = self.learner_params.get("dyn_avg_steps", None)
 
         self.suppress_warnings = self.learner_params.get("suppress_warnings", False)
+        self.print_uncertainty = self.learner_params.get("print_uncertainty", True)
         self.reverify_with_parent = self.learner_params.get(
             "reverify_with_parent", True
         )
@@ -190,13 +191,14 @@ class OnlineLearner(Calculator):
         self.results["forces"] = forces
 
         # Print a statement about the uncertainty
-        uncertainty_statement = "uncertainty: "
-        if self.uncertainty_metric == "forces":
-            uncertainty_statement += str(self.info["force_uncertainty"])
-        elif self.uncertainty_metric == "energy":
-            uncertainty_statement += str(self.info["energy_uncertainty"])
-        uncertainty_statement += ", tolerance: " + str(self.info["tolerance"])
-        print(uncertainty_statement)
+        if self.print_uncertainty:
+            uncertainty_statement = "uncertainty: "
+            if self.uncertainty_metric == "forces":
+                uncertainty_statement += str(self.info["force_uncertainty"])
+            elif self.uncertainty_metric == "energy":
+                uncertainty_statement += str(self.info["energy_uncertainty"])
+            uncertainty_statement += ", tolerance: " + str(self.info["tolerance"])
+            print(uncertainty_statement)
 
     def get_energy_and_forces(self, atoms, precalculated=False):
         # copy the atoms object (original only used to obtain indices of constraints and for precalculated images)
