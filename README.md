@@ -2,6 +2,7 @@
 [![Lint](https://github.com/ulissigroup/finetuna/actions/workflows/black.yml/badge.svg)](https://github.com/ulissigroup/finetuna/actions/workflows/black.yml)
 [![Test](https://github.com/ulissigroup/finetuna/actions/workflows/unittests.yml/badge.svg)](https://github.com/ulissigroup/finetuna/actions/workflows/unittests.yml)
 ## *FINETUNA*: Fine-Tuning Accelerated Molecular Simulations
+<img src="https://github.com/ulissigroup/finetuna/blob/main/doc/workflow.png" width="700">
 
 Implements active learning with pre-trained graph model fine-tuning to accelerate atomistic simulations.
 
