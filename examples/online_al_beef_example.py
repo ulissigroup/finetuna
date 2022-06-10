@@ -81,47 +81,47 @@ if __name__ == "__main__":
     }
     for k in incar.keys():
         vasp_inputs[k.lower()] = incar[k]
-    vasp_inputs["nsw"] = 0
+    vasp_inputs["nsw"] = 2000
     vasp_inputs["ibrion"] = -1
 
-    parent_calc = VaspInteractive(**vasp_inputs)
+    with VaspInteractive(**vasp_inputs) as parent_calc:
 
-    learner = OnlineLearner(
-        learner_params={
-            "stat_uncertain_tol": 1000000,
-            "dyn_uncertain_tol": 1000000,
-            "dyn_avg_steps": 15,
-            "query_every_n_steps": 100,
-            "num_initial_points": 0,
-            "initial_points_to_keep": [],
-            "fmax_verify_threshold": 0.03,
-            "tolerance_selection": "min",
-            "partial_fit": True,
-            # "wandb_init": {
-            #     "wandb_log": True,
-            #     "project": "10_richard_ipa",
-            #     "name": "test0",
-            #     "notes": "2022_03_22, test description",
-            #     "group": "tests"
-            # },
-        },
-        parent_dataset=[],
-        ml_potential=ml_potential,
-        parent_calc=parent_calc,
-        mongo_db=None,
-        optional_config=None,
-    )
+        learner = OnlineLearner(
+            learner_params={
+                "stat_uncertain_tol": 1000000,
+                "dyn_uncertain_tol": 1000000,
+                "dyn_avg_steps": 15,
+                "query_every_n_steps": 100,
+                "num_initial_points": 0,
+                "initial_points_to_keep": [],
+                "fmax_verify_threshold": 0.03,
+                "tolerance_selection": "min",
+                "partial_fit": True,
+                # "wandb_init": {
+                #     "wandb_log": True,
+                #     "project": "10_richard_ipa",
+                #     "name": "test0",
+                #     "notes": "2022_03_22, test description",
+                #     "group": "tests"
+                # },
+            },
+            parent_dataset=[],
+            ml_potential=ml_potential,
+            parent_calc=parent_calc,
+            mongo_db=None,
+            optional_config=None,
+        )
 
-    relaxer = Relaxation(
-        initial_geometry=slab, optimizer=BFGS, fmax=0.03, steps=None, maxstep=0.2
-    )
-    relaxer.run(
-        calc=learner,
-        filename="online_learner_trajectory",
-        replay_traj="parent_only",
-        max_parent_calls=None,
-        check_final=False,
-        online_ml_fmax=learner.fmax_verify_threshold,
-    )
+        relaxer = Relaxation(
+            initial_geometry=slab, optimizer=BFGS, fmax=0.03, steps=None, maxstep=0.2
+        )
+        relaxer.run(
+            calc=learner,
+            filename="online_learner_trajectory",
+            replay_traj="parent_only",
+            max_parent_calls=None,
+            check_final=False,
+            online_ml_fmax=learner.fmax_verify_threshold,
+        )
 
     print("done!")
