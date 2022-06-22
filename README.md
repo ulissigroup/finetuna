@@ -1,5 +1,8 @@
-[![ulissigroup](https://circleci.com/gh/ulissigroup/finetuna.svg?style=svg)](https://app.circleci.com/pipelines/github/ulissigroup/finetuna)
+<!-- [![ulissigroup](https://circleci.com/gh/ulissigroup/finetuna.svg?style=svg)](https://app.circleci.com/pipelines/github/ulissigroup/finetuna) -->
+[![Lint](https://github.com/ulissigroup/finetuna/actions/workflows/black.yml/badge.svg)](https://github.com/ulissigroup/finetuna/actions/workflows/black.yml)
+[![Test](https://github.com/ulissigroup/finetuna/actions/workflows/unittests.yml/badge.svg)](https://github.com/ulissigroup/finetuna/actions/workflows/unittests.yml)
 ## *FINETUNA*: Fine-Tuning Accelerated Molecular Simulations
+<img src="https://github.com/ulissigroup/finetuna/blob/main/doc/workflow.png" width="700">
 
 Implements active learning with pre-trained graph model fine-tuning to accelerate atomistic simulations.
 
@@ -7,16 +10,36 @@ Implements active learning with pre-trained graph model fine-tuning to accelerat
 
 Install dependencies:
 
-1. Ensure conda is up-to-date: ```conda update conda```
+- Ensure conda is up-to-date: 
+    ```
+    conda update conda
+    ```
 
-2. Merge the amptorch conda environment with this one and create it:
-```
-wget https://raw.githubusercontent.com/ulissigroup/amptorch/master/env_cpu.yml -O env_amptorch_cpu.yml
-conda-merge env_amptorch_cpu.yml env_cpu.yml > env.yml
-conda env create -f env.yml
-```
+- Create the environment,
+    - on a CPU machine:
+        ```
+        conda env create -f env.cpu.yml
+        ```
 
-3. Activate the conda environment `conda activate finetuna` and install the package with `pip install -e .`
+    - on a GPU machine:
+    check the instruction [here](https://github.com/Open-Catalyst-Project/ocp#gpu-machines), and
+        ```
+        conda env create -f env.gpu.yml
+        ```
+        
+- Activate the conda environment
+    ```
+    conda activate finetuna
+    ```
+- Install the package:
+    ```
+    pip install -e .
+    ```
+
+- Install VASP Interactive:
+    ```
+    pip install git+https://github.com/ulissigroup/vasp-interactive.git
+    ```
 
 ### Usage
 #### Configs [wip]

@@ -1,4 +1,4 @@
-name: Test finetuna by running unit tests with pytest
+name: Test
 
 env:
   OMP_NUM_THREADS: '1'
@@ -7,7 +7,7 @@ on: [push, pull_request]
 
 jobs:
   light_test:
-    name: Test finetuna with light test suite
+    name: Test
 
     runs-on: [self-hosted, linux, shared-scratch]
 

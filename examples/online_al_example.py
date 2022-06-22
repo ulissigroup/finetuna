@@ -65,9 +65,9 @@ if __name__ == "__main__":
         ],
     )
 
-    parent_calc = VaspInteractive(
+    vasp_calc = VaspInteractive(
         ibrion=-1,
-        nsw=0,
+        nsw=2000,
         isif=0,
         isym=0,
         lreal="Auto",
@@ -77,42 +77,43 @@ if __name__ == "__main__":
         laechg=False,
         lcharg=False,
         lwave=False,
-        ncore=16,
+        ncore=4,
         gga="RP",
         pp="PBE",
         xc="PBE",
         kpts=calculate_surface_k_points(traj[0]),
     )
 
-    learner = OnlineLearner(
-        learner_params={
-            "stat_uncertain_tol": 1000000,
-            "dyn_uncertain_tol": 1000000,
-            "dyn_avg_steps": 15,
-            "query_every_n_steps": 100,
-            "num_initial_points": 0,
-            "initial_points_to_keep": [],
-            "fmax_verify_threshold": 0.03,
-            "tolerance_selection": "min",
-            "partial_fit": True,
-        },
-        parent_dataset=[],
-        ml_potential=ml_potential,
-        parent_calc=parent_calc,
-        mongo_db=None,
-        optional_config=None,
-    )
+    with vasp_calc as parent_calc:
+        learner = OnlineLearner(
+            learner_params={
+                "stat_uncertain_tol": 1000000,
+                "dyn_uncertain_tol": 1000000,
+                "dyn_avg_steps": 15,
+                "query_every_n_steps": 100,
+                "num_initial_points": 0,
+                "initial_points_to_keep": [],
+                "fmax_verify_threshold": 0.03,
+                "tolerance_selection": "min",
+                "partial_fit": True,
+            },
+            parent_dataset=[],
+            ml_potential=ml_potential,
+            parent_calc=parent_calc,
+            mongo_db=None,
+            optional_config=None,
+        )
 
-    relaxer = Relaxation(
-        initial_geometry=traj[0], optimizer=BFGS, fmax=0.03, steps=None, maxstep=0.2
-    )
-    relaxer.run(
-        calc=learner,
-        filename="online_learner_trajectory",
-        replay_traj="parent_only",
-        max_parent_calls=None,
-        check_final=False,
-        online_ml_fmax=learner.fmax_verify_threshold,
-    )
+        relaxer = Relaxation(
+            initial_geometry=traj[0], optimizer=BFGS, fmax=0.03, steps=None, maxstep=0.2
+        )
+        relaxer.run(
+            calc=learner,
+            filename="online_learner_trajectory",
+            replay_traj="parent_only",
+            max_parent_calls=None,
+            check_final=False,
+            online_ml_fmax=learner.fmax_verify_threshold,
+        )
 
     print("done!")
