@@ -637,27 +637,33 @@ class Trainer(ForcesTrainer):
                             self.run_relaxations()
 
                 if self.config["optim"].get("print_loss_and_lr", False):
-                    print(
-                        "epoch: "
-                        + str(self.epoch)
-                        + ", \tstep: "
-                        + str(self.step)
-                        + ", \tloss: "
-                        + str(loss.detach().item())
-                        + ", \tlr: "
-                        + str(self.scheduler.get_lr())
-                        + ", \tval: "
-                        + str(val_metrics["loss"]["metric"])
-                    ) if self.step % eval_every == 0 and self.val_loader is not None else print(
-                        "epoch: "
-                        + str(self.epoch)
-                        + ", \tstep: "
-                        + str(self.step)
-                        + ", \tloss: "
-                        + str(loss.detach().item())
-                        + ", \tlr: "
-                        + str(self.scheduler.get_lr())
-                    )
+                    if self.step % eval_every == 0 or not self.config["optim"].get(
+                        "print_only_on_eval", True
+                    ):
+                        if self.val_loader is not None:
+                            print(
+                                "epoch: "
+                                + "{:.1f}".format(self.epoch)
+                                + ", \tstep: "
+                                + str(self.step)
+                                + ", \tloss: "
+                                + str(loss.detach().item())
+                                + ", \tlr: "
+                                + str(self.scheduler.get_lr())
+                                + ", \tval: "
+                                + str(val_metrics["loss"]["metric"])
+                            )
+                        else:
+                            print(
+                                "epoch: "
+                                + "{:.1f}".format(self.epoch)
+                                + ", \tstep: "
+                                + str(self.step)
+                                + ", \tloss: "
+                                + str(loss.detach().item())
+                                + ", \tlr: "
+                                + str(self.scheduler.get_lr())
+                            )
 
                 if self.scheduler.scheduler_type == "ReduceLROnPlateau":
                     if (
