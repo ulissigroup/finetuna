@@ -341,16 +341,8 @@ class FinetunerCalc(MLPCalc):
         """
         get train_loader object to replace for the ocp model trainer to train on
         """
-        a2g = AtomsToGraphs(
-            max_neigh=self.max_neighbors,
-            radius=self.cutoff,
-            r_energy=True,
-            r_forces=True,
-            r_distances=True,
-            r_edges=False,
-        )
 
-        graphs_list = [a2g.convert(atoms) for atoms in dataset]
+        graphs_list = [self.trainer.a2g_convert(atoms, True) for atoms in dataset]
 
         for graph in graphs_list:
             graph.fid = 0
@@ -492,7 +484,7 @@ class Trainer(ForcesTrainer):
             except NotImplementedError:
                 logging.warning("Unable to load checkpoint!")
 
-        self.a2g = AtomsToGraphs(
+        self.a2g_predict = AtomsToGraphs(
             max_neigh=max_neighbors,
             radius=cutoff,
             r_energy=False,
@@ -501,8 +493,28 @@ class Trainer(ForcesTrainer):
             r_edges=False,
         )
 
+        self.a2g_train = AtomsToGraphs(
+            max_neigh=max_neighbors,
+            radius=cutoff,
+            r_energy=True,
+            r_forces=True,
+            r_distances=True,
+            r_edges=False,
+        )
+
+    def a2g_convert(self, atoms, train: bool):
+        if train:
+            data_object = self.a2g_train.convert(atoms)
+        else:
+            data_object = self.a2g_predict.convert(atoms)
+
+        if not hasattr(data_object, "tags"):
+            data_object.tags = torch.ones(data_object.num_nodes)
+
+        return data_object
+
     def get_atoms_prediction(self, atoms):
-        data_object = self.a2g.convert(atoms)
+        data_object = self.a2g_convert(atoms, False)
         batch = data_list_collater([data_object], self.otf_graph)
         predictions = self.predict(
             data_loader=batch, per_image=False, results_file=None, disable_tqdm=True
