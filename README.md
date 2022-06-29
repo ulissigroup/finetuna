@@ -42,6 +42,11 @@ Install dependencies:
     ```
 
 ### Usage
+
+If you have an ASE atoms object, see example [1](https://github.com/ulissigroup/finetuna/blob/main/examples/online_al_example.py) and [2](https://github.com/ulissigroup/finetuna/blob/main/examples/online_al_beef_example.py).
+
+If you have VASP input files (INCAR, KPOINTS, POTCAR, and POSCAR), see example [3](https://github.com/ulissigroup/finetuna/tree/main/finetuna/vasp_wrapper).
+
 #### Configs [wip]
 ```
 learner_params = {
