@@ -37,7 +37,7 @@ finetuner:
 learner:
   dyn_avg_steps: 15
   dyn_uncertain_tol: 1000000 # Dynamic uncertainty tolerance
-  fmax_verify_threshold: 0.03 # Fmax threshold for calling VASP single point calculation
+  # fmax_verify_threshold: 0.03 # Fmax threshold for calling VASP single point calculation
   initial_points_to_keep: []
   logger:
     pca_quantify: true # Log PCA on wandb
