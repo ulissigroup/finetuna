@@ -41,7 +41,7 @@ def main(args):
     # Set up learner, finetuner
     learner_params = parsed_yaml_file["learner"]
     learner_params["fmax_verify_threshold"] = relax_fmax
-    
+
     finetuner = parsed_yaml_file["finetuner"]
     optional_config = parsed_yaml_file.get("optional_config", None)
     # Set up Finetuner calculator
