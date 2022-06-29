@@ -16,14 +16,19 @@ An ASE [VASP Interactive](https://github.com/ulissigroup/vasp-interactive) calcu
 - All pre-trained OCP models can be found [here](https://github.com/Open-Catalyst-Project/ocp/blob/main/MODELS.md). We recommend download [GemNet-dT all](https://dl.fbaipublicfiles.com/opencatalystproject/models/2021_08/s2ef/gemnet_t_direct_h512_all.pt), and use it for `FINETUNA`.
     
 - Usage
-    - Run `FINETUNA` by
-    ```sh
-        cd /path/to/vasp/input/folder
-        finetuna_wrap.py -c /path/to/checkpoint.pt
-    ```
-        or
-    ```sh
-        finetuna_wrap.py -c /path/to/checkpoint.pt -p /path/to/vasp/input/folder
-    ```
- 
+
+    Required arguments: 
+
+    | Parameter                 | Description   |	
+    | :------------------------ | :-------------|
+    | -c --checkpoint 	        |the path to the machine learning model checkpoint
+
+    Optional arguments: 
+
+    | Parameter                 | Default       | Description   |	
+    | :------------------------ |:-------------:| :-------------|
+    | -p --path 	            |*current working directory*	          |the path to VASP input directory
+    | -con  --config          | finetuna.vasp_wrapper.sample_config.yml           |the path to the configuration file
+
+
 - A subfolder called finetuna_relaxation will be created in the working directory. An [ASE db](https://wiki.fysik.dtu.dk/ase/tutorials/tut06_database/database.html) file (`oal_queried_images.db`) will be generated that stores the structure, energies and forces information.
