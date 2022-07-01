@@ -1,6 +1,6 @@
 finetuner:
 - optim:
-    batch_size: 10
+    batch_size: 1
     break_below_lr: 1.0e-07
     checkpoint_every: 100000
     eps: 1.0e-08
@@ -38,13 +38,13 @@ learner:
   dyn_avg_steps: 15
   dyn_uncertain_tol: 1000000 # Dynamic uncertainty tolerance
   # fmax_verify_threshold: 0.03 # Fmax threshold for calling VASP single point calculation
-  initial_points_to_keep: []
+  # initial_points_to_keep: []
   logger:
     pca_quantify: true # Log PCA on wandb
     uncertainty_quantify: false
-  num_initial_points: 0  # Number of VASP calls at the beginning of the relaxation
+  num_initial_points: 1  # Number of VASP calls at the beginning of the relaxation
   partial_fit: true
-  query_every_n_steps: 100 # K-steps querying strategy: query every 100 steps
+  query_every_n_steps: 30 # K-steps querying strategy: query every 100 steps
   stat_uncertain_tol: 1000000 # Static uncertainty tolerance
   tolerance_selection: min
   # valset_system_id: '1498818'
