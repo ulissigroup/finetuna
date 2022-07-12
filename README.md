@@ -11,35 +11,34 @@ Implements active learning with pre-trained graph model fine-tuning to accelerat
 Install dependencies:
 
 - Ensure conda is up-to-date: 
-    ```
-    conda update conda
-    ```
+    
+    `conda update conda`
 
 - Create the environment,
     - on a CPU machine:
-        ```
+        `
         conda env create -f env.cpu.yml
-        ```
+        `
 
     - on a GPU machine:
     check the instruction [here](https://github.com/Open-Catalyst-Project/ocp#gpu-machines), and
-        ```
+        `
         conda env create -f env.gpu.yml
-        ```
+        `
         
 - Activate the conda environment
-    ```
+    `
     conda activate finetuna
-    ```
+    `
 - Install the package:
-    ```
+    `
     pip install -e .
-    ```
+    `
 
 - Install VASP Interactive:
-    ```
+    `
     pip install git+https://github.com/ulissigroup/vasp-interactive.git
-    ```
+    `
 
 ### Usage
 
