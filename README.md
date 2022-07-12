@@ -16,26 +16,31 @@ Install dependencies:
 
 - Create the environment,
     - on a CPU machine:
+    
         `
         conda env create -f env.cpu.yml
         `
 
     - on a GPU machine:
     check the instruction [here](https://github.com/Open-Catalyst-Project/ocp#gpu-machines), and
+        
         `
         conda env create -f env.gpu.yml
         `
         
 - Activate the conda environment
+    
     `
     conda activate finetuna
     `
 - Install the package:
+    
     `
     pip install -e .
     `
 
 - Install VASP Interactive:
+    
     `
     pip install git+https://github.com/ulissigroup/vasp-interactive.git
     `
