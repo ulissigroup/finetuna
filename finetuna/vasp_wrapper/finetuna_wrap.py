@@ -26,6 +26,12 @@ def main(args):
     vasp_interactive.read_kpoints(filename=os.path.join(args.path, "KPOINTS"))
     vasp_interactive.read_potcar(filename=os.path.join(args.path, "POTCAR"))
 
+    # Set convergence criteria as EDIFFG in VASP flag, default to 0.03 eV/A
+    if -vasp_interactive.exp_params.get("ediffg") == 0:
+        relax_fmax = 0.03
+    else:
+        relax_fmax = -vasp_interactive.exp_params.get("ediffg")
+
     # Read the initial structure
     initial_structure = ase.io.read(os.path.join(args.path, "POSCAR"))
     # Parse the config file
@@ -34,6 +40,8 @@ def main(args):
     parsed_yaml_file = yaml.load(yaml_file, Loader=yaml.FullLoader)
     # Set up learner, finetuner
     learner_params = parsed_yaml_file["learner"]
+    learner_params["fmax_verify_threshold"] = relax_fmax
+
     finetuner = parsed_yaml_file["finetuner"]
     optional_config = parsed_yaml_file.get("optional_config", None)
     # Set up Finetuner calculator
@@ -65,11 +73,7 @@ def main(args):
             maxstep=parsed_yaml_file["relaxation"].get("maxstep", None),
         )
         dyn.attach(parent_only_replay, 1, initial_structure.calc, dyn)
-        # Set convergence criteria as EDIFFG in VASP flag, default to 0.03 eV/A
-        if -vasp_interactive.exp_params.get("ediffg") == 0:
-            relax_fmax = 0.03
-        else:
-            relax_fmax = -vasp_interactive.exp_params.get("ediffg")
+
         print(
             f"------Starting Relaxation. Terminate when Fmax <{relax_fmax} eV/A------"
         )

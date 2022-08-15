@@ -2,46 +2,57 @@
 [![Lint](https://github.com/ulissigroup/finetuna/actions/workflows/black.yml/badge.svg)](https://github.com/ulissigroup/finetuna/actions/workflows/black.yml)
 [![Test](https://github.com/ulissigroup/finetuna/actions/workflows/unittests.yml/badge.svg)](https://github.com/ulissigroup/finetuna/actions/workflows/unittests.yml)
 ## *FINETUNA*: Fine-Tuning Accelerated Molecular Simulations
+
+FINETUNA accelerates atomistic simulations by fine-tuning a pre-trained graph model in an active learning framework.
+
 <img src="https://github.com/ulissigroup/finetuna/blob/main/doc/workflow.png" width="700">
 
-Implements active learning with pre-trained graph model fine-tuning to accelerate atomistic simulations.
 
 ### Installation
 
 Install dependencies:
 
 - Ensure conda is up-to-date: 
-    ```
-    conda update conda
-    ```
+    
+    `conda update conda`
 
 - Create the environment,
     - on a CPU machine:
-        ```
+    
+        `
         conda env create -f env.cpu.yml
-        ```
+        `
 
     - on a GPU machine:
     check the instruction [here](https://github.com/Open-Catalyst-Project/ocp#gpu-machines), and
-        ```
+        
+        `
         conda env create -f env.gpu.yml
-        ```
+        `
         
 - Activate the conda environment
-    ```
+    
+    `
     conda activate finetuna
-    ```
+    `
 - Install the package:
-    ```
+    
+    `
     pip install -e .
-    ```
+    `
 
 - Install VASP Interactive:
-    ```
+    
+    `
     pip install git+https://github.com/ulissigroup/vasp-interactive.git
-    ```
+    `
 
 ### Usage
+
+If you have an ASE atoms object, see example [1](https://github.com/ulissigroup/finetuna/blob/main/examples/online_al_example.py) and [2](https://github.com/ulissigroup/finetuna/blob/main/examples/online_al_beef_example.py).
+
+If you have VASP input files (INCAR, KPOINTS, POTCAR, and POSCAR), see example [3](https://github.com/ulissigroup/finetuna/tree/main/finetuna/vasp_wrapper).
+
 #### Configs [wip]
 ```
 learner_params = {
