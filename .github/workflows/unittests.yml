@@ -26,6 +26,7 @@ jobs:
       run: |
         export CWD=$(pwd)
         cd $CWD
+        conda install h5py
         git clone https://github.com/ulissigroup/amptorch
         cd $CWD/amptorch
         python setup.py install
