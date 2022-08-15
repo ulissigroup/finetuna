@@ -25,12 +25,6 @@ jobs:
     - name: Set up environment
       run: |
         export CWD=$(pwd)
-        pip install git+https://github.com/uncertainty-toolbox/uncertainty-toolbox
-        pip install h5py
-        cd $CWD
-        git clone https://github.com/ulissigroup/amptorch
-        cd $CWD/amptorch
-        python setup.py install
         cd $CWD
         git clone https://github.com/Open-Catalyst-Project/ocp
         cd $CWD/ocp
