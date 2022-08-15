@@ -31,6 +31,10 @@ jobs:
         cd $CWD/amptorch
         python setup.py install
         cd $CWD
+        git clone https://github.com/Open-Catalyst-Project/ocp
+        cd $CWD/ocp
+        python setup.py install
+        cd $CWD
     - name: Run pytest on light test suite unit tests
       run: |
         pytest finetuna/tests/suites/light_suite.py -s
