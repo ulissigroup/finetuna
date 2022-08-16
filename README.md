@@ -3,49 +3,28 @@
 [![Test](https://github.com/ulissigroup/finetuna/actions/workflows/unittests.yml/badge.svg)](https://github.com/ulissigroup/finetuna/actions/workflows/unittests.yml)
 ## *FINETUNA*: Fine-Tuning Accelerated Molecular Simulations
 
+Are you using VASP for your structural optimization? Try :fish: FINETUNA :fish: for accurate but 90% faster relaxation!
+
 FINETUNA accelerates atomistic simulations by fine-tuning a pre-trained graph model in an active learning framework.
+
+Installation is easy:
+```
+    conda env create -f env.cpu.yml
+    git clone https://github.com/ulissigroup/finetuna.git
+    cd finetuna
+    pip install -e .
+    pip install git+https://github.com/ulissigroup/vasp-interactive.git
+```
+
+All pre-trained machine learning model checkpoint can be found [here](https://github.com/Open-Catalyst-Project/ocp/blob/main/MODELS.md). We recommend to download the GemNet-dT all model. [click here to download](https://dl.fbaipublicfiles.com/opencatalystproject/models/2021_08/s2ef/gemnet_t_direct_h512_all.pt).
+
+You are all set! Now in your VASP input folder, run the calculation by: `finetuna_wrap.py -c /path/to/the/checkpoint`.
+
 
 <img src="https://github.com/ulissigroup/finetuna/blob/main/doc/workflow.png" width="700">
 
 
-### Installation
 
-Install dependencies:
-
-- Ensure conda is up-to-date: 
-    
-    `conda update conda`
-
-- Create the environment,
-    - on a CPU machine:
-    
-        `
-        conda env create -f env.cpu.yml
-        `
-
-    - on a GPU machine:
-    check the instruction [here](https://github.com/Open-Catalyst-Project/ocp#gpu-machines), and
-        
-        `
-        conda env create -f env.gpu.yml
-        `
-        
-- Activate the conda environment
-    
-    `
-    conda activate finetuna
-    `
-- Install the package:
-    
-    `
-    pip install -e .
-    `
-
-- Install VASP Interactive:
-    
-    `
-    pip install git+https://github.com/ulissigroup/vasp-interactive.git
-    `
 
 ### Usage
 
@@ -53,36 +32,3 @@ If you have an ASE atoms object, see example [1](https://github.com/ulissigroup/
 
 If you have VASP input files (INCAR, KPOINTS, POTCAR, and POSCAR), see example [3](https://github.com/ulissigroup/finetuna/tree/main/finetuna/vasp_wrapper).
 
-#### Configs [wip]
-```
-learner_params = {
-    "atomistic_method": Relaxation(          #
-        initial_geometry=ase.Atoms object,   # The Atoms object
-        optimizer=ase.Optimizer object,      # Optimizer for Relaxation of Starting Image
-        fmax=float,                          # Force criteria required to terminate relaxation early
-        steps=int                            # Maximum number of steps before relaxation termination
-         )
-    "max_iterations": int,                   # Maximum number of iterations for the active learning loop
-    "samples_to_retrain": int,               # Number of samples to be retrained and added to the training data
-    "filename": str,                         # Name of trajectory file generated
-    "file_dir": str,                         # Directory where trajectory file will be generated
-    "use_dask": bool,                        #
-}
-
-```
-
-#### Specify Calculators and Training Data
-```
-trainer = object                             # An isntance of a trainer that has a train and predict method.
-
-training_data = list                         # A list of ase.Atoms objects that have attached calculators.
-
-parent_calc = ase Calculator object          # Calculator used for querying training data.
-
-base_calc = ase Calculator object<           # Calculator used to calculate delta data for training.
-```
-#### Run Learner
-```
-learner = OfflineActiveLearner(learner_params, trainer, training_data, parent_calc, base_calc)
-learner.learn()
-```
