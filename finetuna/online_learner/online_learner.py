@@ -78,6 +78,7 @@ class OnlineLearner(Calculator):
         self.dyn_avg_steps = self.learner_params.get("dyn_avg_steps", None)
 
         self.suppress_warnings = self.learner_params.get("suppress_warnings", False)
+        self.print_uncertainty = self.learner_params.get("print_uncertainty", True)
         self.reverify_with_parent = self.learner_params.get(
             "reverify_with_parent", True
         )
@@ -122,6 +123,8 @@ class OnlineLearner(Calculator):
         self.store_complete_dataset = self.learner_params.get(
             "store_complete_dataset", False
         )
+
+        self.ml_energy_only = self.learner_params.get("ml_energy_only", False)
 
         self.db_name = self.learner_params.get("asedb_name", "oal_queried_images.db")
 
@@ -188,13 +191,14 @@ class OnlineLearner(Calculator):
         self.results["forces"] = forces
 
         # Print a statement about the uncertainty
-        uncertainty_statement = "uncertainty: "
-        if self.uncertainty_metric == "forces":
-            uncertainty_statement += str(self.info["force_uncertainty"])
-        elif self.uncertainty_metric == "energy":
-            uncertainty_statement += str(self.info["energy_uncertainty"])
-        uncertainty_statement += ", tolerance: " + str(self.info["tolerance"])
-        print(uncertainty_statement)
+        if self.print_uncertainty:
+            uncertainty_statement = "uncertainty: "
+            if self.uncertainty_metric == "forces":
+                uncertainty_statement += str(self.info["force_uncertainty"])
+            elif self.uncertainty_metric == "energy":
+                uncertainty_statement += str(self.info["energy_uncertainty"])
+            uncertainty_statement += ", tolerance: " + str(self.info["tolerance"])
+            print(uncertainty_statement)
 
     def get_energy_and_forces(self, atoms, precalculated=False):
         # copy the atoms object (original only used to obtain indices of constraints and for precalculated images)
@@ -326,6 +330,12 @@ class OnlineLearner(Calculator):
 
                 atoms_copy.info["check"] = False
 
+        if self.ml_energy_only:
+            if self.info.get("retrained_energy", None) is not None:
+                energy = self.info["retrained_energy"]
+            else:
+                energy = self.info["ml_energy"]
+
         # Record number of parent calls after this calculation
         self.info["parent_calls"] = self.parent_calls
         self.info["current_step"] = self.curr_step
@@ -437,7 +447,9 @@ class OnlineLearner(Calculator):
         fmax = np.sqrt((forces**2).sum(axis=1).max())
 
         verify = False
-        if fmax <= self.fmax_verify_threshold:
+        if fmax <= self.fmax_verify_threshold or atoms.info.get(
+            "parent_calculation_required", False
+        ):
             verify = True
             print("Force below threshold: check with parent")
             self.set_query_reason("threshold")

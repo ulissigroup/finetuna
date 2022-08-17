@@ -113,6 +113,10 @@ class FinetunerCalc(MLPCalc):
             torch.set_num_threads(self.mlp_params["tuner"]["num_threads"])
         self.validation_split = self.mlp_params["tuner"].get("validation_split", None)
 
+        self.ref_atoms = None
+        self.ref_energy_parent = None
+        self.ref_energy_ml = None
+
         # init block/weight freezing
         if self.model_name == "gemnet":
             self.unfreeze_blocks = ["out_blocks.3"]
@@ -227,6 +231,9 @@ class FinetunerCalc(MLPCalc):
             atoms, properties, system_changes
         )
 
+        if self.ref_energy_parent is not None:
+            energy += self.ref_energy_parent - self.ref_energy_ml
+
         self.results["energy"] = energy
         self.results["forces"] = forces
         self.results["stds"] = [energy_uncertainty, force_uncertainties]
@@ -294,13 +301,18 @@ class FinetunerCalc(MLPCalc):
             + " seconds"
         )
 
+        if self.ref_energy_parent is not None:
+            self.ref_energy_ml, f = self.trainer.get_atoms_prediction(self.ref_atoms)
+
     def train_ocp(self, dataset):
         """
         Overwritable if doing ensembling of ocp models
         """
-        self.trainer.config["optim"]["max_epochs"] = int(
-            self.trainer.epoch + self.mlp_params["optim"]["max_epochs"]
-        )
+        # set the new max epoch to whatever the starting epoch will be + the current max epoch size
+        start_epoch = self.trainer.step // len(dataset)
+        max_epochs = start_epoch + self.mlp_params["optim"]["max_epochs"]
+        self.trainer.config["optim"]["max_epochs"] = int(max_epochs)
+
         self.trainer.load_optimizer()
         self.trainer.load_extras()
 
@@ -351,6 +363,28 @@ class FinetunerCalc(MLPCalc):
         )
 
         return data_loader
+
+    def set_lr(self, lr):
+        self.trainer.config["optim"]["lr_initial"] = lr
+
+    def set_max_epochs(self, max_epochs):
+        self.mlp_params["optim"]["max_epochs"] = max_epochs
+
+    def set_validation(self, val_set: "list[Atoms]"):
+        self.trainer.val_loader = self.get_data_from_atoms(val_set)
+
+    def set_test(self, test_set: "list[Atoms]"):
+        self.trainer.test_loader = self.get_data_from_atoms(test_set)
+
+    def set_reference_atoms(self, atoms):
+        """
+        Helper and external function for setting a parent reference energy to correct the ML predicted energy.
+        Takes an atoms object with parent singlepoint calculator attached.
+        Sets the atoms object as the reference atoms object, and the parent energy as the correspond parent reference energy.
+        """
+        self.ref_atoms = atoms
+        self.ref_energy_parent = self.ref_atoms.get_potential_energy()
+        self.ref_energy_ml, f = self.trainer.get_atoms_prediction(self.ref_atoms)
 
 
 class GraphsListDataset(Dataset):
@@ -420,12 +454,16 @@ class Trainer(ForcesTrainer):
             del config["dataset"]["src"]
             config["normalizer"] = config["dataset"]
 
+        identifier = ""
+        if hasattr(config.get("logger", {}), "get"):
+            identifier = config.get("logger", {}).get("identifier", "")
+
         super().__init__(
             task=config["task"],
             model=config["model"],
             dataset=None,
             optimizer=config["optim"],
-            identifier="",
+            identifier=identifier,
             normalizer=config["normalizer"],
             slurm=config.get("slurm", {}),
             local_rank=config.get("local_rank", 0),
@@ -613,27 +651,33 @@ class Trainer(ForcesTrainer):
                             self.run_relaxations()
 
                 if self.config["optim"].get("print_loss_and_lr", False):
-                    print(
-                        "epoch: "
-                        + str(self.epoch)
-                        + ", \tstep: "
-                        + str(self.step)
-                        + ", \tloss: "
-                        + str(loss.detach().item())
-                        + ", \tlr: "
-                        + str(self.scheduler.get_lr())
-                        + ", \tval: "
-                        + str(val_metrics["loss"]["metric"])
-                    ) if self.step % eval_every == 0 and self.val_loader is not None else print(
-                        "epoch: "
-                        + str(self.epoch)
-                        + ", \tstep: "
-                        + str(self.step)
-                        + ", \tloss: "
-                        + str(loss.detach().item())
-                        + ", \tlr: "
-                        + str(self.scheduler.get_lr())
-                    )
+                    if self.step % eval_every == 0 or not self.config["optim"].get(
+                        "print_only_on_eval", True
+                    ):
+                        if self.val_loader is not None:
+                            print(
+                                "epoch: "
+                                + "{:.1f}".format(self.epoch)
+                                + ", \tstep: "
+                                + str(self.step)
+                                + ", \tloss: "
+                                + str(loss.detach().item())
+                                + ", \tlr: "
+                                + str(self.scheduler.get_lr())
+                                + ", \tval: "
+                                + str(val_metrics["loss"]["metric"])
+                            )
+                        else:
+                            print(
+                                "epoch: "
+                                + "{:.1f}".format(self.epoch)
+                                + ", \tstep: "
+                                + str(self.step)
+                                + ", \tloss: "
+                                + str(loss.detach().item())
+                                + ", \tlr: "
+                                + str(self.scheduler.get_lr())
+                            )
 
                 if self.scheduler.scheduler_type == "ReduceLROnPlateau":
                     if (

@@ -130,8 +130,11 @@ def create_job(
 
 def merge_dict(d, u):
     for key, value in u.items():
-        if isinstance(value, collections.abc.Mapping):
-            d[key] = merge_dict(d.get(key, {}), value)
+        dvalue = d.get(key, {})
+        if isinstance(value, collections.abc.Mapping) and isinstance(
+            dvalue, collections.abc.Mapping
+        ):
+            d[key] = merge_dict(dvalue, value)
         else:
             d[key] = value
     return d
