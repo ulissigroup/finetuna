@@ -66,12 +66,6 @@ class FinetunerCalc(MLPCalc):
 
         if "tuner" not in mlp_params:
             mlp_params["tuner"] = {}
-        # if "num_atoms" not in config["model"]:
-        #     config["model"]["num_atoms"] = 0
-        # if "bond_feat_dim" not in config["model"]:
-        #     config["model"]["bond_feat_dim"] = 0
-        # if "num_targets" not in config["model"]:
-        #     config["model"]["num_targets"] = 1
 
         if "optimizer" in mlp_params.get("optim", {}):
             config.pop("optim", None)
