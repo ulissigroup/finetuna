@@ -193,15 +193,3 @@ class FinetunerEnsembleCalc(FinetunerCalc):
             checkpoint_paths=config["checkpoint_paths"],
             mlp_params=config["finetuner"],
         )
-
-
-# Add gemnet_t_uncertainty as GemNetT class for loading homoscedastic model checkpoints
-from ocpmodels.common.registry import registry
-from ocpmodels.models.gemnet.gemnet import GemNetT
-
-
-@registry.register_model("gemnet_t_uncertainty")
-class GemNetTUncertainty(GemNetT):
-    def __init__(self, *args, **kwargs):
-        kwargs.pop("heteroskedastic")
-        super().__init__(*args, **kwargs)
