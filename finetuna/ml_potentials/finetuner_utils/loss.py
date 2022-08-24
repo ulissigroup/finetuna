@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from ocpmodels.modules.loss import AtomwiseL2Loss
 
 
 class RelativeL2MAELoss(nn.Module):
@@ -17,3 +18,14 @@ class RelativeL2MAELoss(nn.Module):
             return torch.mean(dists)
         elif self.reduction == "sum":
             return torch.sum(dists)
+
+
+class AtomwiseL2LossNoBatch(AtomwiseL2Loss):
+    def forward(
+        self,
+        input: torch.Tensor,
+        target: torch.Tensor,
+        natoms: torch.Tensor,
+        batch_size: int,
+    ):
+        return super().forward(input, target, natoms)

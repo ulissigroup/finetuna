@@ -5,12 +5,15 @@ from ocpmodels.common import distutils
 import logging
 import yaml
 from ocpmodels.preprocessing import AtomsToGraphs
-from ocpmodels.modules.loss import DDPLoss, L2MAELoss, AtomwiseL2Loss
+from ocpmodels.modules.loss import DDPLoss, L2MAELoss
 import os
 import torch
 import copy
 import torch.nn as nn
-from finetuna.ml_potentials.finetuner_utils.loss import RelativeL2MAELoss
+from finetuna.ml_potentials.finetuner_utils.loss import (
+    RelativeL2MAELoss,
+    AtomwiseL2LossNoBatch,
+)
 
 
 class Trainer(ForcesTrainer):
@@ -331,7 +334,7 @@ class Trainer(ForcesTrainer):
             elif loss_name == "rell2mae":
                 self.loss_fn[loss] = RelativeL2MAELoss()
             elif loss_name == "atomwisel2":
-                self.loss_fn[loss] = AtomwiseL2Loss()
+                self.loss_fn[loss] = AtomwiseL2LossNoBatch()
             else:
                 raise NotImplementedError(f"Unknown loss function name: {loss_name}")
             if distutils.initialized():
