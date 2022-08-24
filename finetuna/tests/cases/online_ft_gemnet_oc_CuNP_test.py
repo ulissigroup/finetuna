@@ -28,6 +28,7 @@ class online_ft_gemnet_oc_CuNP(BaseOnlineCuNP, unittest.TestCase):
                 "max_epochs": 30,
                 "lr_initial": 0.0003,
                 "factor": 0.9,
+                "loss_force": "l2mae",
             },
         }
         al_config["ocp"] = {
