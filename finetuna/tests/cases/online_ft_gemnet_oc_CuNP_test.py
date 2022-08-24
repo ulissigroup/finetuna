@@ -25,10 +25,9 @@ class online_ft_gemnet_oc_CuNP(BaseOnlineCuNP, unittest.TestCase):
             "optim": {
                 "batch_size": 1,
                 "num_workers": 0,
-                "max_epochs": 30,
+                "max_epochs": 60,
                 "lr_initial": 0.0003,
                 "factor": 0.9,
-                "loss_force": "l2mae",
             },
         }
         al_config["ocp"] = {
