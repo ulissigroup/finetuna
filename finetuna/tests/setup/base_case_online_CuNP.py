@@ -57,14 +57,13 @@ class BaseOnlineCuNP:
                 "parent_calc": "emt",
             },
             "learner": {
-                "stat_uncertain_tol": 1,  # online
-                "dyn_uncertain_tol": 1000000000,  # online
-                "fmax_verify_threshold": 0.03,  # online
-                "tolerance_selection": "min",
-                "no_position_change_steps": 10,
-                "min_position_change": 0.0005,
-                "num_initial_points": 3,
-                "initial_points_to_keep": [0, 2],
+                "partial_fit": True,
+                "fmax_verify_threshold": 0.03,
+                "stat_uncertain_tol": 1000000,
+                "dyn_uncertain_tol": 1000000,
+                "query_every_n_steps": 100,
+                "num_initial_points": 0,
+                "initial_points_to_keep": [],
                 "wandb_init": {
                     "wandb_log": False,
                 },
@@ -81,13 +80,6 @@ class BaseOnlineCuNP:
                 "replay_method": "parent_only",
                 "check_final": True,
             },
-            # "dataset": {
-            #     "normalize_labels": True,
-            #     "target_mean": -0.7554450631141663,
-            #     "target_std": 2.887317180633545,
-            #     "grad_target_mean": 0.0,
-            #     "grad_target_std": 2.887317180633545,
-            # },
         }
         return al_config
 

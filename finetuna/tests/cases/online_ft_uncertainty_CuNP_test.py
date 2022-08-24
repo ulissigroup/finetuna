@@ -47,14 +47,6 @@ class online_ft_uncertainty_CuNP(BaseOnlineCuNP, unittest.TestCase):
                 },
             },
         ]
-        al_config["learner"] = {
-            "partial_fit": True,
-            "stat_uncertain_tol": 1000000,
-            "dyn_uncertain_tol": 1000000,
-            "query_every_n_steps": 100,
-            "num_initial_points": 0,
-            "initial_points_to_keep": [],
-        }
         al_config["ocp"] = {
             "checkpoint_path_list": [
                 "/home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_s2re_bagging_results/gem_homo_run0.pt",

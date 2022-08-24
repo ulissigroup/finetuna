@@ -30,14 +30,6 @@ class online_ft_gemnet_oc_CuNP(BaseOnlineCuNP, unittest.TestCase):
                 "factor": 0.9,
             },
         }
-        al_config["learner"] = {
-            "partial_fit": True,
-            "stat_uncertain_tol": 1000000,
-            "dyn_uncertain_tol": 1000000,
-            "query_every_n_steps": 100,
-            "num_initial_points": 0,
-            "initial_points_to_keep": [],
-        }
         al_config["ocp"] = {
             "checkpoint_path": "/home/jovyan/shared-scratch/ocp_checkpoints/public_checkpoints/scaling_attached/gemnet_oc_base_oc20_oc22_attscale.pt",
         }
