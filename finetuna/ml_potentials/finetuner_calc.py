@@ -17,7 +17,7 @@ import logging
 import numpy as np
 from finetuna.ml_potentials.ocp_models.adapter_gemnet_t import adapter_gemnet_t
 import torch.nn as nn
-from ocpmodels.modules.loss import DDPLoss, L2MAELoss
+from ocpmodels.modules.loss import DDPLoss, L2MAELoss, AtomwiseL2Loss
 
 
 class FinetunerCalc(MLPCalc):
@@ -54,48 +54,25 @@ class FinetunerCalc(MLPCalc):
 
     def __init__(
         self,
-        model_name: str,
-        model_path: str,
         checkpoint_path: str,
         mlp_params: dict = {},
     ):
-
-        if model_name not in [
-            "gemnet",
-            "spinconv",
-            "dimenetpp",
-            "adapter_gemnet_t",
-            "gemnet_oc",
-        ]:
-            raise ValueError("Invalid model name provided")
-
-        if "optimizer" in mlp_params.get("optim", {}):
-            checkpoint = torch.load(checkpoint_path, map_location=torch.device("cpu"))
-            for key in ["optimizer", "scheduler", "ema", "amp"]:
-                if key in checkpoint and checkpoint[key] is not None:
-                    raise ValueError(
-                        str(checkpoint_path)
-                        + "\n^this checkpoint contains "
-                        + str(key)
-                        + " information, please load the .pt file, delete the "
-                        + str(key)
-                        + " dictionary, save it again as a .pt file, and try again so that the the given optimizer config will be loaded"
-                    )
-
-        self.model_name = model_name
-        self.model_path = model_path
         self.checkpoint_path = checkpoint_path
+        config = torch.load(self.checkpoint_path)["config"]
+        self.model_name = config["model"]
+        config["model_attributes"]["name"] = config.pop("model")
+        config["model"] = config.pop("model_attributes")
+        config["trainer"] = "forces"
 
         if "tuner" not in mlp_params:
             mlp_params["tuner"] = {}
+        # if "num_atoms" not in config["model"]:
+        #     config["model"]["num_atoms"] = 0
+        # if "bond_feat_dim" not in config["model"]:
+        #     config["model"]["bond_feat_dim"] = 0
+        # if "num_targets" not in config["model"]:
+        #     config["model"]["num_targets"] = 1
 
-        config = yaml.safe_load(open(self.model_path, "r"))
-        if "includes" in config:
-            for include in config["includes"]:
-                # Change the path based on absolute path of config_yml
-                path = os.path.join(self.model_path.split("configs")[0], include)
-                include_config = yaml.safe_load(open(path, "r"))
-                config.update(include_config)
         if "optimizer" in mlp_params.get("optim", {}):
             config.pop("optim", None)
         config = merge_dict(config, mlp_params)
@@ -118,50 +95,15 @@ class FinetunerCalc(MLPCalc):
         self.ref_energy_ml = None
 
         # init block/weight freezing
-        if self.model_name == "gemnet":
-            self.unfreeze_blocks = ["out_blocks.3"]
-        elif self.model_name == "spinconv":
-            self.unfreeze_blocks = ["force_output_block"]
-        elif self.model_name == "dimenetpp":
-            self.unfreeze_blocks = ["output_blocks.3"]
-        elif self.model_name == "adapter_gemnet_t":
-            self.unfreeze_blocks = [
-                "out_blocks.3.seq_forces",
-                # "out_blocks.3.scale_rbf_F",
-                "out_blocks.3.dense_rbf_F",
-                # "out_blocks.3.out_forces",
-                "project_f",
-            ]
-        elif self.model_name == "gemnet_oc":
-            self.unfreeze_blocks = [
-                "out_blocks.6.seq_forces",
-                "out_blocks.6.dense_rbf_F",
-                "out_blocks.5.seq_forces",
-                "out_blocks.5.dense_rbf_F",
-                "out_blocks.4.seq_forces",
-                "out_blocks.4.dense_rbf_F",
-                "out_blocks.3.seq_forces",
-                "out_blocks.3.dense_rbf_F",
-                "out_blocks.2.seq_forces",
-                "out_blocks.2.dense_rbf_F",
-                "out_blocks.1.seq_forces",
-                "out_blocks.1.dense_rbf_F",
-            ]
-        if "unfreeze_blocks" in self.mlp_params["tuner"]:
-            if isinstance(self.mlp_params["tuner"]["unfreeze_blocks"], list):
-                self.unfreeze_blocks = self.mlp_params["tuner"]["unfreeze_blocks"]
-            elif isinstance(self.mlp_params["tuner"]["unfreeze_blocks"], str):
-                self.unfreeze_blocks = [self.mlp_params["tuner"]["unfreeze_blocks"]]
-            else:
-                raise ValueError("invalid unfreeze_blocks parameter given")
+        if isinstance(self.mlp_params["tuner"]["unfreeze_blocks"], list):
+            self.unfreeze_blocks = self.mlp_params["tuner"]["unfreeze_blocks"]
+        elif isinstance(self.mlp_params["tuner"]["unfreeze_blocks"], str):
+            self.unfreeze_blocks = [self.mlp_params["tuner"]["unfreeze_blocks"]]
+        else:
+            raise ValueError("invalid unfreeze_blocks parameter given")
 
         # make a copy of the config dict so we don't edit the original
         config_dict = copy.deepcopy(self.mlp_params)
-
-        # change the path to scale file to start at a folder called "configs"
-        config_dict["model"]["scale_file"] = os.path.join(
-            self.model_path.split("configs")[0], config_dict["model"]["scale_file"]
-        )
 
         # init trainer
         sys.stdout = open(os.devnull, "w")
@@ -427,8 +369,6 @@ class Trainer(ForcesTrainer):
                         config.update(include_config)
             else:
                 config = config_yml
-            # Only keeps the train data that might have normalizer values
-            config["dataset"] = config["dataset"][0]
         else:
             # Loads the config from the checkpoint directly
             config = torch.load(checkpoint, map_location=torch.device("cpu"))["config"]
@@ -726,6 +666,8 @@ class Trainer(ForcesTrainer):
                 self.loss_fn[loss] = L2MAELoss()
             elif loss_name == "rell2mae":
                 self.loss_fn[loss] = RelativeL2MAELoss()
+            elif loss_name == "atomwisel2":
+                self.loss_fn[loss] = AtomwiseL2Loss()
             else:
                 raise NotImplementedError(f"Unknown loss function name: {loss_name}")
             if distutils.initialized():

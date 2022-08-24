@@ -45,26 +45,22 @@ class FinetunerEnsembleCalc(FinetunerCalc):
 
     def __init__(
         self,
-        model_classes: "list[str]",
-        model_paths: "list[str]",
         checkpoint_paths: "list[str]",
         mlp_params: dict = {},
     ) -> None:
 
-        self.model_classes = model_classes
-        self.model_paths = model_paths
+        # self.model_classes = model_classes
+        # self.model_paths = model_paths
         self.checkpoint_paths = checkpoint_paths
 
         self.finetuner_calcs = []
-        for i in range(len(self.model_classes)):
+        for i in range(len(self.checkpoint_paths)):
             if isinstance(mlp_params, list):
                 mlp_params_copy = copy.deepcopy(mlp_params[i])
             else:
                 mlp_params_copy = copy.deepcopy(mlp_params)
             self.finetuner_calcs.append(
                 FinetunerCalc(
-                    model_name=self.model_classes[i],
-                    model_path=self.model_paths[i],
                     checkpoint_path=self.checkpoint_paths[i],
                     mlp_params=mlp_params_copy,
                 )
@@ -80,8 +76,6 @@ class FinetunerEnsembleCalc(FinetunerCalc):
             mlp_params_copy["tuner"] = {}
         self.ensemble_method = mlp_params_copy["tuner"].get("ensemble_method", "mean")
         super().__init__(
-            model_name=model_classes[0],
-            model_path=model_paths[0],
             checkpoint_path=checkpoint_paths[0],
             mlp_params=mlp_params_copy,
         )
