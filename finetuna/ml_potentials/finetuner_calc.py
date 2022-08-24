@@ -178,6 +178,10 @@ class FinetunerCalc(MLPCalc):
         Initialize a new self.trainer containing an ocp ml model using the stored parameter dictionary
         """
         sys.stdout = open(os.devnull, "w")
+        self.trainer.load_model()
+        self.trainer.load_loss()
+        self.trainer.load_optimizer()
+        self.trainer.load_extras()
         self.trainer.load_checkpoint(self.checkpoint_path)
         sys.stdout = sys.__stdout__
 
