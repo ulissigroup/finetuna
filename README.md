@@ -3,7 +3,7 @@
 [![Test](https://github.com/ulissigroup/finetuna/actions/workflows/unittests.yml/badge.svg)](https://github.com/ulissigroup/finetuna/actions/workflows/unittests.yml)
 ## *FINETUNA*: Fine-Tuning Accelerated Molecular Simulations
 <img align="left" src="https://github.com/ulissigroup/finetuna/blob/main/doc/finetuna_logo.png" width="280">
-Are you using VASP for your structural optimization? Try :monocle_face::fish: FINETUNA for accurate but 90% faster relaxation!
+Are you doing structural optimizations with DFT or other electronic structure codes?? Try :monocle_face::fish: FINETUNA for accurate but 90% faster relaxation!
 
 FINETUNA accelerates atomistic simulations by fine-tuning a pre-trained graph model in an active learning framework.
 
@@ -22,9 +22,6 @@ You are all set! Now in your VASP input folder, run the calculation by: `finetun
 
 
 <img src="https://github.com/ulissigroup/finetuna/blob/main/doc/workflow.png" width="700">
-
-
-
 
 ### Usage
 
