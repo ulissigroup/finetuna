@@ -2,7 +2,7 @@
 [![Lint](https://github.com/ulissigroup/finetuna/actions/workflows/black.yml/badge.svg)](https://github.com/ulissigroup/finetuna/actions/workflows/black.yml)
 [![Test](https://github.com/ulissigroup/finetuna/actions/workflows/unittests.yml/badge.svg)](https://github.com/ulissigroup/finetuna/actions/workflows/unittests.yml)
 ## *FINETUNA*: Fine-Tuning Accelerated Molecular Simulations
-<img align="left" src="https://github.com/ulissigroup/finetuna/blob/main/doc/finetuna_logo.png" width="300">
+<img align="left" src="https://github.com/ulissigroup/finetuna/blob/main/doc/finetuna_logo.png" width="250">
 Are you using VASP for your structural optimization? Try :monocle_face::fish: FINETUNA for accurate but 90% faster relaxation!
 
 FINETUNA accelerates atomistic simulations by fine-tuning a pre-trained graph model in an active learning framework.
