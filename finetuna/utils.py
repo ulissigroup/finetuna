@@ -232,3 +232,18 @@ def calculate_surface_k_points(atoms):
         1,
     )
     return k_pts
+
+
+def asedb_row_to_atoms(row):
+    image = row.toatoms()
+    sample_energy = row.parent_energy
+    sample_forces = row.parent_forces
+    sample_forces = np.array(
+        [
+            [float(f) for f in force.split(" ") if f != ""]
+            for force in sample_forces[2:-2].split("]\n [")
+        ]
+    )
+    sp_calc = sp(atoms=image, energy=float(sample_energy), forces=sample_forces)
+    image.calc = sp_calc
+    return image
