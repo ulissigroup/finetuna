@@ -175,9 +175,14 @@ def active_learning(config):
         from finetuna.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
 
         ml_potential = FinetunerEnsembleCalc(
-            model_classes=config["ocp"]["model_class_list"],
-            model_paths=config["ocp"]["model_path_list"],
             checkpoint_paths=config["ocp"]["checkpoint_path_list"],
+            mlp_params=config.get("finetuner", {}),
+        )
+    elif potential_class == "ft":
+        from finetuna.ml_potentials.finetuner_calc import FinetunerCalc
+
+        ml_potential = FinetunerCalc(
+            checkpoint_path=config["ocp"]["checkpoint_path"],
             mlp_params=config.get("finetuner", {}),
         )
     elif potential_class == "ft_ss":
