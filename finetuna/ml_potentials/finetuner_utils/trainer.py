@@ -110,13 +110,15 @@ class Trainer(ForcesTrainer):
         )
 
     def a2g_convert(self, atoms, train: bool):
+        if "tags" not in atoms.arrays:
+            tags = atoms.get_tags()
+            tags[atoms.constraints[0].get_indices()] = 1
+            atoms.arrays["tags"] = tags
+
         if train:
             data_object = self.a2g_train.convert(atoms)
         else:
             data_object = self.a2g_predict.convert(atoms)
-
-        if not hasattr(data_object, "tags"):
-            data_object.tags = torch.ones(data_object.num_nodes)
 
         return data_object
 
