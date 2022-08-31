@@ -10,6 +10,10 @@ FINETUNA accelerates atomistic simulations by fine-tuning a pre-trained graph mo
 Installation is easy:
 ```
 conda env create -f env.cpu.yml
+conda activate finetuna
+git clone https://github.com/Open-Catalyst-Project/ocp.git
+cd ocp
+pip install -e .
 pip install git+https://github.com/ulissigroup/finetuna.git
 pip install git+https://github.com/ulissigroup/vasp-interactive.git
 ```
