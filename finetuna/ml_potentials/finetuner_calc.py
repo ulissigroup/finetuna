@@ -50,7 +50,7 @@ class FinetunerCalc(MLPCalc):
         mlp_params: dict = {},
     ):
         self.checkpoint_path = checkpoint_path
-        config = torch.load(self.checkpoint_path)["config"]
+        config = torch.load(self.checkpoint_path, map_location="cpu")["config"]
         self.model_name = config["model"]
         config["model_attributes"]["name"] = config.pop("model")
         config["model"] = config.pop("model_attributes")
