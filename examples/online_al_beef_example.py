@@ -19,12 +19,6 @@ if __name__ == "__main__":
     slab = read(poscar_path)
 
     ml_potential = FinetunerEnsembleCalc(
-        model_classes=[
-            "gemnet",
-        ],
-        model_paths=[
-            "/home/jovyan/working/ocp/configs/s2ef/all/gemnet/gemnet-dT.yml",  # change this path to your gemnet config
-        ],
         checkpoint_paths=[
             "/home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_s2re_bagging_results/gem_homo_run0.pt",  # change this path to your gemnet checkpoint
         ],
