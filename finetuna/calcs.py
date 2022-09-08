@@ -4,6 +4,7 @@ from ase.calculators.calculator import Calculator
 from ase.calculators.calculator import PropertyNotImplementedError
 import copy
 import numpy as np
+from finetuna.ml_potentials.finetuner_calc import FinetunerCalc
 
 
 class DeltaCalc(LinearCombinationCalculator):
@@ -166,3 +167,15 @@ class CounterCalc(Calculator):
         self.results["energy"] = calc.get_potential_energy(atoms)
         self.results["forces"] = calc.get_forces(atoms)
         self.force_calls += 1
+
+
+class ClonedFinetunerCalc(FinetunerCalc):
+    def __init__(self, finetuner_calc: FinetunerCalc):
+        self.finetuner_calc = finetuner_calc
+        FinetunerCalc.__init__(
+            self, finetuner_calc.checkpoint_path, finetuner_calc.mlp_params
+        )
+        self.ml_model = True
+
+    def load_trainer(self):
+        self.trainer = self.finetuner_calc.trainer
