@@ -88,10 +88,18 @@ class FinetunerCalc(MLPCalc):
         else:
             raise ValueError("invalid unfreeze_blocks parameter given")
 
-        # make a copy of the config dict so we don't edit the original
+        # load the self.trainer
+        self.load_trainer()
+
+    def load_trainer(self):
+        """
+        Initialize a new ocpmodels self.trainer (only call once!)
+        Can be overwritten by classes that want to use an already instantiated ocpmodels trainer
+        """
+        # make a copy of the config dict so the trainer doesn't edit the original
         config_dict = copy.deepcopy(self.mlp_params)
 
-        # init trainer
+        # initialize trainer
         sys.stdout = open(os.devnull, "w")
         self.trainer = Trainer(
             config_yml=config_dict,
@@ -103,7 +111,7 @@ class FinetunerCalc(MLPCalc):
 
     def init_model(self):
         """
-        Initialize a new self.trainer containing an ocp ml model using the stored parameter dictionary
+        Initialize a new model in self.trainer using the stored parameter dictionary
         """
         sys.stdout = open(os.devnull, "w")
         self.trainer.load_model()
