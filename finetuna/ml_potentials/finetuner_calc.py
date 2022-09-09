@@ -109,6 +109,9 @@ class FinetunerCalc(MLPCalc):
         )
         sys.stdout = sys.__stdout__
 
+        # load model for the first time
+        self.init_model()
+
     def init_model(self):
         """
         Initialize a new model in self.trainer using the stored parameter dictionary
