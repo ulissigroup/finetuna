@@ -47,14 +47,6 @@ def main(args):
     # Set up Finetuner calculator
     print("------Setting up Finetuner Calculator------")
     ml_potential = FinetunerEnsembleCalc(
-        model_classes=parsed_yaml_file["ocp"]["model_class_list"],
-        model_paths=[
-            str(
-                files("finetuna.ml_potentials.ocp_models.gemnet_t.configs").joinpath(
-                    "gemnet-dT.yml"
-                )
-            )
-        ],
         checkpoint_paths=[args.checkpoint],
         mlp_params=finetuner,
     )
