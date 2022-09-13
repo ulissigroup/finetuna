@@ -66,7 +66,6 @@ class FinetunerCalc(MLPCalc):
         MLPCalc.__init__(self, mlp_params=config)
 
         self.train_counter = 0
-        self.ml_model = False
         self.max_neighbors = self.mlp_params["tuner"].get("max_neighbors", 50)
         self.cutoff = self.mlp_params["tuner"].get("cutoff", 6)
         self.energy_training = self.mlp_params["tuner"].get("energy_training", False)
@@ -134,7 +133,6 @@ class FinetunerCalc(MLPCalc):
                 if block_name in name:
                     param.requires_grad = True
 
-        self.ml_model = True
         self.trainer.train_dataset = GenericDB()
 
         self.trainer.step = 0
@@ -225,7 +223,7 @@ class FinetunerCalc(MLPCalc):
         """
         self.train_counter = 0
         self.reset()
-        if not self.ml_model or not new_dataset:
+        if not new_dataset:
             self.init_model()
             dataset = parent_dataset
         else:
