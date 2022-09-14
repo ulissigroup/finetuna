@@ -9,7 +9,7 @@ from ase.db import connect
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from ase.constraints import constrained_indices
-from finetuna.ml_potentials.ocp_models.gemnet_t.int_descriptor_gemnet_t import (
+from finetuna.ocp_models.gemnet_t.int_descriptor_gemnet_t import (
     IntDescriptorGemNetT,
 )
 from tqdm import tqdm

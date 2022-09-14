@@ -7,9 +7,9 @@ import copy
 import time
 import torch
 import numpy as np
-from finetuna.ml_potentials.ocp_models.adapter_gemnet_t import adapter_gemnet_t
-from finetuna.ml_potentials.finetuner_utils.utils import GenericDB, GraphsListDataset
-from finetuna.ml_potentials.finetuner_utils.trainer import Trainer
+from finetuna.ocp_models.adapter_gemnet_t import adapter_gemnet_t
+from finetuna.finetuner_utils.utils import GenericDB, GraphsListDataset
+from finetuna.finetuner_utils.trainer import Trainer
 
 
 class FinetunerCalc(MLPCalc):
