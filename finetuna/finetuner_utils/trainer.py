@@ -10,7 +10,7 @@ import os
 import torch
 import copy
 import torch.nn as nn
-from finetuna.ml_potentials.finetuner_utils.loss import (
+from finetuna.finetuner_utils.loss import (
     RelativeL2MAELoss,
     AtomwiseL2LossNoBatch,
 )
