@@ -74,7 +74,6 @@ class FinetunerCalc(MLPCalc):
         MLPCalc.__init__(self, mlp_params=config)
 
         self.train_counter = 0
-        self.ml_model = False
         self.max_neighbors = self.mlp_params["tuner"].get("max_neighbors", 50)
         self.cutoff = self.mlp_params["tuner"].get("cutoff", 6)
         self.energy_training = self.mlp_params["tuner"].get("energy_training", False)
@@ -97,10 +96,18 @@ class FinetunerCalc(MLPCalc):
         else:
             raise ValueError("invalid unfreeze_blocks parameter given")
 
-        # make a copy of the config dict so we don't edit the original
+        # load the self.trainer
+        self.load_trainer()
+
+    def load_trainer(self):
+        """
+        Initialize a new ocpmodels self.trainer (only call once!)
+        Can be overwritten by classes that want to use an already instantiated ocpmodels trainer
+        """
+        # make a copy of the config dict so the trainer doesn't edit the original
         config_dict = copy.deepcopy(self.mlp_params)
 
-        # init trainer
+        # initialize trainer
         sys.stdout = open(os.devnull, "w")
         self.trainer = Trainer(
             config_yml=config_dict,
@@ -110,9 +117,12 @@ class FinetunerCalc(MLPCalc):
         )
         sys.stdout = sys.__stdout__
 
+        # load model for the first time
+        self.init_model()
+
     def init_model(self):
         """
-        Initialize a new self.trainer containing an ocp ml model using the stored parameter dictionary
+        Initialize a new model in self.trainer using the stored parameter dictionary
         """
         sys.stdout = open(os.devnull, "w")
         self.trainer.load_model()
@@ -132,7 +142,6 @@ class FinetunerCalc(MLPCalc):
                 if block_name in name:
                     param.requires_grad = True
 
-        self.ml_model = True
         self.trainer.train_dataset = GenericDB()
 
         self.trainer.step = 0
@@ -223,7 +232,7 @@ class FinetunerCalc(MLPCalc):
         """
         self.train_counter = 0
         self.reset()
-        if not self.ml_model or not new_dataset:
+        if not new_dataset:
             self.init_model()
             dataset = parent_dataset
         else:
