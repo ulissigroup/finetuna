@@ -28,9 +28,13 @@ def main(args):
     }
     for k in incar.keys():
         vasp_inputs[k.lower()] = incar[k]
-        
-    os.rename(os.path.join(args.path, "INCAR"), os.path.join(args.path, "INCAR_original"))
-    os.rename(os.path.join(args.path, "KPOINTS"), os.path.join(args.path, "KPOINTS_original"))
+
+    os.rename(
+        os.path.join(args.path, "INCAR"), os.path.join(args.path, "INCAR_original")
+    )
+    os.rename(
+        os.path.join(args.path, "KPOINTS"), os.path.join(args.path, "KPOINTS_original")
+    )
 
     # Set convergence criteria as EDIFFG in VASP flag, default to 0.03 eV/A
     if -vasp_interactive.exp_params.get("ediffg") == 0:
@@ -40,7 +44,9 @@ def main(args):
 
     # Read the initial structure
     initial_structure = ase.io.read(os.path.join(args.path, "POSCAR"))
-    os.rename(os.path.join(args.path, "POSCAR"), os.path.join(args.path, "POSCAR_original"))
+    os.rename(
+        os.path.join(args.path, "POSCAR"), os.path.join(args.path, "POSCAR_original")
+    )
 
     # Parse the config file
     yaml_file = open(args.config)
@@ -60,7 +66,10 @@ def main(args):
     )
     with VaspInteractive(**vasp_inputs) as parent_calc:
         parent_calc.read_potcar(filename=os.path.join(args.path, "POTCAR"))
-        os.rename(os.path.join(args.path, "POTCAR"), os.path.join(args.path, "POTCAR_original"))
+        os.rename(
+            os.path.join(args.path, "POTCAR"),
+            os.path.join(args.path, "POTCAR_original"),
+        )
 
         onlinecalc = OnlineLearner(
             learner_params,
