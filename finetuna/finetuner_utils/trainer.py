@@ -112,7 +112,10 @@ class Trainer(ForcesTrainer):
     def a2g_convert(self, atoms, train: bool):
         if "tags" not in atoms.arrays:
             tags = atoms.get_tags()
-            tags[atoms.constraints[0].get_indices()] = 1
+            if atoms.constraints != []:
+                tags[atoms.constraints[0].get_indices()] = 1
+            else:
+                tags = [1] * len(atoms)
             atoms.arrays["tags"] = tags
 
         if train:
