@@ -118,15 +118,18 @@ def active_learning(config):
         parent_calc = EMT()
 
     # declare base calc (if path is given)
-    if "ocp" in config:
-        if "model_path" in config["ocp"] and "checkpoint_path" in config["ocp"]:
+    if "base_calc" in config:
+        if (
+            "model_path" in config["base_calc"]
+            and "checkpoint_path" in config["base_calc"]
+        ):
             base_calc = OCPCalculator(
-                config_yml=config["ocp"]["model_path"],
-                checkpoint=config["ocp"]["checkpoint_path"],
+                config_yml=config["base_calc"]["model_path"],
+                checkpoint=config["base_calc"]["checkpoint_path"],
             )
-        elif "checkpoint_path" in config["ocp"]:
+        elif "checkpoint_path" in config["base_calc"]:
             base_calc = OCPCalculator(
-                checkpoint=config["ocp"]["checkpoint_path"],
+                checkpoint=config["base_calc"]["checkpoint_path"],
             )
 
     # use given ml potential class
