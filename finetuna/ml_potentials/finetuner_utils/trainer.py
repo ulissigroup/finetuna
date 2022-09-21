@@ -114,6 +114,8 @@ class Trainer(ForcesTrainer):
             tags = atoms.get_tags()
             if atoms.constraints != []:
                 tags[atoms.constraints[0].get_indices()] = 1
+            else:
+                tags = [1]*len(atoms)
             atoms.arrays["tags"] = tags
 
         if train:
