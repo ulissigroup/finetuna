@@ -10,6 +10,7 @@ import numpy as np
 from finetuna.ocp_models.adapter_gemnet_t import adapter_gemnet_t
 from finetuna.finetuner_utils.utils import GenericDB, GraphsListDataset
 from finetuna.finetuner_utils.trainer import Trainer
+import ocpmodels
 
 
 class FinetunerCalc(MLPCalc):
@@ -55,6 +56,13 @@ class FinetunerCalc(MLPCalc):
         config["model_attributes"]["name"] = config.pop("model")
         config["model"] = config.pop("model_attributes")
         config["trainer"] = "forces"
+
+        if isinstance(config["model"].get("scale_file", None), str):
+            scale_file_path = config["model"]["scale_file"]
+            if not scale_file_path[0] == "/":
+                config["model"]["scale_file"] = (
+                    ocpmodels.__file__[:-21] + scale_file_path
+                )
 
         if "tuner" not in mlp_params:
             mlp_params["tuner"] = {}
