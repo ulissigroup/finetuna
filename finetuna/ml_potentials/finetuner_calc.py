@@ -81,10 +81,11 @@ class FinetunerCalc(MLPCalc):
         self.ref_energy_ml = None
 
         # init block/weight freezing
-        if isinstance(self.mlp_params["tuner"]["unfreeze_blocks"], list):
-            self.unfreeze_blocks = self.mlp_params["tuner"]["unfreeze_blocks"]
-        elif isinstance(self.mlp_params["tuner"]["unfreeze_blocks"], str):
-            self.unfreeze_blocks = [self.mlp_params["tuner"]["unfreeze_blocks"]]
+        self.unfreeze_blocks = self.mlp_params["tuner"].get("unfreeze_blocks", [])
+        if isinstance(self.unfreeze_blocks, list):
+            pass
+        elif isinstance(self.unfreeze_blocks, str):
+            self.unfreeze_blocks = [self.unfreeze_blocks]
         else:
             raise ValueError("invalid unfreeze_blocks parameter given")
 
