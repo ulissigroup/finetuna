@@ -24,6 +24,7 @@ from ocpmodels.models.gemnet.layers.interaction_block import (
     InteractionBlockTripletsOnly,
 )
 from ocpmodels.models.gemnet.layers.radial_basis import RadialBasis
+
 # from ocpmodels.models.gemnet.layers.scaling import AutomaticFit
 from ocpmodels.models.gemnet.layers.spherical_basis import CircularBasisLayer
 from ocpmodels.models.gemnet.utils import (
