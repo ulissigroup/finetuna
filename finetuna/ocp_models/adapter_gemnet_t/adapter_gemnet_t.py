@@ -2,37 +2,15 @@ from ocpmodels.models.gemnet.gemnet import GemNetT
 
 from typing import Optional
 
-import numpy as np
+
 import torch
-from torch_geometric.nn import radius_graph
 from torch_scatter import scatter
-from torch_sparse import SparseTensor
+from torch.nn.init import xavier_uniform_
 
 from ocpmodels.common.registry import registry
-from ocpmodels.common.utils import (
-    compute_neighbors,
-    conditional_grad,
-    get_pbc_distances,
-    radius_graph_pbc,
-)
-
-from ocpmodels.models.gemnet.layers.atom_update_block import OutputBlock
+from ocpmodels.common.utils import conditional_grad
 from ocpmodels.models.gemnet.layers.base_layers import Dense
-from ocpmodels.models.gemnet.layers.efficient import EfficientInteractionDownProjection
-from ocpmodels.models.gemnet.layers.embedding_block import AtomEmbedding, EdgeEmbedding
-from ocpmodels.models.gemnet.layers.interaction_block import (
-    InteractionBlockTripletsOnly,
-)
-from ocpmodels.models.gemnet.layers.radial_basis import RadialBasis
-from ocpmodels.models.gemnet.layers.scaling import AutomaticFit
-from ocpmodels.models.gemnet.layers.spherical_basis import CircularBasisLayer
-from ocpmodels.models.gemnet.utils import (
-    inner_product_normalized,
-    mask_neighbors,
-    ragged_range,
-    repeat_blocks,
-)
-from torch.nn.init import xavier_uniform_
+from ocpmodels.models.gemnet.utils import inner_product_normalized
 
 
 @registry.register_model("adapter_gemnet_t")

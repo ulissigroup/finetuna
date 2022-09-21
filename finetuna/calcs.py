@@ -169,6 +169,25 @@ class CounterCalc(Calculator):
         self.force_calls += 1
 
 
+class Dummy(Calculator):
+    implemented_properties = ["energy", "forces", "stress", "stds"]
+
+    def __init__(self, **kwargs):
+        Calculator.__init__(self, **kwargs)
+
+    def calculate(self, atoms=None, properties=None, system_changes=all_changes):
+        Calculator.calculate(self, atoms, properties, system_changes)
+        image = atoms
+        natoms = len(image)
+        energy = 0.0
+        forces = np.zeros((natoms, 3))
+        self.results["energy"] = energy
+        self.results["forces"] = forces
+        self.results["stress"] = -np.array([0, 0, 0, 0, 0, 0])
+        self.results["force_stds"] = np.core.numeric.zeros_like(forces)
+        atoms.info["max_force_stds"] = np.nanmax(self.results["force_stds"])
+
+
 class ClonedFinetunerCalc(FinetunerCalc):
     def __init__(self, finetuner_calc: FinetunerCalc):
         self.finetuner_calc = finetuner_calc

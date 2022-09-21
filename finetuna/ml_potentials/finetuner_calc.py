@@ -7,9 +7,10 @@ import copy
 import time
 import torch
 import numpy as np
-from finetuna.ml_potentials.ocp_models.adapter_gemnet_t import adapter_gemnet_t
-from finetuna.ml_potentials.finetuner_utils.utils import GenericDB, GraphsListDataset
-from finetuna.ml_potentials.finetuner_utils.trainer import Trainer
+from finetuna.ocp_models.adapter_gemnet_t import adapter_gemnet_t
+from finetuna.finetuner_utils.utils import GenericDB, GraphsListDataset
+from finetuna.finetuner_utils.trainer import Trainer
+import ocpmodels
 
 
 class FinetunerCalc(MLPCalc):
@@ -56,6 +57,13 @@ class FinetunerCalc(MLPCalc):
         config["model"] = config.pop("model_attributes")
         config["trainer"] = "forces"
 
+        if isinstance(config["model"].get("scale_file", None), str):
+            scale_file_path = config["model"]["scale_file"]
+            if not scale_file_path[0] == "/":
+                config["model"]["scale_file"] = (
+                    ocpmodels.__file__[:-21] + scale_file_path
+                )
+
         if "tuner" not in mlp_params:
             mlp_params["tuner"] = {}
 
@@ -80,10 +88,11 @@ class FinetunerCalc(MLPCalc):
         self.ref_energy_ml = None
 
         # init block/weight freezing
-        if isinstance(self.mlp_params["tuner"]["unfreeze_blocks"], list):
-            self.unfreeze_blocks = self.mlp_params["tuner"]["unfreeze_blocks"]
-        elif isinstance(self.mlp_params["tuner"]["unfreeze_blocks"], str):
-            self.unfreeze_blocks = [self.mlp_params["tuner"]["unfreeze_blocks"]]
+        self.unfreeze_blocks = self.mlp_params["tuner"].get("unfreeze_blocks", [])
+        if isinstance(self.unfreeze_blocks, list):
+            pass
+        elif isinstance(self.unfreeze_blocks, str):
+            self.unfreeze_blocks = [self.unfreeze_blocks]
         else:
             raise ValueError("invalid unfreeze_blocks parameter given")
 

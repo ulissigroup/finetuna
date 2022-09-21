@@ -10,7 +10,8 @@ import os
 import torch
 import copy
 import torch.nn as nn
-from finetuna.ml_potentials.finetuner_utils.loss import (
+import numpy as np
+from finetuna.finetuner_utils.loss import (
     RelativeL2MAELoss,
     AtomwiseL2LossNoBatch,
 )
@@ -111,8 +112,10 @@ class Trainer(ForcesTrainer):
 
     def a2g_convert(self, atoms, train: bool):
         if "tags" not in atoms.arrays:
-            tags = atoms.get_tags()
-            tags[atoms.constraints[0].get_indices()] = 1
+            tags = np.array([1] * len(atoms))
+            if atoms.constraints != []:
+                tags[atoms.constraints[0].get_indices()] = 0
+
             atoms.arrays["tags"] = tags
 
         if train:
