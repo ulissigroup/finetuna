@@ -3,7 +3,7 @@ from ase.io.trajectory import Trajectory
 
 from ase.optimize.bfgs import BFGS
 from finetuna.atomistic_methods import Relaxation
-from finetuna.base_calcs.dummy import Dummy
+from finetuna.calcs import Dummy
 from finetuna.calcs import DeltaCalc
 from finetuna.utils import compute_with_calc
 import numpy as np

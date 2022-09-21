@@ -6,6 +6,7 @@ class online_ft_gemnet_dT_CuNP(BaseOnlineCuNP, unittest.TestCase):
     @classmethod
     def get_al_config(cls) -> dict:
         al_config = BaseOnlineCuNP.get_al_config()
+        al_config["learner"]["logger"]["pca_quantify"] = True
         al_config["links"]["ml_potential"] = "ft"
         al_config["finetuner"] = {
             "tuner": {
