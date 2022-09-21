@@ -8,6 +8,7 @@ import ase
 from ase.calculators.vasp.vasp import Vasp
 from ase.io.trajectory import Trajectory
 from ase.optimize import BFGS
+from pymatgen.io.vasp.inputs import Kpoints, Incar
 from vasp_interactive import VaspInteractive
 from finetuna.ml_potentials.finetuner_ensemble_calc import FinetunerEnsembleCalc
 from finetuna.online_learner.online_learner import OnlineLearner
@@ -18,13 +19,18 @@ from importlib_resources import files
 
 def main(args):
     # Initialize VASP interactive calculator with VASP input from the path provided
-    os.mkdir(args.path + "/finetuna_relaxation")
-    os.chdir(args.path + "/finetuna_relaxation")
     print("------Initializing VASP Interactive Calculator------")
     vasp_interactive = VaspInteractive()
-    vasp_interactive.read_incar(filename=os.path.join(args.path, "INCAR"))
-    vasp_interactive.read_kpoints(filename=os.path.join(args.path, "KPOINTS"))
-    vasp_interactive.read_potcar(filename=os.path.join(args.path, "POTCAR"))
+    incar = Incar.from_file(os.path.join(args.path, "INCAR"))
+    kpoints = Kpoints.from_file(os.path.join(args.path, "KPOINTS"))
+    vasp_inputs = {
+        "kpts": kpoints.kpts[0],
+    }
+    for k in incar.keys():
+        vasp_inputs[k.lower()] = incar[k]
+        
+    os.rename(os.path.join(args.path, "INCAR"), os.path.join(args.path, "INCAR_original"))
+    os.rename(os.path.join(args.path, "KPOINTS"), os.path.join(args.path, "KPOINTS_original"))
 
     # Set convergence criteria as EDIFFG in VASP flag, default to 0.03 eV/A
     if -vasp_interactive.exp_params.get("ediffg") == 0:
@@ -34,6 +40,8 @@ def main(args):
 
     # Read the initial structure
     initial_structure = ase.io.read(os.path.join(args.path, "POSCAR"))
+    os.rename(os.path.join(args.path, "POSCAR"), os.path.join(args.path, "POSCAR_original"))
+
     # Parse the config file
     yaml_file = open(args.config)
     # Set VASP command
@@ -50,7 +58,10 @@ def main(args):
         checkpoint_paths=[args.checkpoint],
         mlp_params=finetuner,
     )
-    with vasp_interactive as parent_calc:
+    with VaspInteractive(**vasp_inputs) as parent_calc:
+        parent_calc.read_potcar(filename=os.path.join(args.path, "POTCAR"))
+        os.rename(os.path.join(args.path, "POTCAR"), os.path.join(args.path, "POTCAR_original"))
+
         onlinecalc = OnlineLearner(
             learner_params,
             [],
