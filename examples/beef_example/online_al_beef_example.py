@@ -8,13 +8,9 @@ from ase.io import read
 
 
 if __name__ == "__main__":
-    incar_path = "/home/jovyan/working/data/richard_ipa/adslabs_inputs/Ag_111_IPA/INCAR"
-    kpoints_path = (
-        "/home/jovyan/working/data/richard_ipa/adslabs_inputs/Ag_111_IPA/KPOINTS"
-    )
-    poscar_path = (
-        "/home/jovyan/working/data/richard_ipa/adslabs_inputs/Ag_111_IPA/POSCAR"
-    )
+    incar_path = "Ag111_IPA/INCAR"
+    kpoints_path = "Ag111_IPA/KPOINTS"
+    poscar_path = "Ag111_IPA/POSCAR"
 
     slab = read(poscar_path)
 
