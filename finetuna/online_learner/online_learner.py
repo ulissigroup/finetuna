@@ -91,10 +91,11 @@ class OnlineLearner(Calculator):
             "initial_points_to_keep", [i for i in range(self.num_initial_points)]
         )
         if len(self.initial_points_to_keep) == 0 and self.num_initial_points > 0:
-            raise ValueError(
-                f"{self.num_initial_points} Initial DFT points will be calculated but not used for training.\
-                Please change initial_points_to_keep in learner parameters."
+            print(
+                f"{self.num_initial_points} Initial DFT points will be calculated but no initial points were indicated to be saved for training.\
+                By default, all of the initial DFT points will be used for training, unless you specify the indices of the points you wish to keep."
             )
+            self.initial_points_to_keep = [i for i in range(self.num_initial_points)]
         self.uncertainty_metric = self.learner_params.get(
             "uncertainty_metric", "forces"
         )
