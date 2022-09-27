@@ -8,9 +8,7 @@ from finetuna.utils import calculate_surface_k_points
 
 if __name__ == "__main__":
 
-    traj = Trajectory(
-        "/home/jovyan/working/data/30_randoms_n60/random1447590.traj"
-    )  # change this path to your trajectory file
+    traj = Trajectory("random1447590.traj")  # change this path to your trajectory file
 
     ml_potential = FinetunerEnsembleCalc(
         checkpoint_paths=[

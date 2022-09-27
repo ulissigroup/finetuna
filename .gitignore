@@ -37,3 +37,6 @@ stored-primes/
 
 # pytest outputs
 .pytest_cache
+
+# exceptions
+!examples/**/*.traj
