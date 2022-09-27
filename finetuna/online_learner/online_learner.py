@@ -82,7 +82,7 @@ class OnlineLearner(Calculator):
         self.reverify_with_parent = self.learner_params.get(
             "reverify_with_parent", True
         )
-        self.partial_fit = self.learner_params.get("partial_fit", False)
+        self.partial_fit = self.learner_params.get("partial_fit", True)
         self.train_on_recent_points = self.learner_params.get(
             "train_on_recent_points", None
         )
