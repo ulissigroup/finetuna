@@ -31,6 +31,6 @@ class online_ft_gemnet_oc_CuNP(BaseOnlineCuNP, unittest.TestCase):
             },
         }
         al_config["ocp"] = {
-            "checkpoint_path": "/home/jovyan/shared-scratch/ocp_checkpoints/public_checkpoints/scaling_attached/gemnet_oc_base_oc20_oc22_attscale.pt",
+            "checkpoint_path": "/home/jovyan/shared-scratch/ocp_checkpoints/for_finetuna/public_checkpoints/scaling_attached/gemnet_oc_base_oc20_oc22_attscale.pt",
         }
         return al_config
