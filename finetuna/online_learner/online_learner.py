@@ -1,7 +1,7 @@
 from logging import warn
 import numpy as np
 from ase.calculators.calculator import Calculator
-from ase.calculators.singlepoint import SinglePointCalculator
+from ase.calculators.singlepoint import SinglePointCalculator, SinglePointDFTCalculator
 from finetuna.logger import Logger
 from finetuna.utils import convert_to_singlepoint, convert_to_top_k_forces
 import time
@@ -470,6 +470,7 @@ class OnlineLearner(Calculator):
             and atoms.calc is not None
             and (
                 type(atoms.calc) is SinglePointCalculator
+                or type(atoms.calc) is SinglePointDFTCalculator
                 or atoms.calc.name == self.parent_calc.name
             )
         ):
