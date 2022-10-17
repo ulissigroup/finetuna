@@ -8,6 +8,8 @@ from ase.calculators.vasp import Vasp
 from ase.calculators.emt import EMT
 from vasp_interactive import VaspInteractive
 from ase.db import connect
+from ase.calculators.socketio import SocketIOCalculator
+from ase.calculators.espresso import Espresso
 
 from finetuna.atomistic_methods import Relaxation
 from finetuna.offline_learner.offline_learner import OfflineActiveLearner
@@ -105,17 +107,59 @@ def active_learning(config):
     # begin setting up parent calc
     parent_str = config["links"].get("parent_calc", "vasp")
     # calculate kpts
-    if (
-        parent_str == "vasp" or parent_str == "vasp_interactive"
-    ) and "kpts" not in config["vasp"]:
-        config["vasp"]["kpts"] = calculate_surface_k_points(initial_structure)
+    kpts = calculate_surface_k_points(initial_structure)
     # declare parent calc
     if parent_str == "vasp":
+        if "kpts" not in config["vasp"]:
+            config["vasp"]["kpts"] = kpts
         parent_calc = Vasp(**config["vasp"])
     elif parent_str == "vasp_interactive":
         parent_calc = VaspInteractive(**config["vasp"])
+        if "kpts" not in config["vasp"]:
+            config["vasp"]["kpts"] = kpts
     elif parent_str == "emt":
         parent_calc = EMT()
+    elif parent_str == "espresso":
+        espresso_config = {
+            "command": f"mpirun -np 4 /opt/qe-7.0/bin/pw.x -in espresso.pwi --ipi unix:UNIX > espresso.pwo",
+            "pseudopotentials": {
+                key: f"{key}.UPF"
+                for key, value in initial_traj[0].symbols.formula._count.items()
+            },
+            "kpts": kpts,
+            "input_data": {
+                "control": {
+                    "verbosity": "high",
+                    "calculation": "scf",
+                },
+                "system": {
+                    "input_dft": "BEEF-VDW",
+                    "occupations": "smearing",
+                    "smearing": "mv",
+                    "degauss": 0.01,
+                    "ecutwfc": 60,
+                },
+                "electrons": {
+                    "electron_maxstep": 200,
+                    "mixing_mode": "local-TF",
+                    "conv_thr": 1e-8,
+                },
+            },
+            "pseudo_path": "/home/jovyan/working/espresso_stuff/gbrv_pseudopotentials",
+        }
+        for key, value in config.get("espresso", {}).items():
+            espresso_config[key] = value
+        os.environ["ESPRESSO_PSEUDO"] = espresso_config.pop("pseudo_path")
+        espresso = Espresso(**espresso_config)
+        parent_calc = SocketIOCalculator(
+            espresso,
+            **config.get(
+                "socket",
+                {
+                    "unixsocket": "unix",
+                },
+            ),
+        )
 
     # declare base calc (if path is given)
     if "base_calc" in config:
