@@ -126,6 +126,8 @@ def active_learning(config):
                 key: f"{key}.UPF"
                 for key, value in initial_traj[0].symbols.formula._count.items()
             },
+            "tstress": True,
+            "tprnfor": True,
             "kpts": kpts,
             "input_data": {
                 "control": {
@@ -133,7 +135,7 @@ def active_learning(config):
                     "calculation": "scf",
                 },
                 "system": {
-                    "input_dft": "BEEF-VDW",
+                    "input_dft": "PBE",
                     "occupations": "smearing",
                     "smearing": "mv",
                     "degauss": 0.01,
