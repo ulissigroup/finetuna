@@ -11,10 +11,11 @@ Installation is easy:
 ```
 conda env create -f env.cpu.yml
 conda activate finetuna
+cd finetuna
+pip install -e .
 git clone https://github.com/Open-Catalyst-Project/ocp.git
 cd ocp
 pip install -e .
-pip install git+https://github.com/ulissigroup/finetuna.git
 pip install git+https://github.com/ulissigroup/vasp-interactive.git
 ```
 
