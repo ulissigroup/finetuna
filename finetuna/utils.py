@@ -1,11 +1,14 @@
 from ase.calculators.singlepoint import SinglePointCalculator as sp
-from finetuna.calcs import DeltaCalc
 from ase.io import write
+from ase.constraints import Hookean
+from ase.geometry.analysis import Analysis
+from pymatgen.core.bonds import _load_bond_length_data
 import numpy as np
 import subprocess
 import re
 import tempfile
 import random
+from finetuna.calcs import DeltaCalc
 
 
 def convert_to_singlepoint(images):
@@ -247,3 +250,31 @@ def asedb_row_to_atoms(row):
     sp_calc = sp(atoms=image, energy=float(sample_energy), forces=sample_forces)
     image.calc = sp_calc
     return image
+
+
+def add_hookean_constraint(image, spring_constant=5, default_bl=2, tol=0.3):
+    """Applies a Hookean restorative force to all bonded atoms in the given atoms object.
+
+    Args:
+        image (atoms): ASE atoms object
+        spring_constant (int, optional): Hooke’s law (spring) constant. Defaults to 5.
+        default_bl (int, optional): if the bond length cannot be found using the
+        _load_bond_length_data function from pymatgen, use this instead. Defaults to 2.
+        tol (float, optional): relative tolerance to the bond length. Defaults to 0.3.
+    """
+    bond_lengths = _load_bond_length_data()
+    ana = Analysis(atoms)
+    cons = ase_atoms.constraints
+    for i, atom in enumerate(ase_atoms):
+        if ana.unique_bonds[0][i]:
+            for j in ana.unique_bonds[0][i]:
+                syms = tuple(sorted([atom.symbol, ase_atoms[j].symbol]))
+                if syms in bond_lengths:
+                    rt = (1 + tol) * max(bond_lengths[syms].values())
+                else:
+                    rt = (1 + tol) * default_bl
+                cons.append(Hookean(a1=i, a2=int(j), rt=rt, k=spring_constant))
+                print(
+                    f"Applied a Hookean spring between atom {atom.symbol} and atom {ase_atoms[j].symbol} with a threshold of {rt:.2f} and spring constant of {spring_constant}"
+                )
+    ase_atoms.set_constraint(cons)
