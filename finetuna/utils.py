@@ -252,19 +252,24 @@ def asedb_row_to_atoms(row):
     return image
 
 
-def add_hookean_constraint(image, spring_constant=5, default_bl=2, tol=0.3):
+def add_hookean_constraint(image, spring_constant=5, default_bl=None, tol=0.3):
     """Applies a Hookean restorative force to all bonded atoms in the given atoms object.
+    All bonded pairs in the image will be found with ase Analysis class. The threshold length
+    below which no restorative force will be applied is set as the bond length times the tolerance.
+    If bond length of the atom pair can not be found with _load_bond_length_data function
+    from pymatgen, current distance between two atoms, or a default bond length will be used.
 
     Args:
         image (atoms): ASE atoms object
-        spring_constant (int, optional): Hooke’s law (spring) constant. Defaults to 5.
+        spring_constant (int, optional): Hooke’s law (spring) constant.Defaults to 5.
         default_bl (int, optional): if the bond length cannot be found using the
-        _load_bond_length_data function from pymatgen, use this instead. Defaults to 2.
+        _load_bond_length_data function from pymatgen, use this instead.
+        Defaults to None, i.e.: use the current bond distance as bond length.
         tol (float, optional): relative tolerance to the bond length. Defaults to 0.3.
     """
     bond_lengths = _load_bond_length_data()
     ana = Analysis(image)
-    cons = ase_atoms.constraints
+    cons = image.constraints
     for i, atom in enumerate(image):
         if ana.unique_bonds[0][i]:
             for j in ana.unique_bonds[0][i]:
@@ -272,11 +277,14 @@ def add_hookean_constraint(image, spring_constant=5, default_bl=2, tol=0.3):
                 if syms in bond_lengths:
                     rt = (1 + tol) * max(bond_lengths[syms].values())
                 else:
-                    rt = (1 + tol) * default_bl
+                    if default_bl:
+                        rt = (1 + tol) * default_bl
+                    else:
+                        rt = (1 + tol) * ana.get_bond_value(0, [i, j])
                 cons.append(Hookean(a1=i, a2=int(j), rt=rt, k=spring_constant))
                 print(
-                    f"Applied a Hookean spring between atom {image[i].symbol} and atom
-                    {image[j].symbol} with a threshold of {rt:.2f} and spring constant
-                    of {spring_constant}"
+                    f"Applied a Hookean spring between atom {image[i].symbol} and \
+                    atom {image[j].symbol} with a threshold of {rt:.2f} and \
+                    spring constant of {spring_constant}"
                 )
-    ase_atoms.set_constraint(cons)
+    image.set_constraint(cons)
