@@ -263,18 +263,20 @@ def add_hookean_constraint(image, spring_constant=5, default_bl=2, tol=0.3):
         tol (float, optional): relative tolerance to the bond length. Defaults to 0.3.
     """
     bond_lengths = _load_bond_length_data()
-    ana = Analysis(atoms)
+    ana = Analysis(image)
     cons = ase_atoms.constraints
-    for i, atom in enumerate(ase_atoms):
+    for i, atom in enumerate(image):
         if ana.unique_bonds[0][i]:
             for j in ana.unique_bonds[0][i]:
-                syms = tuple(sorted([atom.symbol, ase_atoms[j].symbol]))
+                syms = tuple(sorted([image[i].symbol, image[j].symbol]))
                 if syms in bond_lengths:
                     rt = (1 + tol) * max(bond_lengths[syms].values())
                 else:
                     rt = (1 + tol) * default_bl
                 cons.append(Hookean(a1=i, a2=int(j), rt=rt, k=spring_constant))
                 print(
-                    f"Applied a Hookean spring between atom {atom.symbol} and atom {ase_atoms[j].symbol} with a threshold of {rt:.2f} and spring constant of {spring_constant}"
+                    f"Applied a Hookean spring between atom {image[i].symbol} and atom
+                    {image[j].symbol} with a threshold of {rt:.2f} and spring constant
+                    of {spring_constant}"
                 )
     ase_atoms.set_constraint(cons)
