@@ -308,7 +308,7 @@ def add_hookean_constraint(image, default_bl=None, des_rt = 2., rec_rt = 1., spr
                 )
     rand_ads_index = random.choice(ads_indices)
     rand_ads_z = image[rand_ads_index].position[2]
-    cons.append(Hookean(a1=rand_ads_index, a2=(0., 0., 1., rand_ads_z + des_rt), k=spring_constant))
+    cons.append(Hookean(a1=rand_ads_index, a2=(0., 0., 1., -(rand_ads_z + des_rt)), k=spring_constant))
     print(
         f"Applied a Hookean spring on atom {image[rand_ads_index].symbol} with a spring", \
         f"constant of {spring_constant} so that it doesn't move {des_rt}A above its current location"
