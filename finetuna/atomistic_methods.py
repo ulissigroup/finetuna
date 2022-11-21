@@ -2,11 +2,17 @@ import ase
 import ase.io
 from ase.neb import SingleCalculatorNEB
 from ase.optimize import BFGS
+from ase.optimize.minimahopping import MinimaHopping
 import copy
 from ase import units
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from ase.md import VelocityVerlet, Langevin, nvtberendsen
 import numpy as np
+import os
+from ase.optimize import QuasiNewton
+from ase.parallel import paropen, world
+from ase.md import MDLogger
+
 
 
 class NEBcalc:
@@ -312,3 +318,19 @@ def ml_only_replay(calc, optimizer):
         return r, f
 
     base_replay(replay_func, calc, optimizer)
+
+
+class MinimaHoppingReplay(MinimaHopping):
+    def __init__(self, atoms, **kwargs):
+        super().__init__(atoms, **kwargs)
+        
+    def _optimize(self):
+        """Perform an optimization."""
+        self._atoms.set_momenta(np.zeros(self._atoms.get_momenta().shape))
+        with self._optimizer(self._atoms,
+                             trajectory='qn%05i.traj' % self._counter,
+                             logfile='qn%05i.log' % self._counter) as opt:
+            self._log('msg', 'Optimization: qn%05i' % self._counter)
+            opt.attach(parent_only_replay, 1, self._atoms.calc, opt)
+            opt.run(fmax=self._fmax)
+            self._log('ene')
