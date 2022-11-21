@@ -252,7 +252,9 @@ def asedb_row_to_atoms(row):
     return image
 
 
-def add_hookean_constraint(image, default_bl=None, des_rt = 2., rec_rt = 1., spring_constant=5, tol=0.3):
+def add_hookean_constraint(
+    image, default_bl=None, des_rt=2.0, rec_rt=1.0, spring_constant=5, tol=0.3
+):
     """Applies a Hookean restorative force to prevent adsorbate desorption, dissociation and
     surface reconstruction.
     All bonded pairs in the image will be found with ase Analysis class. The threshold length
@@ -260,29 +262,29 @@ def add_hookean_constraint(image, default_bl=None, des_rt = 2., rec_rt = 1., spr
     If bond length of the atom pair can not be found with _load_bond_length_data function
     from pymatgen, current distance between two atoms, or a default bond length will be used.
     This method requires the atoms object to be tagged.
-    
+
     Args:
         image (atoms): tagged ASE atoms object, 0 for bulk, 1 for surface, 2 for adsorbate.
-               
+
         default_bl (float, optional): if the bond length cannot be found using the
         _load_bond_length_data function from pymatgen, use this instead. Defaults to None,
         i.e.: use the current bond distance as bond length.
-        
+
         des_rt (float, optional): desorption threshold. Apply a spring to a randomly selected
         adsorbate atom so that the adsorbate doesn't fly away from the surface. Defaults to 2,
         i.e.: if the selected atom move 2A above its current z position, apply the restorative
         force.
-        
+
         rec_rt (float, optional): reconstruction threshold. Apply springs to the surface atoms
-        to prevent surface reconstruction. Defaults to 1A, i.e.: if a surface atom move 1A away 
+        to prevent surface reconstruction. Defaults to 1A, i.e.: if a surface atom move 1A away
         from its current position, apply the restorative force.
-        
+
         spring_constant (int, optional): Hooke’s law (spring) constant. Defaults to 5.
 
         tol (float, optional): relative tolerance to the bond length. Defaults to 0.3, i.e.: if
         the bond is 30% over the bond length, apply the restorative force.
     """
-    
+
     bond_lengths = _load_bond_length_data()
     ana = Analysis(image)
     cons = image.constraints
@@ -302,21 +304,27 @@ def add_hookean_constraint(image, default_bl=None, des_rt = 2., rec_rt = 1., spr
                         rt = (1 + tol) * ana.get_bond_value(0, [i, j])
                 cons.append(Hookean(a1=i, a2=int(j), rt=rt, k=spring_constant))
                 print(
-                    f"Applied a Hookean spring between atom {image[i].symbol} and", \
-                    f"atom {image[j].symbol} with a threshold of {rt:.2f} and", \
-                    f"spring constant of {spring_constant}"
+                    f"Applied a Hookean spring between atom {image[i].symbol} and",
+                    f"atom {image[j].symbol} with a threshold of {rt:.2f} and",
+                    f"spring constant of {spring_constant}",
                 )
     rand_ads_index = random.choice(ads_indices)
     rand_ads_z = image[rand_ads_index].position[2]
-    cons.append(Hookean(a1=rand_ads_index, a2=(0., 0., 1., -(rand_ads_z + des_rt)), k=spring_constant))
+    cons.append(
+        Hookean(
+            a1=rand_ads_index,
+            a2=(0.0, 0.0, 1.0, -(rand_ads_z + des_rt)),
+            k=spring_constant,
+        )
+    )
     print(
-        f"Applied a Hookean spring on atom {image[rand_ads_index].symbol} with a spring", \
-        f"constant of {spring_constant} so that it doesn't move {des_rt}A above its current location"
+        f"Applied a Hookean spring on atom {image[rand_ads_index].symbol} with a spring",
+        f"constant of {spring_constant} so that it doesn't move {des_rt}A above its current location",
     )
     for i in surface_indices:
         cons.append(Hookean(a1=i, a2=image[i].position, rt=rec_rt, k=spring_constant))
     print(
-        f"Applied Hookean springs to all surface atom with a spring constant of", \
-        f"{spring_constant} so that they don't move {rec_rt}A away from their current locations"
+        f"Applied Hookean springs to all surface atom with a spring constant of",
+        f"{spring_constant} so that they don't move {rec_rt}A away from their current locations",
     )
     image.set_constraint(cons)

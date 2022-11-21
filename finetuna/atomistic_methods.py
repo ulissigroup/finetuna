@@ -14,7 +14,6 @@ from ase.parallel import paropen, world
 from ase.md import MDLogger
 
 
-
 class NEBcalc:
     def __init__(self, starting_images, intermediate_samples=3):
         """
@@ -323,14 +322,16 @@ def ml_only_replay(calc, optimizer):
 class MinimaHoppingReplay(MinimaHopping):
     def __init__(self, atoms, **kwargs):
         super().__init__(atoms, **kwargs)
-        
+
     def _optimize(self):
         """Perform an optimization."""
         self._atoms.set_momenta(np.zeros(self._atoms.get_momenta().shape))
-        with self._optimizer(self._atoms,
-                             trajectory='qn%05i.traj' % self._counter,
-                             logfile='qn%05i.log' % self._counter) as opt:
-            self._log('msg', 'Optimization: qn%05i' % self._counter)
+        with self._optimizer(
+            self._atoms,
+            trajectory="qn%05i.traj" % self._counter,
+            logfile="qn%05i.log" % self._counter,
+        ) as opt:
+            self._log("msg", "Optimization: qn%05i" % self._counter)
             opt.attach(parent_only_replay, 1, self._atoms.calc, opt)
             opt.run(fmax=self._fmax)
-            self._log('ene')
+            self._log("ene")
