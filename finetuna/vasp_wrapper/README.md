@@ -19,19 +19,18 @@ An ASE [VASP Interactive](https://github.com/ulissigroup/vasp-interactive) calcu
 
     Required arguments: 
 
-    | Parameter                 | Description   |	
-    | :------------------------ | :-------------|
-    | -xc --xc                  |the exchange correlation function, e.g.: pbe, rpbe, beef-vdw. Check [ASE-VASP](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html#exchange-correlation-functionals) for the full list the keys.
-    | -c --checkpoint 	        |the path to the machine learning model checkpoint. (Not required for VASP-Only mode)
+    | Parameter   | Description   |	
+    | :---------- | :-------------|
+    | -xc         |the exchange correlation function, e.g.: pbe, rpbe, beef-vdw. Check [ASE-VASP](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html#exchange-correlation-functionals) for the full list the keys.
+    | -c  	      |the path to the machine learning model checkpoint. (Not required for VASP-Only mode)
 
     Optional arguments: 
 
-    | Parameter                 | Default       | Description   |	
-    | :------------------------ |:-------------:| :-------------|
-    
-    | -p --path 	            |*current working directory*	|the path to VASP input directory
-    | -con  --config            | finetuna.vasp_wrapper.sample_config.yml |the path to the configuration file
-    | -vasponly  --vasponly     | False         |add this argument if you want to run pure VASP Interactive relaxation with BFGS optimizer. No FineTuna involved!
+    | Parameter   | Default       | Description   |	
+    | :---------- |:-------------:| :-------------|
+    | -p  	      |current working directory	|the path to VASP input directory
+    | -con        | finetuna.vasp_wrapper.sample_config.yml |the path to the configuration file
+    | -vasponly   | False         |add this argument if you want to run pure VASP Interactive relaxation with BFGS optimizer. No FineTuna involved!
 
 For example:
 to run a FineTuna relaxation with RPBE functional using the VASP input files in the current directory,
