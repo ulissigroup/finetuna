@@ -33,10 +33,13 @@ An ASE [VASP Interactive](https://github.com/ulissigroup/vasp-interactive) calcu
     | -vasponly   | False         |add this argument if you want to run pure VASP Interactive relaxation with BFGS optimizer. No FineTuna involved!
 
 For example:
+
 to run a FineTuna relaxation with RPBE functional using the VASP input files in the current directory,
+
 `finetuna_wrap.py -xc rpbe -c /path/to/checkpoint`
 
-For example: for running a VASP Interactive with BEEF-VdW functional using the VASP input files in `/home/vasp_inputs` directory,
+to run a VASP Interactive with BEEF-VdW functional using the VASP input files in `/home/vasp_inputs` directory,
+
 `finetuna_wrap.py -xc beef-vdw -vasponly -p /home/vasp_inputs`
 
-- A subfolder called finetuna_relaxation will be created in the working directory. An [ASE db](https://wiki.fysik.dtu.dk/ase/tutorials/tut06_database/database.html) file (`oal_queried_images.db`) will be generated that stores the structure, energies and forces information.
+
