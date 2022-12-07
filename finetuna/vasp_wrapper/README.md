@@ -21,14 +21,23 @@ An ASE [VASP Interactive](https://github.com/ulissigroup/vasp-interactive) calcu
 
     | Parameter                 | Description   |	
     | :------------------------ | :-------------|
-    | -c --checkpoint 	        |the path to the machine learning model checkpoint
+    | -xc --xc                  |the exchange correlation function, e.g.: pbe, rpbe, beef-vdw. Check [ASE-VASP](https://wiki.fysik.dtu.dk/ase/ase/calculators/vasp.html#exchange-correlation-functionals) for the full list the keys.
+    | -c --checkpoint 	        |the path to the machine learning model checkpoint. (Not required for VASP-Only mode)
 
     Optional arguments: 
 
     | Parameter                 | Default       | Description   |	
     | :------------------------ |:-------------:| :-------------|
-    | -p --path 	            |*current working directory*	          |the path to VASP input directory
-    | -con  --config          | finetuna.vasp_wrapper.sample_config.yml           |the path to the configuration file
+    
+    | -p --path 	            |*current working directory*	|the path to VASP input directory
+    | -con  --config            | finetuna.vasp_wrapper.sample_config.yml |the path to the configuration file
+    | -vasponly  --vasponly     | False         |add this argument if you want to run pure VASP Interactive relaxation with BFGS optimizer. No FineTuna involved!
 
+For example:
+to run a FineTuna relaxation with RPBE functional using the VASP input files in the current directory,
+`finetuna_wrap.py -xc rpbe -c /path/to/checkpoint`
+
+For example: for running a VASP Interactive with BEEF-VdW functional using the VASP input files in `/home/vasp_inputs` directory,
+`finetuna_wrap.py -xc beef-vdw -vasponly -p /home/vasp_inputs`
 
 - A subfolder called finetuna_relaxation will be created in the working directory. An [ASE db](https://wiki.fysik.dtu.dk/ase/tutorials/tut06_database/database.html) file (`oal_queried_images.db`) will be generated that stores the structure, energies and forces information.
