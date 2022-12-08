@@ -9,8 +9,9 @@ An ASE [VASP Interactive](https://github.com/ulissigroup/vasp-interactive) calcu
 ## How to use
 - Install via `pip`
 
-    ```sh
-        pip install git+https://github.com/ulissigroup/finetuna.git
+    ```
+        cd finetuna
+        pip install -e .
     ```
     
 - All pre-trained OCP models can be found [here](https://github.com/Open-Catalyst-Project/ocp/blob/main/MODELS.md). We recommend download [GemNet-dT all](https://dl.fbaipublicfiles.com/opencatalystproject/models/2021_08/s2ef/gemnet_t_direct_h512_all.pt), and use it for `FINETUNA`.
