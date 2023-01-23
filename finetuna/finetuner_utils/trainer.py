@@ -59,7 +59,8 @@ class Trainer(ForcesTrainer):
         self.config["checkpoint"] = checkpoint
 
         if "normalizer" not in config:
-            del config["dataset"]["src"]
+            if config["dataset"] is not None:
+                del config["dataset"]["src"]
             config["normalizer"] = config["dataset"]
 
         identifier = ""
