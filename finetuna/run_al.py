@@ -133,6 +133,7 @@ def active_learning(config):
                 "control": {
                     "verbosity": "high",
                     "calculation": "scf",
+                    "disk_io": "nowf",
                 },
                 "system": {
                     "input_dft": "PBE",
