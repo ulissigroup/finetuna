@@ -83,7 +83,7 @@ class Trainer(ForcesTrainer):
         )
 
         # if loading a model with added blocks for training from the checkpoint, set strict loading to False
-        if self.config["model"] in ["adapter_gemnet_t"]:
+        if self.config["model"] in ["adapter_gemnet_t", "adapter_gemnet_oc"]:
             self.model.load_state_dict.__func__.__defaults__ = (False,)
 
         # load checkpoint
