@@ -62,7 +62,7 @@ ocp:
   model_class_list:
   - gemnet
   checkpoint_path_list:
-  - /home/jovyan/shared-scratch/joe/optim_cleaned_checkpoints/gemnet_s2re_bagging_results/gem_homo_run0.pt
+  - ""
 relaxation:
   # fmax: 0.03
   max_parent_calls: null
