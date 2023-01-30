@@ -56,6 +56,16 @@ def main(args):
     # Set VASP command
     parsed_yaml_file = yaml.load(yaml_file, Loader=yaml.FullLoader)
 
+    with open(os.path.abspath("") + "/run_config.yml", "w") as savefile:
+        yaml.dump(
+            {
+                **parsed_yaml_file,
+                "vasp_inputs": vasp_inputs,
+                "checkpoint": args.checkpoint,
+            },
+            savefile,
+        )
+
     if not args.vasponly:
         # Set up learner, finetuner
         learner_params = parsed_yaml_file["learner"]
@@ -125,6 +135,7 @@ if __name__ == "__main__":
         "-c",
         "--checkpoint",
         type=str,
+        default=None,
         help="Path to the checkpoint",
     )
     parser.add_argument(
