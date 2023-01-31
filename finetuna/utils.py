@@ -365,4 +365,5 @@ def force_cos_sim(forces0, forces1):
     magnitudes0 = norm(forces0, axis=1)
     magnitudes1 = norm(forces1, axis=1)
     cos_sim = dot_array / (magnitudes0 * magnitudes1)
-    return cos_sim
+    mean_cos_sim = np.mean(cos_sim)
+    return mean_cos_sim
