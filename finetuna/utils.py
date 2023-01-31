@@ -9,6 +9,8 @@ import re
 import tempfile
 import random
 from finetuna.calcs import DeltaCalc
+import numpy as np
+from numpy.linalg import norm
 
 
 def convert_to_singlepoint(images):
@@ -341,3 +343,26 @@ def add_hookean_constraint(
         f"{spring_constant} so that they don't move {rec_rt}A away from their current locations",
     )
     image.set_constraint(cons)
+
+
+def force_l2_norm_err(forces0, forces1):
+    diff_array = forces0 - forces1
+    l2_norm_vector = norm(diff_array, axis=1)
+    mae = np.mean(l2_norm_vector)
+    return mae
+
+
+def force_magnitude_err(forces0, forces1):
+    magnitudes0 = norm(forces0, axis=1)
+    magnitudes1 = norm(forces1, axis=1)
+    mae = np.mean(magnitudes0 - magnitudes1)
+    return mae
+
+
+def force_cos_sim(forces0, forces1):
+    # cos_sim = np.dot(forces0, forces1)/(norm(forces0)*norm(forces1)) # cosine similarity formula, but doesn't work elementwise
+    dot_array = np.einsum("ij, ij->i", forces0, forces1)
+    magnitudes0 = norm(forces0, axis=1)
+    magnitudes1 = norm(forces1, axis=1)
+    cos_sim = dot_array / (magnitudes0 * magnitudes1)
+    return cos_sim
