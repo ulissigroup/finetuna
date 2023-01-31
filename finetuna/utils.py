@@ -237,10 +237,23 @@ def calculate_surface_k_points(atoms):
     return k_pts
 
 
-def asedb_row_to_atoms(row):
+def asedb_row_to_atoms(row, calc="parent"):
     image = row.toatoms()
-    sample_energy = row.parent_energy
-    sample_forces = row.parent_forces
+    # get the energy and the forces string
+    if calc == "parent":
+        sample_energy = row.parent_energy
+        sample_forces = row.parent_forces
+    elif calc == "ml":
+        sample_energy = row.ml_energy
+        sample_forces = row.ml_forces
+    elif calc == "retrained":
+        sample_energy = row.retrained_energy
+        sample_forces = row.retrained_forces
+    else:
+        raise ValueError(
+            "calc name given: " + str(calc) + ", this is not a valid calc name"
+        )
+    # convert forces string to array
     sample_forces = np.array(
         [
             [float(f) for f in force.split(" ") if f != ""]
