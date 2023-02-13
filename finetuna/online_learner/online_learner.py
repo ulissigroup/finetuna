@@ -213,11 +213,35 @@ class OnlineLearner(Calculator):
             atoms_copy.calc = atoms.calc
             self.set_query_reason("pretrain")
 
-        # If we have less than two data points, uncertainty is not
-        # well calibrated so just use DFT
-        if len(self.parent_dataset) < self.num_initial_points:
+        atoms_ML = self.get_ml_prediction(atoms_copy)
+
+        # Get ML potential predicted energies and forces
+        energy = atoms_ML.get_potential_energy(apply_constraint=self.constraint)
+        forces = atoms_ML.get_forces(apply_constraint=self.constraint)
+        constrained_forces = atoms_ML.get_forces()
+        fmax = np.sqrt((constrained_forces**2).sum(axis=1).max())
+        self.info["ml_energy"] = energy
+        self.info["ml_forces"] = str(forces)
+        self.info["ml_fmax"] = fmax
+
+        # Check if we are extrapolating too far
+        unsafe_bool = self.unsafe_prediction(atoms_ML)
+        verify_bool = self.parent_verify(atoms_ML)
+        need_to_retrain = unsafe_bool or verify_bool or precalculated
+
+        self.info["force_uncertainty"] = atoms_ML.info["max_force_stds"]
+        self.info["energy_uncertainty"] = atoms_ML.info.get("energy_stds", None)
+        self.info["dyn_uncertainty_tol"] = atoms_ML.info["dyn_uncertain_tol"]
+        self.info["stat_uncertain_tol"] = atoms_ML.info["stat_uncertain_tol"]
+        self.info["tolerance"] = atoms_ML.info["uncertain_tol"]
+
+        # If we are extrapolating too far add/retrain
+        if need_to_retrain:
             atoms_copy.info["check"] = True
 
+            energy_ML = energy
+            constrained_forces_ML = constrained_forces
+            # Run DFT, so use that energy/force
             energy, forces, constrained_forces = self.add_data_and_retrain(atoms_copy)
             fmax = np.sqrt((constrained_forces**2).sum(axis=1).max())
 
@@ -225,111 +249,70 @@ class OnlineLearner(Calculator):
             self.info["parent_energy"] = energy
             self.info["parent_forces"] = str(forces)
             self.info["parent_fmax"] = fmax
-            self.set_query_reason("pretrain")
+            self.info["energy_error"] = energy - energy_ML
+            self.info["relative_energy_error"] = (energy - energy_ML) / energy
+            self.info["forces_error"] = np.sum(
+                np.abs(constrained_forces - constrained_forces_ML)
+            )
+            self.info["forces_mae"] = np.mean(
+                np.abs(constrained_forces - constrained_forces_ML)
+            )
+
+            if atoms.constraints:
+                constraints_index = atoms.constraints[0].index
+            else:
+                constraints_index = []
+            self.info["relative_forces_error"] = np.divide(
+                np.sum(
+                    np.abs(
+                        np.delete(
+                            constrained_forces - constrained_forces_ML,
+                            constraints_index,
+                            axis=0,
+                        )
+                    )
+                ),
+                np.sum(
+                    np.abs(
+                        np.delete(
+                            constrained_forces,
+                            constraints_index,
+                            axis=0,
+                        )
+                    )
+                ),
+            ).item()
+
+            # Using retrained ML potential, get new predicted energies and forces
+            retrained_atoms_ML = self.get_ml_prediction(atoms_copy)
+            retrained_energy = retrained_atoms_ML.get_potential_energy(
+                apply_constraint=self.constraint
+            )
+            retrained_forces = retrained_atoms_ML.get_forces(
+                apply_constraint=self.constraint
+            )
+            retrained_constrained_forces = retrained_atoms_ML.get_forces()
+            retrained_fmax = np.sqrt(
+                (retrained_constrained_forces**2).sum(axis=1).max()
+            )
+            self.info["retrained_energy"] = retrained_energy
+            self.info["retrained_forces"] = str(retrained_forces)
+            self.info["retrained_fmax"] = retrained_fmax
+            self.info["retrained_force_error"] = np.sum(
+                np.abs(constrained_forces - retrained_constrained_forces)
+            )
 
         else:
-            atoms_ML = self.get_ml_prediction(atoms_copy)
-
-            # Get ML potential predicted energies and forces
-            energy = atoms_ML.get_potential_energy(apply_constraint=self.constraint)
-            forces = atoms_ML.get_forces(apply_constraint=self.constraint)
-            constrained_forces = atoms_ML.get_forces()
-            fmax = np.sqrt((constrained_forces**2).sum(axis=1).max())
-            self.info["ml_energy"] = energy
-            self.info["ml_forces"] = str(forces)
-            self.info["ml_fmax"] = fmax
-
-            # Check if we are extrapolating too far
-            unsafe_bool = self.unsafe_prediction(atoms_ML)
-            verify_bool = self.parent_verify(atoms_ML)
-            need_to_retrain = unsafe_bool or verify_bool or precalculated
-
-            self.info["force_uncertainty"] = atoms_ML.info["max_force_stds"]
-            self.info["energy_uncertainty"] = atoms_ML.info.get("energy_stds", None)
-            self.info["dyn_uncertainty_tol"] = atoms_ML.info["dyn_uncertain_tol"]
-            self.info["stat_uncertain_tol"] = atoms_ML.info["stat_uncertain_tol"]
-            self.info["tolerance"] = atoms_ML.info["uncertain_tol"]
-
-            # If we are extrapolating too far add/retrain
-            if need_to_retrain:
-                atoms_copy.info["check"] = True
-
-                energy_ML = energy
-                constrained_forces_ML = constrained_forces
-                # Run DFT, so use that energy/force
-                energy, forces, constrained_forces = self.add_data_and_retrain(
-                    atoms_copy
-                )
-                fmax = np.sqrt((constrained_forces**2).sum(axis=1).max())
-
-                self.info["check"] = True
-                self.info["parent_energy"] = energy
-                self.info["parent_forces"] = str(forces)
-                self.info["parent_fmax"] = fmax
-                self.info["energy_error"] = energy - energy_ML
-                self.info["relative_energy_error"] = (energy - energy_ML) / energy
-                self.info["forces_error"] = np.sum(
-                    np.abs(constrained_forces - constrained_forces_ML)
-                )
-                self.info["forces_mae"] = np.mean(
-                    np.abs(constrained_forces - constrained_forces_ML)
-                )
-
-                if atoms.constraints:
-                    constraints_index = atoms.constraints[0].index
-                else:
-                    constraints_index = []
-                self.info["relative_forces_error"] = np.divide(
-                    np.sum(
-                        np.abs(
-                            np.delete(
-                                constrained_forces - constrained_forces_ML,
-                                constraints_index,
-                                axis=0,
-                            )
-                        )
-                    ),
-                    np.sum(
-                        np.abs(
-                            np.delete(
-                                constrained_forces,
-                                constraints_index,
-                                axis=0,
-                            )
-                        )
-                    ),
-                ).item()
-
-                # Using retrained ML potential, get new predicted energies and forces
-                retrained_atoms_ML = self.get_ml_prediction(atoms_copy)
-                retrained_energy = retrained_atoms_ML.get_potential_energy(
-                    apply_constraint=self.constraint
-                )
-                retrained_forces = retrained_atoms_ML.get_forces(
-                    apply_constraint=self.constraint
-                )
-                retrained_constrained_forces = retrained_atoms_ML.get_forces()
-                retrained_fmax = np.sqrt(
-                    (retrained_constrained_forces**2).sum(axis=1).max()
-                )
-                self.info["retrained_energy"] = retrained_energy
-                self.info["retrained_forces"] = str(retrained_forces)
-                self.info["retrained_fmax"] = retrained_fmax
-                self.info["retrained_force_error"] = np.sum(
-                    np.abs(constrained_forces - retrained_constrained_forces)
-                )
-
+            # Otherwise use the ML predicted energies and forces
+            if self.store_complete_dataset:
+                self.complete_dataset.append(atoms_ML)
             else:
-                # Otherwise use the ML predicted energies and forces
-                if self.store_complete_dataset:
-                    self.complete_dataset.append(atoms_ML)
-                else:
-                    self.complete_dataset = [atoms_ML]
+                self.complete_dataset = [atoms_ML]
 
-                self.info["check"] = False
-                self.set_query_reason("noquery")
+            self.info["check"] = False
+            self.set_query_reason("noquery")
 
-                atoms_copy.info["check"] = False
+            atoms_copy.info["check"] = False
 
         if self.ml_energy_only:
             if self.info.get("retrained_energy", None) is not None:
@@ -458,6 +441,16 @@ class OnlineLearner(Calculator):
             verify = True
             print("checking final point")
             self.set_query_reason("final")
+        if len(self.parent_dataset) < self.num_initial_points:
+            verify = True
+            print(
+                "Pretraining on "
+                + str(len(self.parent_dataset) + 1)
+                + " of "
+                + str(self.num_initial_points)
+                + " initial points"
+            )
+            self.set_query_reason("pretrain")
         return verify
 
     def add_data_and_retrain(self, atoms):
