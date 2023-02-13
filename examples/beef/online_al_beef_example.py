@@ -71,7 +71,6 @@ if __name__ == "__main__":
     vasp_inputs["ibrion"] = -1
 
     with VaspInteractive(**vasp_inputs) as parent_calc:
-
         learner = OnlineLearner(
             learner_params={
                 "query_every_n_steps": 100,

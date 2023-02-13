@@ -48,7 +48,6 @@ class FinetunerEnsembleCalc(FinetunerCalc):
         checkpoint_paths: "list[str]",
         mlp_params: dict = {},
     ) -> None:
-
         # self.model_classes = model_classes
         # self.model_paths = model_paths
         self.checkpoint_paths = checkpoint_paths
