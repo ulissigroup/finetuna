@@ -139,6 +139,27 @@ class Trainer(ForcesTrainer):
         forces = predictions["forces"].cpu().numpy()
         return energy, forces
 
+    def save(
+        self,
+        metrics=None,
+        checkpoint_file="checkpoint.pt",
+        training_state=True,
+    ):
+        """
+        Overwriting save file to make sure that checkpoints that have been trained with finetuner calc retain normalizer dictionary in the right location
+        (by default 'Normalizers' was being saved by OCP, but when loading trained checkpoints it also expects the information to be saved in 'Normalizer')
+        """
+        checkpoint_path = super().save(
+            metrics=metrics,
+            checkpoint_file=checkpoint_file,
+            training_state=training_state,
+        )
+        if checkpoint_path is not None:
+            checkpoint = torch.load(checkpoint_path)
+            checkpoint["config"]["normalizer"] = self.normalizer
+            torch.save(checkpoint, checkpoint_path)
+        return checkpoint_path
+
     def train(self, disable_eval_tqdm=False):
         eval_every = self.config["optim"].get("eval_every", None)
         if eval_every is None:
