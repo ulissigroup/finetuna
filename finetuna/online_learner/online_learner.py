@@ -8,7 +8,7 @@ import time
 import math
 import ase.db
 import queue
-import os
+from finetuna.utils import force_l2_norm_err
 
 __author__ = "Joseph Musielewicz"
 __email__ = "al.mlp.package@gmail.com"
@@ -125,6 +125,10 @@ class OnlineLearner(Calculator):
             "store_complete_dataset", False
         )
 
+        self.mae_threshold = self.learner_params.get("mae_threshold", None)
+        if self.mae_threshold is not None:
+            self.mae_unsafe = True
+
         self.ml_energy_only = self.learner_params.get("ml_energy_only", False)
 
         self.db_name = self.learner_params.get("asedb_name", "oal_queried_images.db")
@@ -149,6 +153,8 @@ class OnlineLearner(Calculator):
             self.info["query"] = 4  # Set to 4 if querying b/c positions not changed
         elif reason == "nsteps":
             self.info["query"] = 5  # Set to 5 if querying b/c it has been n steps
+        elif reason == "mae":
+            self.info["query"] = 6  # Set to 6 if querying b/c retrain mae too high
         else:
             raise ValueError("invalid query reason given (" + str(reason) + ")")
 
@@ -257,6 +263,9 @@ class OnlineLearner(Calculator):
             self.info["forces_mae"] = np.mean(
                 np.abs(constrained_forces - constrained_forces_ML)
             )
+            self.info["forces_l2mae"] = force_l2_norm_err(
+                constrained_forces, constrained_forces_ML
+            )
 
             if atoms.constraints:
                 constraints_index = atoms.constraints[0].index
@@ -301,6 +310,14 @@ class OnlineLearner(Calculator):
             self.info["retrained_force_error"] = np.sum(
                 np.abs(constrained_forces - retrained_constrained_forces)
             )
+            self.info["retrained_forces_l2mae"] = force_l2_norm_err(
+                constrained_forces, retrained_constrained_forces
+            )
+            if self.mae_threshold is not None:
+                if self.info["retrained_forces_l2mae"] > self.mae_threshold:
+                    self.mae_unsafe = True
+                else:
+                    self.mae_unsafe = False
 
         else:
             # Otherwise use the ML predicted energies and forces
@@ -431,6 +448,11 @@ class OnlineLearner(Calculator):
         fmax = np.sqrt((forces**2).sum(axis=1).max())
 
         verify = False
+        if self.mae_threshold is not None:
+            if self.mae_unsafe:
+                verify = True
+                print("Previous retrained error above threshold: check with parent")
+                self.set_query_reason("mae")
         if fmax <= self.fmax_verify_threshold or atoms.info.get(
             "parent_calculation_required", False
         ):
