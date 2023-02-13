@@ -54,6 +54,9 @@ class Trainer(ForcesTrainer):
         self.otf_graph = True
         config["model"]["otf_graph"] = self.otf_graph
 
+        # delete scale file entry in config before loading (remove me if this causes problems in the future)
+        config.get("model", {}).pop("scale_file", None)
+
         # Save config so obj can be transported over network (pkl)
         self.config = copy.deepcopy(config)
         self.config["checkpoint"] = checkpoint
