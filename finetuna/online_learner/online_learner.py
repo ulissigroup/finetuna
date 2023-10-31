@@ -128,6 +128,7 @@ class OnlineLearner(Calculator):
         self.mae_threshold = self.learner_params.get("mae_threshold", None)
         if self.mae_threshold is not None:
             self.mae_unsafe = True
+            self.mae_descending = self.learner_params.get("mae_descending", False)
 
         self.ml_energy_only = self.learner_params.get("ml_energy_only", False)
 
@@ -318,6 +319,8 @@ class OnlineLearner(Calculator):
                     self.mae_unsafe = True
                 else:
                     self.mae_unsafe = False
+                    if self.mae_descending:
+                        self.mae_threshold = self.info["retrained_forces_l2mae"]
 
         else:
             # Otherwise use the ML predicted energies and forces
