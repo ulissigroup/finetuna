@@ -107,12 +107,13 @@ class FinetunerCalc(MLPCalc):
         """
         # make a copy of the config dict so the trainer doesn't edit the original
         config_dict = copy.deepcopy(self.mlp_params)
-
+        print(config_dict["dataset"])
+        print("---------------------------")
         # initialize trainer
         sys.stdout = open(os.devnull, "w")
         self.trainer = Trainer(
             config_yml=config_dict,
-            checkpoint=self.checkpoint_path,
+            checkpoint_path=self.checkpoint_path,
             cutoff=self.cutoff,
             max_neighbors=self.max_neighbors,
         )
