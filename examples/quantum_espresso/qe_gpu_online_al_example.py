@@ -115,6 +115,9 @@ if __name__ == "__main__":
                 "query_every_n_steps": 100,
                 "num_initial_points": 1,
                 "fmax_verify_threshold": 0.03,
+                "wandb_init": {
+                    "wandb_log": True,
+                },
             },
             parent_dataset=[],
             ml_potential=ml_potential,

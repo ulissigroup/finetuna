@@ -126,14 +126,14 @@ def active_learning(config):
                 key: f"{key}.UPF"
                 for key, value in initial_traj[0].symbols.formula._count.items()
             },
-            "tstress": True,
+            "tstress": False,
             "tprnfor": True,
             "kpts": kpts,
             "input_data": {
                 "control": {
                     "verbosity": "high",
                     "calculation": "scf",
-                    "disk_io": "nowf",
+                    "disk_io": "medium",
                 },
                 "system": {
                     "input_dft": "PBE",
