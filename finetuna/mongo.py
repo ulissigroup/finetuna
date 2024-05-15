@@ -200,7 +200,6 @@ def _make_results_dict(atoms):
     # Results. This may duplicate information in the calculator,
     # but we have no control on what the calculator does.
     if calculator:
-
         if not calculator.calculation_required(atoms, ["energy"]):
             results_dict["energy"] = atoms.get_potential_energy(apply_constraint=False)
 

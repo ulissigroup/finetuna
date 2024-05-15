@@ -26,6 +26,7 @@ class GenericDB:
 from ocpmodels.common.registry import registry
 from ocpmodels.models.gemnet.gemnet import GemNetT
 
+
 # imported in __init__.py
 @registry.register_model("gemnet_t_uncertainty")
 class GemNetTUncertainty(GemNetT):

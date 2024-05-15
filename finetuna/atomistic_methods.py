@@ -23,7 +23,8 @@ class NEBcalc:
         ----------
         starting_images: list. Initial and final images to be used for the NEB.
 
-        intermediate_samples: int. Number of intermediate samples to be used in constructing the NEB"""
+        intermediate_samples: int. Number of intermediate samples to be used in constructing the NEB
+        """
 
         self.starting_images = copy.deepcopy(starting_images)
         self.intermediate_samples = intermediate_samples

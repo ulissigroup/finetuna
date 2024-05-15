@@ -21,7 +21,6 @@ class IntDescriptorGemNetT(GemNetT):
         checkpoint_path,
         cpu=True,
     ):
-
         if cpu:
             map_location = torch.device("cpu")
         else:

@@ -7,7 +7,6 @@ from ase.io import Trajectory
 from finetuna.utils import calculate_surface_k_points
 
 if __name__ == "__main__":
-
     traj = Trajectory("N2H_Ag111.traj")  # change this path to your trajectory file
 
     ml_potential = FinetunerCalc(

@@ -15,7 +15,6 @@ import sys
 import os
 
 if __name__ == "__main__":
-
     traj = Trajectory("ch3_cu_final.traj")  # change this path to your trajectory file
 
     ml_potential = FinetunerCalc(
