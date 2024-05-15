@@ -35,6 +35,14 @@ dist/
 */checkpoints/*
 stored-primes/
 
+#quantum espresso outputs
+**/wandb/**
+*.dat
+*.xml
+*.pwi
+*.pwo
+*.update
+
 # pytest outputs
 .pytest_cache
 
